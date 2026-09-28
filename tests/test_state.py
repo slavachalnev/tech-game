@@ -54,3 +54,15 @@ def test_check_file_rejects_bad_thing_and_misnumbered_turn(tmp_path, monkeypatch
     assert any("must live in log/0002.json" in p for p in state.check_file(save, save / "log/0001.json"))
     (save / "maps/town.svg").write_text("<svg><title>Town</title>")
     assert any("not well-formed SVG" in p for p in state.check_file(save, save / "maps/town.svg"))
+
+
+def test_places_must_be_labelled_on_their_maps(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    gazetteer = state.read_json(save / "places.json")
+    gazetteer["places"].append({"id": "st-agnes", "name": "St Agnes", "kind": "village", "x_km": 6, "y_km": 7, "maps": ["district"]})
+    gazetteer["routes"].append({"from": "redruth", "to": "atlantis", "km": 1, "by": "sea", "time": "never"})
+    state.write_json(save / "places.json", gazetteer)
+    problems = state.check_save(save)
+    assert any("'St Agnes' isn't labelled on maps/district.svg" in p for p in problems)
+    assert any("unknown place 'atlantis'" in p for p in problems)

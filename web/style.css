@@ -141,6 +141,14 @@ dd { margin: 0; }
   font: 12.5px/1.45 ui-monospace, Menlo, monospace; background: rgba(255, 255, 255, 0.45); border: 1px solid var(--rule);
 }
 
+.gazetteer { max-width: 1000px; }
+.gazetteer table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+.gazetteer th { font: 15px var(--fell-sc); color: var(--faded); text-align: left; border-bottom: 1px solid var(--rule); padding: 2px 10px 4px 0; }
+.gazetteer td { padding: 3px 10px 3px 0; border-bottom: 1px dotted var(--rule); vertical-align: top; }
+.gazetteer td:nth-child(2), .gazetteer td:nth-child(3) { font: italic 15px var(--fell); color: var(--faded); white-space: nowrap; }
+.gazetteer tr.visited td:first-child { font-weight: 600; }
+.gazetteer ul { padding-left: 20px; font-size: 15.5px; }
+
 /* ---------- people ---------- */
 .people { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 22px; }
 .attitude { font-style: italic; }

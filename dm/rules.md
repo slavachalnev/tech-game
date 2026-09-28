@@ -14,6 +14,7 @@ The fun is in finding out how much they really know. A lenient referee destroys 
 | `log/NNNN.json` | One file per turn. Never rewrite old turns. |
 | `fermi/NNNN_<slug>.py` | The back-of-envelope scripts behind rulings. The player can read these. |
 | `visuals/<id>.svg` | Your drawings of things (see the style guide). |
+| `places.json` | The gazetteer: every known place (km east/north of the origin, which maps it's on) and every route you've ruled on (km, by what, how long). |
 | `maps/<id>.svg` | Your schematic maps of the world (see Maps below). |
 | `sketches/NNNN.png` | The player's sketches from the view's Sketch tab. |
 
@@ -25,6 +26,7 @@ Commands (run from this folder):
 - `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock.
 - `uv run tg pay "£2.35"` and `uv run tg receive "45p"`: change the purse. Use these rather than doing the arithmetic yourself.
 - `uv run tg roll 0.25 "what"`: a random draw against a probability.
+- `uv run tg places [place-id]`: every place by straight-line distance and direction from that place, plus all known routes.
 - `uv run tg shot <thing-id> [--state running]`: screenshot a drawing, then Read the PNG it prints. `uv run tg shot` (or `journal`, `people`, or `<id> --sheet`) shows the player's view.
 - `uv run tg validate`: full check, including cross-references.
 - `uv run python fermi/NNNN_slug.py`: run a Fermi script.
@@ -41,7 +43,7 @@ Read files with the Read tool, not `cat` or shell loops. The only shell commands
 6. **Rule.** Update the files: new and changed spec sheets, purse, people, `threads`, clock. Every action takes time; most cost money; wages and rent fall due. New rulings must agree with existing spec sheets (they are precedent). If you correct an earlier ruling, say so in the log.
 7. **Check big rulings.** A machine's first run, or anything that puts the player ahead of history, gets a fresh-context check. Spawn a subagent with only the player's words, the relevant spec sheets and the Fermi output, and ask: "Is this ruling lenient? What would realistically go wrong with period materials and workmanship?" Adjust if it finds something real, and put its verdict in the log's `check`.
 8. **Log.** Write `log/NNNN.json` (the next number from `tg status`): the action, `specified`, `assumed`, `fermi`, `rulings`, `changes`, `sketches`, and `narration`. Write the narration now: the exact text you will send in step 10, because the view's journal shows it to the player.
-9. **Draw.** If a thing is new or visibly changed, draw or update `visuals/<id>.svg`. If a new place came up, add it to a map. Then look with `tg shot` and fix what's wrong. Everything gets a drawing: a detailed one for machines, components, structures and sites, and a simple, clear one for tools, materials and documents.
+9. **Draw.** If a thing is new or visibly changed, draw or update `visuals/<id>.svg`. If a new place came up, add it to `places.json` and to a map. Then look with `tg shot` and fix what's wrong. Everything gets a drawing: a detailed one for machines, components, structures and sites, and a simple, clear one for tools, materials and documents.
 10. **Narrate**, and only now, with the narration you logged. Keep it short: what was done, what was observed, what it cost, and the date. Write in second person. End with a footer line giving the date, the purse and the number of the turn just logged: `*Monday 9 April 1705, evening · £47.18 · turn 4*`.
 
 A quick exchange inside one scene (haggling, a conversation) doesn't need its own turn. Answer in character, then log the whole scene as one turn when it ends or state changes.
@@ -75,11 +77,11 @@ The player wants no friction from the period's language or measures, and knowing
 
 ## Maps
 
-Keep approximate schematic maps in `maps/`, one SVG each with a `<title>`. The scenario starts you with some; add more when play needs them (a town plan, a mine's surroundings, a long route).
+`places.json` is the source of truth for geography; the maps in `maps/` (one SVG each, with a `<title>`) are drawings of it. Look places up with `tg places` rather than reading the SVGs. The scenario starts you with some maps; add more when play needs them (a town plan, a mine's surroundings, a long route).
 
-- **Every place that comes up goes on a map, in the same turn:** anywhere the player goes, and any place mentioned that matters (a supplier's town, a stream, a rival mine, a quarry). Put it on the most local map that covers it.
-- **Positions are precedent.** Keep them consistent with the period notes' distances and earlier rulings, and use the map's scale for travel times. When a ruling fixes a new distance, draw it that way.
-- Label routes you've used with their distance and travel time. Keep the maps readable: approximate and schematic beats cluttered. `uv run tg shot map/<id>` shows a map.
+- **Every place that comes up goes into `places.json` and onto a map, in the same turn:** anywhere the player goes, and any place mentioned that matters (a supplier's town, a stream, a rival mine, a quarry). Put it on the most local map that covers it. The validator checks that each place's name is labelled on every map it lists.
+- **Positions and routes are precedent.** Keep them consistent with the period notes and earlier rulings. When a ruling fixes a distance or a travel time, add or update the route. Set `visited` when the player first goes there.
+- Keep the maps readable: approximate and schematic beats cluttered. `uv run tg shot map/<id>` shows a map.
 
 ## Time and the world
 

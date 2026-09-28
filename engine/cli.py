@@ -1,6 +1,7 @@
 """`tg`: the game's command line, for the player and the DM."""
 import argparse
 import json
+import math
 import random
 import sys
 from pathlib import Path
@@ -71,6 +72,21 @@ def cmd_money(sign):
     return run
 
 
+def cmd_places(args):
+    gazetteer = state.read_json(state.find_save(args.save) / "places.json")
+    places = {p["id"]: p for p in gazetteer["places"]}
+    here = places[args.origin or gazetteer["origin"]]
+    compass = "N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW".split()
+    print(f"Places, straight-line from {here['name']} ({args.origin or gazetteer['origin']}):")
+    for p in sorted(places.values(), key=lambda p: math.dist((p["x_km"], p["y_km"]), (here["x_km"], here["y_km"]))):
+        dx, dy = p["x_km"] - here["x_km"], p["y_km"] - here["y_km"]
+        where = f"{math.hypot(dx, dy):6.1f} km {compass[round(math.degrees(math.atan2(dx, dy)) / 22.5) % 16]:3}" if p is not here else "  here"
+        print(f"  {p['id']:16} {where}  {p['kind']:8} maps: {', '.join(p['maps'])}{'  (visited)' if p.get('visited') else ''}")
+    print("Routes:")
+    for r in gazetteer["routes"]:
+        print(f"  {r['from']} – {r['to']}: {r['km']} km by {r['by']}, {r['time']}{'. ' + r['notes'] if r.get('notes') else ''}")
+
+
 def cmd_roll(args):
     draw = random.random()
     print(f"{args.what}: p={args.p}, drew {draw:.3f} -> {'YES' if draw < args.p else 'NO'}")
@@ -120,6 +136,10 @@ def main():
         p = sub.add_parser(name, help=f"{name} money, e.g. \"£2.35\" or \"45p\"")
         p.add_argument("amount")
         p.set_defaults(run=cmd_money(sign))
+
+    p = sub.add_parser("places", help="the gazetteer: places by distance, and known routes")
+    p.add_argument("origin", nargs="?", help="measure from this place id (default: the gazetteer's origin)")
+    p.set_defaults(run=cmd_places)
 
     p = sub.add_parser("roll", help='draw against a probability: roll 0.25 "Penrose is at the mine"')
     p.add_argument("p", type=float)

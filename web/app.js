@@ -13,6 +13,11 @@ let S = null; // latest state from the server
 let seen = new Map(); // key -> JSON last rendered, to highlight what the referee just changed
 const fresh = new Set();
 let renderId = 0;
+const opened = JSON.parse(localStorage.getItem("opened") ?? "{}"); // details open/closed, by data-key, kept across pages and reloads
+const scrolls = {}; // scroll position per page, restored when you come back
+let shownHash = null;
+let lastMap = null;
+const COMPASS = "N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW".split(" ");
 
 // ---------- formatting ----------
 
@@ -179,10 +184,28 @@ function journal() {
 
 async function map(id) {
   if (!S.maps.length) return `<p class="empty">No maps yet. The referee draws them as places come up.</p>`;
-  const m = S.maps.find((x) => x.id === id) ?? S.maps[0];
+  const m = S.maps.find((x) => x.id === (id ?? lastMap)) ?? S.maps[0];
+  lastMap = m.id;
   const url = await drawing(m);
   return `<nav class="states map-list">${S.maps.map((x) => `<a href="#/map/${x.id}" class="${x === m ? "on" : ""}">${esc(x.title)}</a>`).join("")}</nav>
-    <figure class="plate map${fresh.has("m:" + m.id) ? " fresh" : ""}"><a href="${url}" target="_blank" title="Open full size"><img src="${url}" alt="${esc(m.title)}"></a></figure>`;
+    <figure class="plate map${fresh.has("m:" + m.id) ? " fresh" : ""}"><a href="${url}" target="_blank" title="Open full size"><img src="${url}" alt="${esc(m.title)}"></a></figure>
+    ${gazetteer(m.id)}`;
+}
+
+// The places on a map, nearest to the origin first, and the routes between them.
+function gazetteer(mapId) {
+  const g = S.places, byId = Object.fromEntries(g.places.map((p) => [p.id, p])), o = byId[g.origin];
+  if (!o) return "";
+  const here = g.places.filter((p) => p.maps.includes(mapId));
+  const dist = (p) => Math.hypot(p.x_km - o.x_km, p.y_km - o.y_km);
+  const bearing = (p) => COMPASS[Math.round((Math.atan2(p.x_km - o.x_km, p.y_km - o.y_km) * 180) / Math.PI / 22.5 + 16) % 16];
+  const rows = here.sort((a, b) => dist(a) - dist(b)).map((p) => `<tr${p.visited ? ' class="visited"' : ""}>
+    <td>${esc(p.name)}</td><td>${esc(p.kind)}</td><td>${p === o ? "" : `${dist(p).toFixed(1)} km ${bearing(p)}`}</td><td>${esc(p.notes ?? "")}</td></tr>`);
+  const ids = new Set(here.map((p) => p.id));
+  const routes = g.routes.filter((r) => ids.has(r.from) && ids.has(r.to))
+    .map((r) => `<li>${esc(byId[r.from].name)} – ${esc(byId[r.to].name)}: ${r.km} km by ${r.by}, ${esc(r.time)}${r.notes ? `. ${esc(r.notes)}` : ""}</li>`);
+  return `<section class="gazetteer"><h2>Places</h2><table><tr><th>Place</th><th>Kind</th><th>From ${esc(o.name)}</th><th>Notes</th></tr>${rows.join("")}</table>
+    ${routes.length ? `<h2>Routes</h2><ul>${routes.join("")}</ul>` : ""}</section>`;
 }
 
 async function plate(id, query) {
@@ -231,12 +254,16 @@ async function render() {
   const views = { workshop, thing: thingPage, people, map, journal, visual: plate, sketch: () => "" };
   const html = await (views[route] ?? workshop)(arg, query);
   if (id !== renderId) return; // a newer render started meanwhile
-  const open = [...main.querySelectorAll("details[open]")].map((d) => d.dataset.key);
+  const navigated = location.hash !== shownHash;
+  if (navigated) scrolls[shownHash] = scrollY;
   main.innerHTML = html;
-  open.forEach((k) => main.querySelector(`details[data-key="${CSS.escape(k ?? "")}"]`)?.setAttribute("open", ""));
+  main.querySelectorAll("details[data-key]").forEach((d) => d.dataset.key in opened && (d.open = opened[d.dataset.key]));
   await Promise.all([...main.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
   await document.fonts.ready;
-  if (id === renderId) document.body.dataset.ready = "1";
+  if (id !== renderId) return;
+  if (navigated) scrollTo(0, scrolls[location.hash] ?? 0);
+  shownHash = location.hash;
+  document.body.dataset.ready = "1";
 }
 
 function markFresh(next) {
@@ -255,10 +282,13 @@ function toast(message) {
   toast.timer = setTimeout(() => (el.hidden = true), 7000);
 }
 
-// Fermi scripts load when opened.
+// Remember which sections are open; Fermi scripts load when opened.
 document.addEventListener("toggle", async (e) => {
   const d = e.target;
-  if (d.matches?.("details[data-src]") && d.open) d.querySelector("pre").textContent = await (await fetch(`/save/${d.dataset.src}`)).text();
+  if (!d.matches?.("details[data-key]")) return;
+  opened[d.dataset.key] = d.open;
+  localStorage.setItem("opened", JSON.stringify(opened));
+  if (d.dataset.src && d.open) d.querySelector("pre").textContent = await (await fetch(`/save/${d.dataset.src}`)).text();
 }, true);
 
 const sketch = initSketch($("#sketch"), {

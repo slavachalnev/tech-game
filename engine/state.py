@@ -88,6 +88,7 @@ def load_state(save):
         "people": folder("people"),
         "log": folder("log"),
         "maps": maps(save),
+        "places": read_json(save / "places.json") or {"origin": None, "places": [], "routes": []},
         "sketches": [f"sketches/{p.name}" for p in sorted((save / "sketches").glob("*.png"))],
         "briefing": briefing.read_text() if briefing.is_file() else "",
         "problems": check_save(save),
@@ -129,8 +130,8 @@ def validator(kind):
 
 
 def kind_of(rel):
-    if rel == Path("world.json"):
-        return "world"
+    if rel in (Path("world.json"), Path("places.json")):
+        return rel.stem
     if len(rel.parts) == 2 and rel.suffix == ".json":
         return DIR_KINDS.get(rel.parts[0])
 
@@ -189,6 +190,32 @@ def check_save(save):
             problems.append(f"log/{i:04d}: clock_end is before clock_start")
     if turns and turns[-1] and world.get("clock", "") < turns[-1].get("clock_end", ""):
         problems.append("world.json: clock is behind the last turn's clock_end")
+    return problems + check_places(save, things)
+
+
+def map_labels(svg_path):
+    """All the text on a map, lower-cased, for checking that places are labelled."""
+    root = ElementTree.parse(svg_path).getroot()
+    return " ".join(" ".join(t.itertext()) for t in root.iter("{http://www.w3.org/2000/svg}text")).lower()
+
+
+def check_places(save, things):
+    gazetteer = read_json(save / "places.json")
+    if not gazetteer:
+        return []
+    places = {p["id"]: p for p in gazetteer.get("places", [])}
+    labels = {p.stem: map_labels(p) for p in (save / "maps").glob("*.svg") if not check_file(save, p)}
+    problems = [] if gazetteer.get("origin") in places else [f"places.json: origin {gazetteer.get('origin')!r} is not a place"]
+    for p in places.values():
+        for m in p.get("maps", []):
+            if m not in labels:
+                problems.append(f"places.json: {p['id']} is on map {m!r}, but maps/{m}.svg doesn't exist")
+            elif " ".join(p["name"].lower().split()) not in " ".join(labels[m].split()):
+                problems.append(f"places.json: {p['name']!r} isn't labelled on maps/{m}.svg")
+        if "thing" in p and p["thing"] not in things:
+            problems.append(f"places.json: {p['id']} links to unknown thing {p['thing']!r}")
+    for r in gazetteer.get("routes", []):
+        problems += [f"places.json: route {r['from']}–{r['to']} uses unknown place {end!r}" for end in (r["from"], r["to"]) if end not in places]
     return problems
 
 

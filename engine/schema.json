@@ -78,7 +78,52 @@
             "by": {"$ref": "#/$defs/texts"},
             "took": {"type": "string"},
             "cost_p": {"type": "integer", "minimum": 0},
-            "turn": {"type": "integer", "minimum": 0},
+            "places": {
+      "description": "The gazetteer: every place the player knows of, and the routes the referee has ruled on.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "places", "routes"],
+      "properties": {
+        "origin": {"$ref": "#/$defs/id", "description": "The place at x_km = 0, y_km = 0."},
+        "places": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "kind", "x_km", "y_km", "maps"],
+            "properties": {
+              "id": {"$ref": "#/$defs/id"},
+              "name": {"$ref": "#/$defs/text", "description": "Must appear as a label on each of its maps."},
+              "kind": {"type": "string", "description": "town, village, port, mine, hill, estate, base, …"},
+              "x_km": {"type": "number", "description": "Straight-line km east of the origin (west is negative)."},
+              "y_km": {"type": "number", "description": "Straight-line km north of the origin (south is negative)."},
+              "maps": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+              "visited": {"type": "boolean"},
+              "thing": {"$ref": "#/$defs/id", "description": "Its spec sheet, if it has one (a mine, the player's base)."},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "km", "by", "time"],
+            "properties": {
+              "from": {"$ref": "#/$defs/id"},
+              "to": {"$ref": "#/$defs/id"},
+              "km": {"type": "number", "minimum": 0},
+              "by": {"enum": ["road", "track", "path", "sea", "river"]},
+              "time": {"$ref": "#/$defs/text", "description": "e.g. 2½–3 h walk, 1½ h ride"},
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "turn": {"type": "integer", "minimum": 0},
             "recipe": {"type": "string", "description": "Set once it can be repeated reliably."}
           }
         },
@@ -110,12 +155,102 @@
       }
     },
 
+    "places": {
+      "description": "The gazetteer: every place the player knows of, and the routes the referee has ruled on.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "places", "routes"],
+      "properties": {
+        "origin": {"$ref": "#/$defs/id", "description": "The place at x_km = 0, y_km = 0."},
+        "places": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "kind", "x_km", "y_km", "maps"],
+            "properties": {
+              "id": {"$ref": "#/$defs/id"},
+              "name": {"$ref": "#/$defs/text", "description": "Must appear as a label on each of its maps."},
+              "kind": {"type": "string", "description": "town, village, port, mine, hill, estate, base, …"},
+              "x_km": {"type": "number", "description": "Straight-line km east of the origin (west is negative)."},
+              "y_km": {"type": "number", "description": "Straight-line km north of the origin (south is negative)."},
+              "maps": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+              "visited": {"type": "boolean"},
+              "thing": {"$ref": "#/$defs/id", "description": "Its spec sheet, if it has one (a mine, the player's base)."},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "km", "by", "time"],
+            "properties": {
+              "from": {"$ref": "#/$defs/id"},
+              "to": {"$ref": "#/$defs/id"},
+              "km": {"type": "number", "minimum": 0},
+              "by": {"enum": ["road", "track", "path", "sea", "river"]},
+              "time": {"$ref": "#/$defs/text", "description": "e.g. 2½–3 h walk, 1½ h ride"},
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
     "turn": {
       "type": "object",
       "additionalProperties": false,
       "required": ["turn", "clock_start", "clock_end", "action", "rulings", "narration"],
       "properties": {
-        "turn": {"type": "integer", "minimum": 1},
+        "places": {
+      "description": "The gazetteer: every place the player knows of, and the routes the referee has ruled on.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "places", "routes"],
+      "properties": {
+        "origin": {"$ref": "#/$defs/id", "description": "The place at x_km = 0, y_km = 0."},
+        "places": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "kind", "x_km", "y_km", "maps"],
+            "properties": {
+              "id": {"$ref": "#/$defs/id"},
+              "name": {"$ref": "#/$defs/text", "description": "Must appear as a label on each of its maps."},
+              "kind": {"type": "string", "description": "town, village, port, mine, hill, estate, base, …"},
+              "x_km": {"type": "number", "description": "Straight-line km east of the origin (west is negative)."},
+              "y_km": {"type": "number", "description": "Straight-line km north of the origin (south is negative)."},
+              "maps": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+              "visited": {"type": "boolean"},
+              "thing": {"$ref": "#/$defs/id", "description": "Its spec sheet, if it has one (a mine, the player's base)."},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "km", "by", "time"],
+            "properties": {
+              "from": {"$ref": "#/$defs/id"},
+              "to": {"$ref": "#/$defs/id"},
+              "km": {"type": "number", "minimum": 0},
+              "by": {"enum": ["road", "track", "path", "sea", "river"]},
+              "time": {"$ref": "#/$defs/text", "description": "e.g. 2½–3 h walk, 1½ h ride"},
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "turn": {"type": "integer", "minimum": 1},
         "clock_start": {"$ref": "#/$defs/clock"},
         "clock_end": {"$ref": "#/$defs/clock"},
         "action": {"$ref": "#/$defs/text", "description": "The player's words, verbatim or closely quoted."},

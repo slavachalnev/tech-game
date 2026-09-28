@@ -1,0 +1,408 @@
+{
+  "origin": "redruth",
+  "places": [
+    {
+      "id": "redruth",
+      "name": "Redruth",
+      "kind": "town",
+      "x_km": 0,
+      "y_km": 0,
+      "maps": [
+        "district",
+        "region"
+      ],
+      "visited": true,
+      "notes": "Mining market town; the Fountain inn."
+    },
+    {
+      "id": "smithy",
+      "name": "your smithy",
+      "kind": "base",
+      "x_km": 0.9,
+      "y_km": 0,
+      "maps": [
+        "district"
+      ],
+      "visited": true,
+      "thing": "smithy",
+      "notes": "On the Truro road at the east edge of Redruth."
+    },
+    {
+      "id": "wheal-fortune",
+      "name": "Wheal Fortune",
+      "kind": "mine",
+      "x_km": 3.1,
+      "y_km": 0.7,
+      "maps": [
+        "district"
+      ],
+      "thing": "wheal-fortune"
+    },
+    {
+      "id": "st-day",
+      "name": "St Day",
+      "kind": "village",
+      "x_km": 3.4,
+      "y_km": -1.1,
+      "maps": [
+        "district"
+      ]
+    },
+    {
+      "id": "gwennap",
+      "name": "Gwennap",
+      "kind": "village",
+      "x_km": 5.1,
+      "y_km": -2.4,
+      "maps": [
+        "district"
+      ]
+    },
+    {
+      "id": "carnkie",
+      "name": "Carnkie",
+      "kind": "village",
+      "x_km": -1.7,
+      "y_km": -4.3,
+      "maps": [
+        "district"
+      ],
+      "notes": "Thomas Hocking, millwright."
+    },
+    {
+      "id": "carn-brea",
+      "name": "Carn Brea",
+      "kind": "hill",
+      "x_km": -1.5,
+      "y_km": -2.2,
+      "maps": [
+        "district"
+      ],
+      "notes": "Granite hill with an old castle."
+    },
+    {
+      "id": "camborne",
+      "name": "Camborne",
+      "kind": "town",
+      "x_km": -5.0,
+      "y_km": -2.2,
+      "maps": [
+        "district"
+      ]
+    },
+    {
+      "id": "illogan",
+      "name": "Illogan",
+      "kind": "village",
+      "x_km": -2.9,
+      "y_km": 2.4,
+      "maps": [
+        "district"
+      ]
+    },
+    {
+      "id": "tehidy",
+      "name": "Tehidy",
+      "kind": "estate",
+      "x_km": -5.1,
+      "y_km": 2.8,
+      "maps": [
+        "district"
+      ],
+      "notes": "Seat of the Bassets, who own much of the mineral land and Portreath."
+    },
+    {
+      "id": "portreath",
+      "name": "Portreath",
+      "kind": "port",
+      "x_km": -3.7,
+      "y_km": 4.8,
+      "maps": [
+        "district",
+        "region"
+      ],
+      "notes": "A beach cove, no quay; coal is landed here. No landing in a northerly gale."
+    },
+    {
+      "id": "truro",
+      "name": "Truro",
+      "kind": "town",
+      "x_km": 12.6,
+      "y_km": 3.2,
+      "maps": [
+        "district",
+        "region"
+      ],
+      "notes": "Merchants, lawyers, coinage town, port at the head of the Fal."
+    },
+    {
+      "id": "penryn",
+      "name": "Penryn",
+      "kind": "town",
+      "x_km": 8.4,
+      "y_km": -7.1,
+      "maps": [
+        "district",
+        "region"
+      ]
+    },
+    {
+      "id": "falmouth",
+      "name": "Falmouth",
+      "kind": "port",
+      "x_km": 11.1,
+      "y_km": -8.9,
+      "maps": [
+        "district",
+        "region"
+      ],
+      "notes": "Harbour, mail-packet station, Pendennis Castle."
+    },
+    {
+      "id": "helston",
+      "name": "Helston",
+      "kind": "town",
+      "x_km": -3.4,
+      "y_km": -14.7,
+      "maps": [
+        "district",
+        "region"
+      ],
+      "notes": "Coinage town."
+    },
+    {
+      "id": "hayle",
+      "name": "Hayle",
+      "kind": "port",
+      "x_km": -13.8,
+      "y_km": -5.2,
+      "maps": [
+        "district",
+        "region"
+      ]
+    },
+    {
+      "id": "st-ives",
+      "name": "St Ives",
+      "kind": "port",
+      "x_km": -18.0,
+      "y_km": -2.4,
+      "maps": [
+        "district",
+        "region"
+      ]
+    },
+    {
+      "id": "penzance",
+      "name": "Penzance",
+      "kind": "town",
+      "x_km": -22.1,
+      "y_km": -12.8,
+      "maps": [
+        "district",
+        "region"
+      ],
+      "notes": "Coinage town."
+    },
+    {
+      "id": "launceston",
+      "name": "Launceston",
+      "kind": "town",
+      "x_km": 61.5,
+      "y_km": 44.7,
+      "maps": [
+        "region"
+      ],
+      "notes": "County assizes."
+    },
+    {
+      "id": "plymouth",
+      "name": "Plymouth",
+      "kind": "port",
+      "x_km": 76.9,
+      "y_km": 15.3,
+      "maps": [
+        "region"
+      ],
+      "notes": "Naval dockyard; big timber, anchor smiths."
+    },
+    {
+      "id": "exeter",
+      "name": "Exeter",
+      "kind": "city",
+      "x_km": 120.6,
+      "y_km": 54.7,
+      "maps": [
+        "region"
+      ]
+    },
+    {
+      "id": "bristol",
+      "name": "Bristol",
+      "kind": "city",
+      "x_km": 187.3,
+      "y_km": 135.6,
+      "maps": [
+        "region"
+      ],
+      "notes": "Brass, copper, iron and timber merchants."
+    },
+    {
+      "id": "swansea",
+      "name": "Swansea",
+      "kind": "port",
+      "x_km": 91.0,
+      "y_km": 154.1,
+      "maps": [
+        "region"
+      ],
+      "notes": "Welsh coal."
+    },
+    {
+      "id": "neath",
+      "name": "Neath",
+      "kind": "port",
+      "x_km": 101.0,
+      "y_km": 158.7,
+      "maps": [
+        "region"
+      ],
+      "notes": "Welsh coal; copper smelting."
+    },
+    {
+      "id": "london",
+      "name": "London",
+      "kind": "city",
+      "x_km": 362,
+      "y_km": 141,
+      "maps": [
+        "region"
+      ],
+      "notes": "Off the region map, to the east."
+    }
+  ],
+  "routes": [
+    {
+      "from": "redruth",
+      "to": "wheal-fortune",
+      "km": 3,
+      "by": "track",
+      "time": "40 min walk"
+    },
+    {
+      "from": "redruth",
+      "to": "carnkie",
+      "km": 5,
+      "by": "track",
+      "time": "1 h walk"
+    },
+    {
+      "from": "redruth",
+      "to": "portreath",
+      "km": 6.5,
+      "by": "track",
+      "time": "1½ h walk"
+    },
+    {
+      "from": "redruth",
+      "to": "camborne",
+      "km": 5.5,
+      "by": "road",
+      "time": "about 1¼ h walk"
+    },
+    {
+      "from": "redruth",
+      "to": "truro",
+      "km": 13,
+      "by": "road",
+      "time": "2½–3 h walk, 1½ h ride"
+    },
+    {
+      "from": "redruth",
+      "to": "falmouth",
+      "km": 18,
+      "by": "road",
+      "time": "half a day",
+      "notes": "Via Penryn."
+    },
+    {
+      "from": "redruth",
+      "to": "helston",
+      "km": 16,
+      "by": "track",
+      "time": "a morning"
+    },
+    {
+      "from": "redruth",
+      "to": "hayle",
+      "km": 15,
+      "by": "road",
+      "time": "a morning"
+    },
+    {
+      "from": "redruth",
+      "to": "st-ives",
+      "km": 23,
+      "by": "road",
+      "time": "most of a day"
+    },
+    {
+      "from": "redruth",
+      "to": "penzance",
+      "km": 27,
+      "by": "road",
+      "time": "a day"
+    },
+    {
+      "from": "redruth",
+      "to": "plymouth",
+      "km": 90,
+      "by": "road",
+      "time": "2 days' ride",
+      "notes": "Tamar ferry."
+    },
+    {
+      "from": "redruth",
+      "to": "exeter",
+      "km": 150,
+      "by": "road",
+      "time": "3 days' ride"
+    },
+    {
+      "from": "redruth",
+      "to": "bristol",
+      "km": 290,
+      "by": "road",
+      "time": "5–6 days' ride; pack goods 10–14 days"
+    },
+    {
+      "from": "portreath",
+      "to": "bristol",
+      "km": 230,
+      "by": "sea",
+      "time": "2–5 days' sailing, plus 1–3 weeks waiting for a wind"
+    },
+    {
+      "from": "swansea",
+      "to": "portreath",
+      "km": 185,
+      "by": "sea",
+      "time": "a few days' sailing, weather permitting",
+      "notes": "Coal freight 20–30p a tonne."
+    },
+    {
+      "from": "redruth",
+      "to": "london",
+      "km": 430,
+      "by": "road",
+      "time": "7–9 days' ride; post 5–7 days"
+    },
+    {
+      "from": "london",
+      "to": "falmouth",
+      "km": 560,
+      "by": "sea",
+      "time": "7–14 days' sailing"
+    }
+  ]
+}

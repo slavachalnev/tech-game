@@ -20,7 +20,7 @@ A time-travel invention game. Claude Code is the referee (DM); a local web page 
   - `scenario.md`: player briefing.
   - `period_notes.md`: DM-facing, not secret.
   - `referee.md`: **secret**.
-  - `start/`: initial state, including starting drawings (`visuals/`) and maps (`maps/`).
+  - `start/`: initial state, including starting drawings (`visuals/`), the gazetteer (`places.json`) and maps (`maps/`).
 - `saves/<name>/`: games in progress (gitignored). Each one is a world folder and a DM workspace.
 - `tests/`: pytest.
 

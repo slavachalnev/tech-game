@@ -1,0 +1,12 @@
+{
+  "id": "bar-iron",
+  "name": "Bar iron",
+  "kind": "material",
+  "status": "ok",
+  "summary": "Wrought flat bar from a Bristol merchant.",
+  "location": "the smithy",
+  "quantity": 2,
+  "unit": "cwt",
+  "dimensions": {"section_in": "1½ x ½", "length_ft": 12},
+  "quality": {"grade": "ordinary merchant bar; some slag seams"}
+}

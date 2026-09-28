@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <pattern id="stipple" width="11" height="11" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r="0.8" fill="#7a6a55"/><circle cx="7.5" cy="8" r="0.6" fill="#7a6a55"/><circle cx="9" cy="2" r="0.4" fill="#7a6a55"/>
+    </pattern>
+    <pattern id="lode" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#7a6a55" stroke-width="0.9"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Ground: earth wash, stipple, and the lode -->
+  <path d="M20,112 C180,100 360,102 460,114 C560,128 660,200 780,244 L780,540 L20,540 Z" fill="#8a7a62" fill-opacity="0.13"/>
+  <path d="M20,112 C180,100 360,102 460,114 C560,128 660,200 780,244 L780,540 L20,540 Z" fill="url(#stipple)" opacity="0.55"/>
+  <path d="M402,106 L420,106 L382,540 L364,540 Z" fill="url(#lode)" opacity="0.8"/>
+  <path d="M377,392 L395,392 L382,540 L364,540 Z" fill="#b08d3c" fill-opacity="0.35"/>
+
+  <!-- Workings, cut out of the rock -->
+  <g fill="#f8f1e1" stroke="#2b2118" stroke-width="1.6" filter="url(#ink)">
+    <path d="M266,229 L755,236 L755,246 L266,239 Z"/>
+    <rect x="130" y="299" width="110" height="10"/><rect x="266" y="299" width="154" height="10"/>
+    <rect x="150" y="365" width="90" height="10"/><rect x="266" y="365" width="194" height="10"/>
+    <rect x="170" y="431" width="70" height="10"/><rect x="266" y="431" width="204" height="10"/>
+    <rect x="200" y="497" width="40" height="10"/><rect x="266" y="497" width="164" height="10"/>
+    <rect x="240" y="106" width="26" height="408"/>
+  </g>
+
+  <!-- Surface, headframe, horse whim, pumps -->
+  <g fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#ink)">
+    <path d="M20,112 C180,100 360,102 460,114 C560,128 660,200 780,244"/>
+    <path d="M224,108 L253,58 L282,108 M236,88 L270,88"/>
+    <circle cx="253" cy="61" r="7" stroke-width="1.5"/>
+    <path d="M253,68 L253,150" stroke-width="1"/>
+    <rect x="248" y="150" width="10" height="9" stroke-width="1.2"/>
+    <path d="M247,57 L150,66" stroke-width="1"/>
+    <rect x="112" y="60" width="36" height="18" stroke-width="1.6"/>
+    <path d="M130,78 L130,104 M130,70 L196,90" stroke-width="1.6"/>
+    <ellipse cx="130" cy="100" rx="72" ry="11" stroke="#7a6a55" stroke-width="0.9" stroke-dasharray="4 4"/>
+    <!-- the horse -->
+    <path d="M188,95 C192,88 206,88 212,93 L218,84 L222,86 L216,96 C214,99 196,101 190,99 Z" fill="#2b2118" fill-opacity="0.65" stroke-width="1.2"/>
+    <path d="M192,99 L190,108 M197,100 L197,109 M208,99 L210,108 M212,98 L215,107 M188,95 L183,102" stroke-width="1.2"/>
+    <!-- rag-and-chain pump pipe from the deep water up to the adit -->
+    <path d="M259,236 L259,500 M263,236 L263,500" stroke-width="1"/>
+    <!-- adit portal -->
+    <path d="M755,247 L755,234 Q761,228 767,234 L767,248" stroke-width="1.6"/>
+  </g>
+
+  <!-- Water pumped to the adit runs out to the valley (both states) -->
+  <path d="M268,238 L755,245" stroke="#4f7390" stroke-opacity="0.6" stroke-width="3" stroke-dasharray="8 6">
+    <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1.6s" repeatCount="indefinite"/>
+  </path>
+  <path d="M767,246 Q772,256 780,262" fill="none" stroke="#4f7390" stroke-opacity="0.6" stroke-width="3"/>
+
+  <!-- Flooded: water stands at 24 fathoms -->
+  <g data-state="flooded">
+    <g fill="#4f7390" fill-opacity="0.42">
+      <rect x="241" y="370" width="24" height="143"/>
+      <rect x="150" y="370" width="90" height="5"/><rect x="266" y="370" width="194" height="5"/>
+      <rect x="170" y="431" width="70" height="10"/><rect x="266" y="431" width="204" height="10"/>
+      <rect x="200" y="497" width="40" height="10"/><rect x="266" y="497" width="164" height="10"/>
+    </g>
+    <path d="M241,370 Q247,367 253,370 T265,370" fill="none" stroke="#4f7390" stroke-width="1.5">
+      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1.5; 0,0" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <g fill="#9c3b25" font-style="italic" font-size="13">
+      <text x="468" y="374">24 fm level: water stands here</text>
+      <text x="410" y="476">Richest ground, drowned</text>
+    </g>
+    <path d="M466,370 L462,370" stroke="#9c3b25"/>
+  </g>
+
+  <!-- Drained: only the sump holds water -->
+  <g data-state="drained">
+    <rect x="241" y="500" width="24" height="13" fill="#4f7390" fill-opacity="0.42"/>
+    <g fill="#2b2118" font-style="italic" font-size="13">
+      <text x="468" y="374">24 fm level</text>
+      <text x="410" y="476">Richest ground, now workable</text>
+    </g>
+  </g>
+
+  <!-- Fathom scale -->
+  <g stroke="#7a6a55" stroke-width="0.8">
+    <line x1="48" y1="106" x2="48" y2="502"/>
+    <path d="M44,106 H52 M44,172 H52 M44,238 H52 M44,304 H52 M44,370 H52 M44,436 H52 M44,502 H52"/>
+  </g>
+  <g fill="#7a6a55" font-size="12" font-style="italic" text-anchor="end">
+    <text x="40" y="110">0</text><text x="40" y="176">6</text><text x="40" y="242">12</text><text x="40" y="308">18</text>
+    <text x="40" y="374">24</text><text x="40" y="440">30</text><text x="40" y="506">36</text>
+    <text x="52" y="524" text-anchor="middle">fathoms</text>
+  </g>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="13">
+    <text x="84" y="44">Horse whim</text>
+    <text x="290" y="54">Headframe over the engine shaft</text>
+    <text x="440" y="226">Adit: drains by gravity to the valley</text>
+    <text x="428" y="308">18 fm level</text>
+    <text x="478" y="440">30 fm level</text>
+    <text x="438" y="506">36 fm, the bottom</text>
+    <text x="96" y="208">Rag-and-chain pumps</text>
+    <text x="424" y="148">Lode</text>
+  </g>
+  <g stroke="#7a6a55" stroke-width="0.8" fill="none">
+    <path d="M180,212 Q230,218 258,226" marker-end="url(#arrow)"/>
+    <path d="M420,146 L408,150" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Wheal Fortune</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Section through the engine shaft · depths in fathoms, breadth not to scale</text>
+  </g>
+</svg>

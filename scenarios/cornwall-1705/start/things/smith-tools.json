@@ -1,0 +1,12 @@
+{
+  "id": "smith-tools",
+  "name": "Smith's tools",
+  "kind": "tool",
+  "status": "ok",
+  "summary": "Hammers, tongs, swages, punches, chisels, files and a leg vice.",
+  "location": "the smithy",
+  "quantity": 1,
+  "unit": "set",
+  "performance": {"can_make": "ordinary smithing: nails, hinges, mine tools, bands, chain, simple fittings"},
+  "quality": {"files": "hand-cut, worn; can true a surface to roughly the thickness of a coin with patience"}
+}

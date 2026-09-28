@@ -1,0 +1,13 @@
+{
+  "id": "forge",
+  "name": "Hearth and bellows",
+  "kind": "tool",
+  "status": "ok",
+  "summary": "A side-blown smith's hearth with a pair of leather hand bellows.",
+  "location": "the smithy",
+  "materials": ["brick and stone hearth", "cast-iron tuyere", "leather and ash-wood bellows"],
+  "dimensions": {"hearth_ft": "4 x 3", "fire_pit_depth_in": 6, "bellows_length_ft": 5},
+  "performance": {"heat": "welding heat for wrought iron at the tuyere, over a fist-sized zone", "crucible_melt": "a few lb of brass, bronze or lead at a time", "fuel": "coal or charcoal"},
+  "flaws": ["Cannot melt iron in any quantity", "Bellows need a second pair of hands (or a boy) whenever the smith is working"],
+  "notes": "Part of the smithy."
+}

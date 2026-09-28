@@ -1,0 +1,9 @@
+{
+  "id": "drawing-kit",
+  "name": "Drawing instruments",
+  "kind": "tool",
+  "status": "ok",
+  "summary": "A quire of paper, iron-gall ink, quills, a two-foot brass rule and dividers.",
+  "location": "with you",
+  "quality": {"rule": "marked in inches and eighths"}
+}

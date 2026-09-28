@@ -1,0 +1,11 @@
+{
+  "id": "jacca-pascoe",
+  "name": "Jacca Pascoe",
+  "role": "Smith, in your pay",
+  "skills": ["General smithing and fire-welding", "Mine tools: picks, gads, borers", "Shoeing", "Can't read"],
+  "employed": true,
+  "wage_d_week": 108,
+  "attitude": "Takes your money gladly; thinks you're a queer sort of gentleman.",
+  "location": "The smithy",
+  "notes": "Knows every mine captain in the parish and drinks at the Fountain."
+}

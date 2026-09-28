@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="11"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <pattern id="stone" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="0.9" fill="#7a6a55"/><circle cx="9" cy="8" r="0.7" fill="#7a6a55"/><circle cx="6" cy="11" r="0.5" fill="#7a6a55"/>
+    </pattern>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#e8a13a" stop-opacity="0.95"/>
+      <stop offset="0.5" stop-color="#c0662b" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#c0662b" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Walls, roof and floor -->
+  <g fill="#8a7a62" fill-opacity="0.16">
+    <rect x="60" y="270" width="30" height="210"/><rect x="710" y="270" width="30" height="210"/>
+  </g>
+  <g fill="url(#stone)"><rect x="60" y="270" width="30" height="210"/><rect x="710" y="270" width="30" height="210"/></g>
+  <rect x="600" y="330" width="80" height="150" fill="#f3dfa0" fill-opacity="0.45"/>
+  <rect x="200" y="400" width="140" height="80" fill="#9c3b25" fill-opacity="0.12"/>
+
+  <g fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#ink)">
+    <path d="M40,280 L400,122 L760,280"/>
+    <path d="M52,286 L400,134 L748,286" stroke-width="1"/>
+    <path d="M110,258 L130,266 M160,236 L180,244 M210,214 L230,222 M330,162 L350,170 M470,162 L450,170 M520,184 L500,192 M570,206 L550,214 M620,228 L600,236 M670,250 L650,258" stroke="#7a6a55" stroke-width="1"/>
+    <rect x="60" y="270" width="30" height="210"/><rect x="710" y="270" width="30" height="210"/>
+    <path d="M30,480 L770,480"/>
+    <!-- door in the back wall -->
+    <rect x="600" y="330" width="80" height="150" stroke-width="1.4"/>
+    <!-- hearth, hood and chimney -->
+    <rect x="200" y="400" width="140" height="80"/>
+    <path d="M200,420 H340 M200,440 H340 M200,460 H340 M235,400 V420 M290,400 V420 M260,420 V440 M315,420 V440 M235,440 V460 M290,440 V460 M260,460 V480 M315,460 V480" stroke="#7a6a55" stroke-width="0.8"/>
+    <path d="M190,335 L350,335 L295,290 L245,290 Z"/>
+    <path d="M245,290 L245,140 L295,140 L295,290 M240,140 H300"/>
+    <!-- bellows, lever and handle -->
+    <path d="M100,372 L196,390 L100,408 Q88,390 100,372 Z" fill="#9a7446" fill-opacity="0.35"/>
+    <path d="M104,380 L184,391 M104,400 L184,391" stroke="#7a6a55" stroke-width="0.8"/>
+    <path d="M196,390 L214,394"/>
+    <path d="M120,480 L120,322 M82,336 L196,314" stroke-width="1.8"/>
+    <circle cx="120" cy="325" r="3" fill="#2b2118"/>
+    <path d="M186,316 L176,378 M86,335 L86,388" stroke-width="1" stroke-dasharray="2 2"/>
+    <circle cx="86" cy="392" r="4" stroke-width="1.2"/>
+    <!-- anvil on its stump, slack tub -->
+    <rect x="440" y="432" width="40" height="48" fill="#9a7446" fill-opacity="0.3"/>
+    <path d="M404,414 Q420,410 428,408 L506,408 L506,418 L494,420 L488,426 L494,432 L430,432 L436,426 L430,420 Q418,418 404,414 Z" fill="#56514b" fill-opacity="0.45"/>
+    <path d="M352,448 L384,448 L381,480 L355,480 Z" fill="#9a7446" fill-opacity="0.25"/>
+    <path d="M353,458 H383 M354,470 H382" stroke-width="1"/>
+    <!-- bench and leg vice -->
+    <path d="M520,420 L600,420 M524,420 L524,480 M596,420 L596,480 M520,426 L600,426" stroke-width="1.8"/>
+    <path d="M530,398 L530,480 M540,398 L540,420 M526,405 L546,405" stroke-width="1.4"/>
+    <!-- tool rack: tongs and hammers -->
+    <path d="M412,330 L520,330" stroke-width="1.5"/>
+    <path d="M425,330 L420,385 M425,330 L430,385 M445,330 L440,392 M445,330 L450,392" stroke-width="1.1"/>
+    <path d="M470,330 L470,372 M462,372 L478,372 M490,330 L490,366 M483,366 L497,366 M510,330 L510,376 M502,376 L518,376" stroke-width="1.3"/>
+    <!-- coal on the hearth -->
+    <path d="M240,400 Q256,386 270,392 Q284,384 300,400" fill="#2b2118" fill-opacity="0.55" stroke-width="1.2"/>
+  </g>
+
+  <!-- Fire lit: glow, flicker, smoke -->
+  <g data-state="fire-lit">
+    <ellipse cx="270" cy="392" rx="60" ry="30" fill="url(#glow)">
+      <animate attributeName="opacity" values="0.85;1;0.7;0.95;0.85" dur="1.3s" repeatCount="indefinite"/>
+    </ellipse>
+    <path d="M254,394 Q260,378 266,390 Q272,372 280,392" fill="none" stroke="#c0662b" stroke-width="2">
+      <animate attributeName="stroke-opacity" values="1;0.4;1" dur="0.9s" repeatCount="indefinite"/>
+    </path>
+    <g fill="#9aa5a8" fill-opacity="0.35">
+      <circle cx="270" cy="128" r="9">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 14,-60" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="262" cy="130" r="7">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 20,-70" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0" dur="4s" begin="1.6s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Flaws, where they are -->
+  <g fill="#9c3b25" font-style="italic" font-size="13">
+    <text x="612" y="318">the only good light</text>
+    <text x="36" y="420">needs a second</text>
+    <text x="36" y="436">pair of hands</text>
+  </g>
+  <path d="M60,412 Q72,402 82,394" fill="none" stroke="#9c3b25" stroke-width="0.8" marker-end="url(#arrow)"/>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="13">
+    <text x="306" y="222">Hood and chimney</text>
+    <text x="222" y="505">Hearth</text>
+    <text x="118" y="360">Bellows</text>
+    <text x="404" y="505">Anvil on elm stump</text>
+    <text x="336" y="522">Slack tub</text>
+    <text x="516" y="522">Bench, leg vice</text>
+    <text x="418" y="320">Tongs and hammers</text>
+    <text x="436" y="140">Slate on oak trusses</text>
+    <text x="626" y="505">Door</text>
+    <text x="700" y="262">Granite wall</text>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">The Smithy, Redruth</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Cut away, looking north · not to scale</text>
+  </g>
+</svg>

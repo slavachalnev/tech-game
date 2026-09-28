@@ -1,0 +1,11 @@
+{
+  "id": "carpentry-tools",
+  "name": "Carpenter's tools",
+  "kind": "tool",
+  "status": "ok",
+  "summary": "Saws, axe, adze, augers, chisels, planes and a drawknife.",
+  "location": "the smithy",
+  "quantity": 1,
+  "unit": "set",
+  "performance": {"augers": "up to 2 in diameter", "can_make": "benches, frames, simple wooden pumps and troughs"}
+}

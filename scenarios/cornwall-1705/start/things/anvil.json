@@ -1,0 +1,11 @@
+{
+  "id": "anvil",
+  "name": "Anvil",
+  "kind": "tool",
+  "status": "ok",
+  "summary": "A 1½ cwt wrought-iron anvil with a steel face, on an elm stump.",
+  "location": "the smithy",
+  "materials": ["wrought iron body", "steel face, fire-welded"],
+  "dimensions": {"weight_lb": 168, "face_in": "14 x 4", "height_in": 30},
+  "flaws": ["Face slightly swayed and chipped at the edges"]
+}

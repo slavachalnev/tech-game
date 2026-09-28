@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time Travel Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="row">
+      <span id="title">Time Travel Game</span>
+      <span class="ledger">
+        <b id="clock"></b> · <span id="place"></span> · <b id="purse"></b> · <span id="turn"></span>
+        <span id="ahead"></span>
+        <i id="live" title="Live: updates as the referee writes"></i>
+      </span>
+    </div>
+    <nav class="tabs">
+      <a href="#/workshop">Workshop</a>
+      <a href="#/people">People</a>
+      <a href="#/journal">Journal</a>
+      <a href="#/sketch">Sketch</a>
+    </nav>
+  </header>
+  <div id="problems" hidden></div>
+  <main id="main"></main>
+  <section id="sketch" hidden></section>
+  <div id="toast" hidden></div>
+</body>
+</html>

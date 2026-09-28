@@ -63,6 +63,13 @@ def cmd_advance(args):
     before, world["clock"] = world["clock"], state.advance_clock(world["clock"], args.span)
     state.write_json(path, world)
     print(f"{state.fmt_clock(before)}  ->  {state.fmt_clock(world['clock'])}")
+    due = state.paydays(before, world["clock"])
+    staff = [p for p in map(state.read_json, sorted((path.parent / "people").glob("*.json"))) if p and p.get("employed") and p.get("wage_p_week")]
+    if due and staff:
+        weekly = sum(p["wage_p_week"] for p in staff)
+        print(f"Payday passed: {', '.join(f'Saturday {d.day} {d:%B}' for d in due)}. Wages due each time: "
+              + ", ".join(f"{p['name']} {state.fmt_money(p['wage_p_week'])}" for p in staff)
+              + f". Total {state.fmt_money(weekly * len(due))}. Nothing has been paid yet.")
 
 
 def cmd_money(sign):
@@ -73,6 +80,30 @@ def cmd_money(sign):
         state.write_json(path, world)
         print(f"{'Paid' if sign < 0 else 'Received'} {state.fmt_money(amount)}. Purse: {state.fmt_money(world['purse_p'])}")
     return run
+
+
+def cmd_show(args):
+    """Several records in one go, compactly: things, people, recipes or places by id, or paths like log/0003."""
+    save = state.find_save(args.save)
+    gazetteer = state.read_json(save / "places.json") or {"places": [], "routes": []}
+    places = {p["id"]: p for p in gazetteer["places"]}
+    missing = []
+    for name in args.ids:
+        paths = [save / f"{name}.json"] if "/" in name else [save / f"{d}/{name}.json" for d in ("things", "people", "recipes")]
+        found = [p for p in paths if p.is_file()]
+        for p in found:
+            print(f"== {p.relative_to(save).with_suffix('')}")
+            for key, value in (state.read_json(p) or {"error": "not valid JSON"}).items():
+                print(f"{key}: {value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)}")
+        if name in places:
+            print(f"== place {name}\n{json.dumps(places[name], ensure_ascii=False)}")
+            for r in gazetteer["routes"]:
+                if name in (r["from"], r["to"]):
+                    print(f"route: {json.dumps(r, ensure_ascii=False)}")
+        if not found and name not in places:
+            missing.append(name)
+    if missing:
+        raise SystemExit(f"Not found: {', '.join(missing)}")
 
 
 def cmd_places(args):
@@ -163,6 +194,10 @@ def main():
         p = sub.add_parser(name, help=f"{name} money, e.g. \"£2.35\" or \"45p\"")
         p.add_argument("amount")
         p.set_defaults(run=cmd_money(sign))
+
+    p = sub.add_parser("show", help="print several things, people, recipes or places (by id), or paths like log/0003")
+    p.add_argument("ids", nargs="+")
+    p.set_defaults(run=cmd_show)
 
     p = sub.add_parser("places", help="the gazetteer: places by distance, and known routes")
     p.add_argument("origin", nargs="?", help="measure from this place id (default: the gazetteer's origin)")

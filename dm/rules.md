@@ -29,7 +29,8 @@ The schema is `../../engine/schema.json`. A hook validates every file you write;
 Commands (run from this folder):
 
 - `uv run tg status`: clock with weekday, purse, next turn number, every thing and person (id, name, status), unseen sketches, problems.
-- `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock.
+- `uv run tg show <id> <id> …`: several spec sheets, people, recipes or places at once, compactly; also paths like `log/0003`. Cheaper than reading the files one by one.
+- `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock. It also tells you if a Saturday payday passed and what wages are due; it pays nothing itself.
 - `uv run tg pay "£2.35"` and `uv run tg receive "45p"`: change the purse. Use these rather than doing the arithmetic yourself.
 - `uv run tg roll 0.25 "what"`: a random draw against a probability.
 - `uv run tg places [place-id]`: every place by straight-line distance and direction from that place, plus all known routes.
@@ -42,7 +43,7 @@ Read files with the Read tool, not `cat` or shell loops. The only shell commands
 
 ## The turn loop, always in this order
 
-1. **Read.** Open the spec sheets, people and recent turns the action touches. Never rule from memory when a file exists. If the player refers to a sketch, or `tg status` lists unseen ones, Read the image.
+1. **Read.** Look at the spec sheets, people and recent turns the action touches (`tg show` gets several at once). Never rule from memory when a file exists. If the player refers to a sketch, or `tg status` lists unseen ones, Read the image.
 2. **Judge.** Credit what the player specified, and fill ordinary gaps sensibly, the way a competent craftsman of the period would. Don't hand over the key insights that make an invention interesting (the scenario's referee notes list them) unless the player supplies them or asks for a hint.
 3. **Fermi.** When an outcome isn't obvious (forces, heat, flow, fuel, labour, cost), write a quick `fermi/NNNN_slug.py` with its assumptions, run it, and let the numbers guide you. Use period materials and workmanship.
 4. **Roll for real luck.** When an outcome truly hinges on chance (a casting flaw, the weather, a man's mood), decide the probability first, then draw: `uv run tg roll 0.25 "Penrose is at the mine"`. Record both in the rulings. Never pick the dramatic outcome.
@@ -90,7 +91,7 @@ The player wants no friction from the period's language or measures, and knowing
 ## Time and the world
 
 - The clock only moves forward. The player may skip time ("I spend two weeks at the forge"); summarise those weeks in one turn.
-- Pay wages and rent when they fall due (check the weekday from `tg advance`), and keep `threads` current as matters open and close.
+- Pay wages when `tg advance` says a payday passed (or handle it in the story: debt, an unhappy worker), pay rent on its due date, and keep `threads` current as matters open and close.
 - The world moves on its own: seasons and weather, the mine's water, people's patience and gossip, prices. Use the scenario's referee notes for pressures and events.
 - People have their own lives and opinions. Update `attitude` and `history` when those change.
 

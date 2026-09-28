@@ -16,6 +16,10 @@ def test_clock_uses_old_style_weekdays_before_1752():
     assert state.fmt_clock("1705-04-02T08:00") == "Monday 2 April 1705, 08:00"  # Julian; Gregorian 13 April
     assert state.advance_clock("1705-04-02T08:00", "1w2d3h30m") == "1705-04-11T11:30"
     assert state.fmt_clock("1850-06-01T12:00").startswith("Saturday")
+    # Monday 2 April 1705 (Old Style): the first Saturday payday is the 7th, at 18:00
+    assert [d.day for d in state.paydays("1705-04-02T08:00", "1705-04-16T08:00")] == [7, 14]
+    assert state.paydays("1705-04-07T08:00", "1705-04-07T17:00") == []
+    assert len(state.paydays("1705-04-07T17:00", "1705-04-07T19:00")) == 1
 
 
 @pytest.mark.parametrize("scenario", sorted(p.name for p in state.SCENARIOS.iterdir() if p.is_dir()))

@@ -2,7 +2,7 @@
 import json
 import re
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -265,8 +265,20 @@ def advance_clock(clock, span):
     return later.strftime(CLOCK_FMT)
 
 
+def weekday(t):
+    """The real weekday of a clock time. Before Britain's 1752 switch, dates are Old Style (Julian)."""
+    julian_shift = t.year // 100 - t.year // 400 - 2 if t < datetime(1752, 9, 14) else 0
+    return f"{t + timedelta(days=julian_shift):%A}"
+
+
 def fmt_clock(clock):
-    """'1705-04-02T08:00' -> 'Monday 2 April 1705, 08:00'. Before Britain's 1752 switch, dates are Old Style (Julian)."""
+    """'1705-04-02T08:00' -> 'Monday 2 April 1705, 08:00'."""
     t = datetime.strptime(clock, CLOCK_FMT)
-    julian_shift = t.year // 100 - t.year // 400 - 2 if clock < "1752-09-14" else 0
-    return f"{t + timedelta(days=julian_shift):%A} {t.day} {t:%B} {t.year}, {t:%H:%M}"
+    return f"{weekday(t)} {t.day} {t:%B} {t.year}, {t:%H:%M}"
+
+
+def paydays(start, end):
+    """Saturday evenings (18:00) passed between two clock times: when weekly wages fall due."""
+    t0, t1 = (datetime.strptime(c, CLOCK_FMT) for c in (start, end))
+    evenings = (datetime.combine(t0.date() + timedelta(days=i), time(18)) for i in range((t1 - t0).days + 2))
+    return [e for e in evenings if t0 < e <= t1 and weekday(e) == "Saturday"]

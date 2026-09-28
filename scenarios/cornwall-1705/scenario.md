@@ -15,6 +15,6 @@
 
 **The situation.** Wheal Fortune, 3 km east of town, is flooding. Horse-driven pumps run day and night and only just keep the water at 44 m deep, and the richest ore lies below that. The mine's shareholders have posted an offer: **£250 to anyone who keeps the water below 55 m for a month, plus £60 a year for as long as it keeps working.** Others have tried and failed.
 
-**How to play.** Say what you do, in as much detail as you actually know. The referee credits only what you state or sketch: knowing the name of a thing isn't knowing how to make it. Every action takes time, and most cost money. Start a message with `ooc:` to ask the referee a question out of character.
+**How to play.** Say what you do, in as much detail as you actually know. Knowing the name of a thing isn't knowing how to make it, so the more you can say about how it works, the better it goes. Every action takes time, and most cost money. Talk to the referee out of character (start with `ooc:`) whenever you like: to ask something, get a hint, or change how the game handles something ("assume the journey is uneventful").
 
-**Settings.** Strict referee. Starting money £50. No time limit beyond one lifetime. There's no win condition; your progress is tracked instead. For convenience everything is in modern English, measurements are metric and money is in decimal pounds. That's deliberately anachronistic.
+**Settings.** Realistic but relaxed referee. Starting money £50. No time limit beyond one lifetime. There's no win condition; your progress is tracked instead. For convenience everything is in modern English, measurements are metric and money is in decimal pounds. That's deliberately anachronistic.

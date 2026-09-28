@@ -107,6 +107,7 @@ async function workshop() {
   return `
     <details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>
     ${S.world.threads.length ? `<section><h2>Open threads</h2><ul class="threads">${S.world.threads.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
+    ${S.world.house_rules?.length ? `<section><h2>House rules</h2><ul class="threads">${S.world.house_rules.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
     ${(await Promise.all(groups.map(async ([k, ts]) => `<section><h2>${KINDS[k]}</h2>${await cards(ts)}</section>`))).join("")}
     ${others.length ? `<section><h2>Not yours</h2>${await cards(others)}</section>` : ""}`;
 }
@@ -197,7 +198,6 @@ function journal() {
       <details data-key="w${e.turn}"><summary>How the referee ruled</summary>
         ${workings("Credited to you", e.specified)}${workings("Filled in with standard period practice", e.assumed)}
         ${workings("Rulings", e.rulings)}${workings("Changes", e.changes)}
-        ${e.check ? `<h4>Check</h4><p>${esc(e.check)}</p>` : ""}
         ${fermi(e.fermi)}
       </details>
     </article>`).join("");

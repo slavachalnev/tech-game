@@ -21,7 +21,7 @@ uv run tg serve mygame                      # terminal 1: open http://127.0.0.1:
 cd saves/mygame && claude                   # terminal 2: the referee
 ```
 
-Say "let's begin" to the referee, then describe what you do in as much detail as you actually know. The referee credits only what you state or sketch. To show a design, draw it in the view's **Sketch** tab, save it, and paste the path it copies into the terminal with your message. Start a message with `ooc:` to ask the referee something out of character.
+Say "let's begin" to the referee, then describe what you do in as much detail as you actually know. You can step out of the story at any time to ask for a hint or change how something is modelled ("let's assume I didn't run out of money"); the referee keeps lasting changes as house rules. To show a design, draw it in the view's **Sketch** tab, save it, and paste the path it copies into the terminal with your message. Start a message with `ooc:` to ask the referee something out of character.
 
 Made a mistake, or want to try something else? Ask the referee (`ooc: undo that`), or run `uv run tg undo` (last turn), `uv run tg history` and `uv run tg restore <id>` yourself, then tell the referee. Every referee reply is snapshotted.
 

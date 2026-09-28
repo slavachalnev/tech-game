@@ -45,7 +45,8 @@
             "notes": {"type": "string"}
           }
         },
-        "threads": {"$ref": "#/$defs/texts", "description": "Open matters the player knows about: offers, debts, deadlines, rumours."}
+        "threads": {"$ref": "#/$defs/texts", "description": "Open matters the player knows about: offers, debts, deadlines, rumours."},
+        "house_rules": {"$ref": "#/$defs/texts", "description": "Lasting changes the player asked for in how the game is modelled."}
       }
     },
 
@@ -404,7 +405,6 @@
         "fermi": {"$ref": "#/$defs/paths"},
         "rulings": {"$ref": "#/$defs/texts"},
         "changes": {"$ref": "#/$defs/texts"},
-        "check": {"type": "string", "description": "Result of a fresh-context ruling check, if run."},
         "narration": {"$ref": "#/$defs/text"}
       }
     }

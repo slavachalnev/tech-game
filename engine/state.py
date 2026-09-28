@@ -50,7 +50,7 @@ def new_save(scenario, name):
         (dst / sub).mkdir(exist_ok=True)
     template = ROOT / "dm" / "save_template"
     (dst / "CLAUDE.md").write_text((template / "CLAUDE.md").read_text().replace("{scenario}", scenario))
-    shutil.copy(template / "secret.md", dst / "secret.md")
+    shutil.copy(template / "hidden.md", dst / "hidden.md")
     shutil.copytree(template / ".claude", dst / ".claude")
     return dst
 

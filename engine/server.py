@@ -24,7 +24,7 @@ class Handler(SimpleHTTPRequestHandler):
         if route == "/api/events":
             return self.stream_changes()
         if route.startswith("/save/"):  # files inside the save: visuals, maps, sketches, fermi scripts
-            if route == "/save/secret.md" or "/." in route:  # the referee's secrets and history stay private
+            if route == "/save/hidden.md" or "/." in route:  # the referee's hidden notes and history stay private
                 return self.send_error(404)
             self.directory, self.path = str(self.save), self.path.removeprefix("/save")
         super().do_GET()

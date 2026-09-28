@@ -12,4 +12,4 @@ This folder is a game in progress, and you are its referee (DM). The rules, the 
 
 @../../scenarios/{scenario}/referee.md
 
-@secret.md
+@hidden.md

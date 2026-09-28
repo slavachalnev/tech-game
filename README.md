@@ -25,7 +25,7 @@ Say "let's begin" to the referee, then describe what you do in as much detail as
 
 Made a mistake, or want to try something else? Ask the referee (`ooc: undo that`), or run `uv run tg undo` (last turn), `uv run tg history` and `uv run tg restore <id>` yourself, then tell the referee. Every referee reply is snapshotted.
 
-Don't open `scenarios/*/referee.md` or a save's `secret.md`: they hold the referee's hidden notes.
+Don't open `scenarios/*/referee.md` or a save's `hidden.md`: they hold the referee's hidden notes.
 
 ## How it works
 

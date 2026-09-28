@@ -16,7 +16,7 @@ A time-travel invention game. Claude Code is the referee (DM); a local web page 
 - `dm/`: what the referee gets.
   - `rules.md`: the referee rulebook, the heart of the game.
   - `style_guide.md` and `visual_template.svg`: how drawings look.
-  - `save_template/`: what each new save gets: `CLAUDE.md`, `secret.md` (the referee's private notebook) and `.claude/settings.json` (schema-check hook, snapshot-on-reply hook, permissions).
+  - `save_template/`: what each new save gets: `CLAUDE.md`, `hidden.md` (the referee's private notebook) and `.claude/settings.json` (schema-check hook, snapshot-on-reply hook, permissions).
 - `scenarios/<id>/`:
   - `scenario.md`: player briefing.
   - `period_notes.md`: DM-facing, not secret.
@@ -41,5 +41,6 @@ uv run pytest
 - The world is data. State is JSON under `engine/schema.json`; the only code in a save is SVG drawings and Fermi scripts. When adding a field, change the schema, the view and `dm/rules.md` together.
 - The browser never decides anything. Only the DM writes state; the one exception is the player's saved sketches.
 - Everything the player sees is in modern plain English, metric units and decimal pounds (a deliberate anachronism; see the rules' "Language and units"). Money is integer pence, 100p = £1 (`purse_p`, `cost_p`, `wage_p_week`). The clock is `YYYY-MM-DDTHH:MM`, Old Style before 1752.
-- **Don't read `scenarios/*/referee.md` or a save's `secret.md` out to the user.** They are also the player, and it's a spoiler.
+- **Don't read `scenarios/*/referee.md` or a save's `hidden.md` out to the user.** They are also the player, and it's a spoiler.
+- Don't put "secret" in the names of files the referee edits: common Claude Code deny rules (like `Edit(**/*secret*)`) block them. That's why the notebook is `hidden.md`.
 - Keep dependencies minimal: stdlib server, vanilla JS, no bundler. To check a UI change, run `tg shot` and look at the PNG.

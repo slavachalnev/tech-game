@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Schemas for a save's state files. world.json, things/*.json, people/*.json, log/*.json.",
+  "$comment": "Schemas for a save's state files: world.json, places.json, things/, people/, recipes/, log/.",
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
     "clock": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$"},
@@ -79,100 +79,7 @@
             "by": {"$ref": "#/$defs/texts"},
             "took": {"type": "string"},
             "cost_p": {"type": "integer", "minimum": 0},
-            "recipe": {
-      "description": "A capability: something the player can now order made again without re-explaining it.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "makes", "how", "time", "cost_p", "quality"],
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "name": {"$ref": "#/$defs/text", "description": "e.g. Bore brass cylinders"},
-        "makes": {"$ref": "#/$defs/text", "description": "What comes out, and its size range."},
-        "how": {"$ref": "#/$defs/text", "description": "The method, as credited to the player."},
-        "inputs": {"$ref": "#/$defs/texts", "description": "Materials per unit, with quantities."},
-        "tools": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Things needed (things/<id>.json)."},
-        "people": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Who knows how (people/<id>.json). If they all leave, the recipe is lost."},
-        "time": {"$ref": "#/$defs/text", "description": "Per unit or per batch, e.g. 3 weeks per cylinder."},
-        "cost_p": {"type": "integer", "minimum": 0, "description": "Per unit: materials and labour."},
-        "quality": {"$ref": "#/$defs/props", "description": "What it reliably achieves: tolerances, strength, finish."},
-        "flaws": {"$ref": "#/$defs/texts", "description": "Carried into everything made this way."},
-        "first_made": {"$ref": "#/$defs/id", "description": "The thing whose making established it."},
-        "turn": {"type": "integer", "minimum": 1},
-        "historical_year": {"type": "integer"},
-        "notes": {"type": "string"}
-      }
-    },
-
-    "places": {
-      "description": "The gazetteer: every place the player knows of, and the routes the referee has ruled on.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["origin", "places", "routes"],
-      "properties": {
-        "origin": {"$ref": "#/$defs/id", "description": "The place at x_km = 0, y_km = 0."},
-        "recipe": {
-      "description": "A capability: something the player can now order made again without re-explaining it.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "makes", "how", "time", "cost_p", "quality"],
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "name": {"$ref": "#/$defs/text", "description": "e.g. Bore brass cylinders"},
-        "makes": {"$ref": "#/$defs/text", "description": "What comes out, and its size range."},
-        "how": {"$ref": "#/$defs/text", "description": "The method, as credited to the player."},
-        "inputs": {"$ref": "#/$defs/texts", "description": "Materials per unit, with quantities."},
-        "tools": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Things needed (things/<id>.json)."},
-        "people": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Who knows how (people/<id>.json). If they all leave, the recipe is lost."},
-        "time": {"$ref": "#/$defs/text", "description": "Per unit or per batch, e.g. 3 weeks per cylinder."},
-        "cost_p": {"type": "integer", "minimum": 0, "description": "Per unit: materials and labour."},
-        "quality": {"$ref": "#/$defs/props", "description": "What it reliably achieves: tolerances, strength, finish."},
-        "flaws": {"$ref": "#/$defs/texts", "description": "Carried into everything made this way."},
-        "first_made": {"$ref": "#/$defs/id", "description": "The thing whose making established it."},
-        "turn": {"type": "integer", "minimum": 1},
-        "historical_year": {"type": "integer"},
-        "notes": {"type": "string"}
-      }
-    },
-
-    "places": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["id", "name", "kind", "x_km", "y_km", "maps"],
-            "properties": {
-              "id": {"$ref": "#/$defs/id"},
-              "name": {"$ref": "#/$defs/text", "description": "Must appear as a label on each of its maps."},
-              "kind": {"type": "string", "description": "town, village, port, mine, hill, estate, base, …"},
-              "x_km": {"type": "number", "description": "Straight-line km east of the origin (west is negative)."},
-              "y_km": {"type": "number", "description": "Straight-line km north of the origin (south is negative)."},
-              "maps": {"type": "array", "items": {"$ref": "#/$defs/id"}},
-              "visited": {"type": "boolean"},
-              "thing": {"$ref": "#/$defs/id", "description": "Its spec sheet, if it has one (a mine, the player's base)."},
-              "notes": {"type": "string"}
-            }
-          }
-        },
-        "routes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["from", "to", "km", "by", "time"],
-            "properties": {
-              "from": {"$ref": "#/$defs/id"},
-              "to": {"$ref": "#/$defs/id"},
-              "km": {"type": "number", "minimum": 0},
-              "by": {"enum": ["road", "track", "path", "sea", "river"]},
-              "time": {"$ref": "#/$defs/text", "description": "e.g. 2½–3 h walk, 1½ h ride"},
-              "notes": {"type": "string"}
-            }
-          }
-        }
-      }
-    },
-
-    "turn": {"type": "integer", "minimum": 0},
+            "turn": {"type": "integer", "minimum": 0},
             "recipe": {"$ref": "#/$defs/id", "description": "The recipe (recipes/<id>.json) it was made by, or that making it established."}
           }
         },
@@ -198,7 +105,7 @@
         "employed": {"type": "boolean", "description": "True if in the player's pay."},
         "wage_p_week": {"type": "integer", "minimum": 0},
         "attitude": {"type": "string"},
-        "location": {"type": "string"},
+        "location": {"type": "string", "description": "Use a place name from places.json, so the map's place card lists them."},
         "notes": {"type": "string"},
         "history": {"$ref": "#/$defs/history"}
       }
@@ -235,31 +142,7 @@
       "required": ["origin", "places", "routes"],
       "properties": {
         "origin": {"$ref": "#/$defs/id", "description": "The place at x_km = 0, y_km = 0."},
-        "recipe": {
-      "description": "A capability: something the player can now order made again without re-explaining it.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "makes", "how", "time", "cost_p", "quality"],
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "name": {"$ref": "#/$defs/text", "description": "e.g. Bore brass cylinders"},
-        "makes": {"$ref": "#/$defs/text", "description": "What comes out, and its size range."},
-        "how": {"$ref": "#/$defs/text", "description": "The method, as credited to the player."},
-        "inputs": {"$ref": "#/$defs/texts", "description": "Materials per unit, with quantities."},
-        "tools": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Things needed (things/<id>.json)."},
-        "people": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Who knows how (people/<id>.json). If they all leave, the recipe is lost."},
-        "time": {"$ref": "#/$defs/text", "description": "Per unit or per batch, e.g. 3 weeks per cylinder."},
-        "cost_p": {"type": "integer", "minimum": 0, "description": "Per unit: materials and labour."},
-        "quality": {"$ref": "#/$defs/props", "description": "What it reliably achieves: tolerances, strength, finish."},
-        "flaws": {"$ref": "#/$defs/texts", "description": "Carried into everything made this way."},
-        "first_made": {"$ref": "#/$defs/id", "description": "The thing whose making established it."},
-        "turn": {"type": "integer", "minimum": 1},
-        "historical_year": {"type": "integer"},
-        "notes": {"type": "string"}
-      }
-    },
-
-    "places": {
+        "places": {
           "type": "array",
           "items": {
             "type": "object",
@@ -274,7 +157,7 @@
               "maps": {"type": "array", "items": {"$ref": "#/$defs/id"}},
               "visited": {"type": "boolean"},
               "thing": {"$ref": "#/$defs/id", "description": "Its spec sheet, if it has one (a mine, the player's base)."},
-              "notes": {"type": "string"}
+              "notes": {"type": "string", "description": "What the player knows about it; shown on the map's place card."}
             }
           }
         },
@@ -302,100 +185,7 @@
       "additionalProperties": false,
       "required": ["turn", "clock_start", "clock_end", "action", "rulings", "narration"],
       "properties": {
-        "recipe": {
-      "description": "A capability: something the player can now order made again without re-explaining it.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "makes", "how", "time", "cost_p", "quality"],
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "name": {"$ref": "#/$defs/text", "description": "e.g. Bore brass cylinders"},
-        "makes": {"$ref": "#/$defs/text", "description": "What comes out, and its size range."},
-        "how": {"$ref": "#/$defs/text", "description": "The method, as credited to the player."},
-        "inputs": {"$ref": "#/$defs/texts", "description": "Materials per unit, with quantities."},
-        "tools": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Things needed (things/<id>.json)."},
-        "people": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Who knows how (people/<id>.json). If they all leave, the recipe is lost."},
-        "time": {"$ref": "#/$defs/text", "description": "Per unit or per batch, e.g. 3 weeks per cylinder."},
-        "cost_p": {"type": "integer", "minimum": 0, "description": "Per unit: materials and labour."},
-        "quality": {"$ref": "#/$defs/props", "description": "What it reliably achieves: tolerances, strength, finish."},
-        "flaws": {"$ref": "#/$defs/texts", "description": "Carried into everything made this way."},
-        "first_made": {"$ref": "#/$defs/id", "description": "The thing whose making established it."},
         "turn": {"type": "integer", "minimum": 1},
-        "historical_year": {"type": "integer"},
-        "notes": {"type": "string"}
-      }
-    },
-
-    "places": {
-      "description": "The gazetteer: every place the player knows of, and the routes the referee has ruled on.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["origin", "places", "routes"],
-      "properties": {
-        "origin": {"$ref": "#/$defs/id", "description": "The place at x_km = 0, y_km = 0."},
-        "recipe": {
-      "description": "A capability: something the player can now order made again without re-explaining it.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "makes", "how", "time", "cost_p", "quality"],
-      "properties": {
-        "id": {"$ref": "#/$defs/id"},
-        "name": {"$ref": "#/$defs/text", "description": "e.g. Bore brass cylinders"},
-        "makes": {"$ref": "#/$defs/text", "description": "What comes out, and its size range."},
-        "how": {"$ref": "#/$defs/text", "description": "The method, as credited to the player."},
-        "inputs": {"$ref": "#/$defs/texts", "description": "Materials per unit, with quantities."},
-        "tools": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Things needed (things/<id>.json)."},
-        "people": {"type": "array", "items": {"$ref": "#/$defs/id"}, "description": "Who knows how (people/<id>.json). If they all leave, the recipe is lost."},
-        "time": {"$ref": "#/$defs/text", "description": "Per unit or per batch, e.g. 3 weeks per cylinder."},
-        "cost_p": {"type": "integer", "minimum": 0, "description": "Per unit: materials and labour."},
-        "quality": {"$ref": "#/$defs/props", "description": "What it reliably achieves: tolerances, strength, finish."},
-        "flaws": {"$ref": "#/$defs/texts", "description": "Carried into everything made this way."},
-        "first_made": {"$ref": "#/$defs/id", "description": "The thing whose making established it."},
-        "turn": {"type": "integer", "minimum": 1},
-        "historical_year": {"type": "integer"},
-        "notes": {"type": "string"}
-      }
-    },
-
-    "places": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["id", "name", "kind", "x_km", "y_km", "maps"],
-            "properties": {
-              "id": {"$ref": "#/$defs/id"},
-              "name": {"$ref": "#/$defs/text", "description": "Must appear as a label on each of its maps."},
-              "kind": {"type": "string", "description": "town, village, port, mine, hill, estate, base, …"},
-              "x_km": {"type": "number", "description": "Straight-line km east of the origin (west is negative)."},
-              "y_km": {"type": "number", "description": "Straight-line km north of the origin (south is negative)."},
-              "maps": {"type": "array", "items": {"$ref": "#/$defs/id"}},
-              "visited": {"type": "boolean"},
-              "thing": {"$ref": "#/$defs/id", "description": "Its spec sheet, if it has one (a mine, the player's base)."},
-              "notes": {"type": "string"}
-            }
-          }
-        },
-        "routes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["from", "to", "km", "by", "time"],
-            "properties": {
-              "from": {"$ref": "#/$defs/id"},
-              "to": {"$ref": "#/$defs/id"},
-              "km": {"type": "number", "minimum": 0},
-              "by": {"enum": ["road", "track", "path", "sea", "river"]},
-              "time": {"$ref": "#/$defs/text", "description": "e.g. 2½–3 h walk, 1½ h ride"},
-              "notes": {"type": "string"}
-            }
-          }
-        }
-      }
-    },
-
-    "turn": {"type": "integer", "minimum": 1},
         "clock_start": {"$ref": "#/$defs/clock"},
         "clock_end": {"$ref": "#/$defs/clock"},
         "action": {"$ref": "#/$defs/text", "description": "The player's words, verbatim or closely quoted."},

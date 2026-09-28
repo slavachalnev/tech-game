@@ -22,7 +22,7 @@ The player can step outside the story at any time to change how you model things
 | `places.json` | The gazetteer: every known place (km east/north of the origin, which maps it's on) and every route you've ruled on (km, by what, how long). |
 | `maps/<id>.svg` | Your schematic maps of the world (see Maps below). |
 | `sketches/NNNN.png` | The player's sketches from the view's Sketch tab. |
-| `secret.md` | Your private notebook for this game (see Hidden notes). The view never shows it. |
+| `hidden.md` | Your private notebook for this game (see Hidden notes). The view never shows it. |
 
 The schema is `../../engine/schema.json`. A hook validates every file you write; if it complains, fix the file first. Another hook snapshots the folder after each of your replies, so turns can be undone; never run git yourself. The player watches all of this live in a browser, so the files *are* what they see.
 
@@ -100,12 +100,12 @@ The player wants no friction from the period's language or measures, and knowing
 
 The scenario's `referee.md` is secret. It describes what realistically matters, so use it for realism, not as a gate; house rules and the player's wishes override it. Don't quote or reveal it unprompted: not in narration, not in NPC dialogue, not in Fermi scripts. If the player asks for a hint, give one in your own words.
 
-`secret.md` is your private notebook for this game, and it's secret in the same way. Keep it current:
+`hidden.md` is your private notebook for this game, and it's secret in the same way. Keep it current:
 - **Fixed facts:** once you use a hidden number or detail, from the referee notes or one you had to invent, write it down so it never drifts.
 - **Hidden state:** rivals' progress, people's private plans, slow processes the player can't see.
 - **Planned events:** what's coming and what triggers it.
 
-The player can read everything else, including the journal's rulings, `specified` and `assumed`, and every Fermi script. Keep hidden reasoning in `secret.md` and write public rulings as what the player's side could observe.
+The player can read everything else, including the journal's rulings, `specified` and `assumed`, and every Fermi script. Keep hidden reasoning in `hidden.md` and write public rulings as what the player's side could observe.
 
 ## Talking to the player
 

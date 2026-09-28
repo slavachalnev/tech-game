@@ -84,13 +84,13 @@ def test_undo_and_restore_turns(tmp_path, monkeypatch):
         turn = {"turn": n, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T09:00", "action": f"act {n}", "rulings": [], "narration": "n"}
         state.write_json(save / f"log/{n:04d}.json", turn)
         assert history.snapshot(save) == f"turn {n}: act {n}"
-    (save / "secret.md").write_text("a hidden fact")  # a later, non-turn edit
+    (save / "hidden.md").write_text("a hidden fact")  # a later, non-turn edit
     assert history.snapshot(save) == "after turn 2"
     assert history.snapshot(save) is None  # nothing changed
 
     assert history.undo(save)[0] == 2
     assert state.next_turn(save) == 2 and state.read_json(save / "world.json")["purse_p"] == 4900
-    assert "hidden fact" not in (save / "secret.md").read_text()
+    assert "hidden fact" not in (save / "hidden.md").read_text()
     tag = history.undo(save)[1]
     assert state.next_turn(save) == 1
     history.restore(save, tag)  # changed my mind
@@ -107,3 +107,17 @@ def test_recipes_link_to_real_tools_people_and_things(tmp_path, monkeypatch):
     state.write_json(save / "recipes/hoops.json", {**recipe, "tools": ["lathe"], "first_made": "hoop-1"})
     problems = state.check_save(save)
     assert any("unknown tool 'lathe'" in p for p in problems) and any("unknown first_made thing 'hoop-1'" in p for p in problems)
+
+
+def test_schema_has_no_pasted_definitions():
+    """A property named like a top-level definition must not be a full copy of it (a past editing accident)."""
+    defs = state.SCHEMA["$defs"]
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            for key, value in node.get("properties", {}).items():
+                assert not (key in defs and isinstance(value, dict) and "properties" in value), f"{path}/{key} copies $defs/{key}"
+            for key, value in node.items():
+                walk(value, f"{path}/{key}")
+
+    walk(defs, "$defs")

@@ -3,11 +3,27 @@
   "name": "Hearth and bellows",
   "kind": "tool",
   "status": "ok",
-  "summary": "A side-blown smith's hearth with a pair of leather hand bellows.",
+  "summary": "A blacksmith's hearth blown from the side by a pair of leather hand bellows.",
   "location": "the smithy",
-  "materials": ["brick and stone hearth", "cast-iron tuyere", "leather and ash-wood bellows"],
-  "dimensions": {"hearth_ft": "4 x 3", "fire_pit_depth_in": 6, "bellows_length_ft": 5},
-  "performance": {"heat": "welding heat for wrought iron at the tuyere, over a fist-sized zone", "crucible_melt": "a few lb of brass, bronze or lead at a time", "fuel": "coal or charcoal"},
-  "flaws": ["Cannot melt iron in any quantity", "Bellows need a second pair of hands (or a boy) whenever the smith is working"],
-  "notes": "Part of the smithy."
+  "materials": [
+    "brick and stone hearth",
+    "cast-iron air nozzle (tuyere)",
+    "leather and ash-wood bellows"
+  ],
+  "dimensions": {
+    "hearth_m": "1.2 x 0.9",
+    "fire_pit_depth_cm": 15,
+    "bellows_length_m": 1.5
+  },
+  "performance": {
+    "heat": "welding heat for wrought iron (about 1300 °C) in a fist-sized spot at the nozzle",
+    "crucible_melt": "a few kg of brass, bronze or lead at a time",
+    "fuel": "coal or charcoal"
+  },
+  "flaws": [
+    "Can't melt iron in any quantity",
+    "The bellows need a second person (or a boy) whenever the smith is working"
+  ],
+  "notes": "Part of the smithy.",
+  "visual": "visuals/forge.svg"
 }

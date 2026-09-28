@@ -1,12 +1,17 @@
 {
   "id": "smith-tools",
-  "name": "Smith's tools",
+  "name": "Blacksmith's tools",
   "kind": "tool",
   "status": "ok",
-  "summary": "Hammers, tongs, swages, punches, chisels, files and a leg vice.",
+  "summary": "Hammers, tongs, shaping tools, punches, chisels, files and a vice.",
   "location": "the smithy",
   "quantity": 1,
   "unit": "set",
-  "performance": {"can_make": "ordinary smithing: nails, hinges, mine tools, bands, chain, simple fittings"},
-  "quality": {"files": "hand-cut, worn; can true a surface to roughly the thickness of a coin with patience"}
+  "performance": {
+    "can_make": "ordinary smithing: nails, hinges, mining tools, iron bands, chain, simple fittings"
+  },
+  "quality": {
+    "files": "hand-cut and worn; with patience they can flatten a surface to about 1 mm"
+  },
+  "visual": "visuals/smith-tools.svg"
 }

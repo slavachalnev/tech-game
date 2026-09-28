@@ -1,24 +1,24 @@
 {
   "scenario": "cornwall-1705",
-  "title": "Cornwall, 1705: The Drowned Mine",
+  "title": "Cornwall, 1705: The Flooded Mine",
   "clock": "1705-04-02T08:00",
   "location": "Redruth, Cornwall",
-  "purse_d": 12000,
+  "purse_p": 5000,
   "player": {
     "name": "",
-    "status": "A stranger of modest means, lately arrived. No trade, no guild, no local standing.",
+    "status": "A newcomer of modest means. No trade, no guild membership, no local reputation.",
     "skills": [
       "Reading, writing and arithmetic",
       "Whatever you actually know from the 21st century, and only that",
-      "No practised period craft: your hands are a modern person's"
+      "No hands-on period craft skills"
     ],
-    "reputation": "Unknown in Redruth.",
+    "reputation": "Nobody in Redruth knows you.",
     "health": "Good."
   },
   "threads": [
-    "Wheal Fortune's adventurers offer £250 for any means that holds the water below 30 fathoms for a month, and £60 a year while it keeps working.",
-    "You carry a letter of introduction to Nicholas Penrose, purser of Wheal Fortune.",
-    "Jacca Pascoe's wages, 9s, are due each Saturday.",
-    "Smithy rent is paid to Midsummer (24 June); the next quarter is £1 10s."
+    "Wheal Fortune's shareholders offer £250 to anyone who keeps the water below 55 m for a month, plus £60 a year for as long as it keeps working.",
+    "You have a letter of introduction to Nicholas Penrose, the mine's treasurer.",
+    "Jacca Pascoe's wages, 45p, are due every Saturday.",
+    "The smithy's rent is paid until 24 June; the next quarter costs £1.50."
   ]
 }

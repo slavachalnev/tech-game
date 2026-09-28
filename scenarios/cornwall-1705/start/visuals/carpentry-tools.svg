@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="9"/>
+      <feDisplacementMap in="SourceGraphic" scale="2"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- wall rail, pegs, shelf -->
+    <rect x="24" y="48" width="752" height="12" fill="#9a7446" fill-opacity="0.35"/>
+    <g fill="#9a7446" fill-opacity="0.5" stroke-width="1.2">
+      <circle cx="116" cy="64" r="3.5"/><circle cx="222" cy="80" r="3.5"/><circle cx="282" cy="64" r="3.5"/><circle cx="368" cy="64" r="3.5"/>
+      <circle cx="440" cy="64" r="3.5"/><circle cx="492" cy="64" r="3.5"/><circle cx="552" cy="64" r="3.5"/><circle cx="628" cy="64" r="3.5"/><circle cx="732" cy="64" r="3.5"/>
+    </g>
+    <rect x="24" y="430" width="420" height="12" fill="#9a7446" fill-opacity="0.35"/>
+    <path d="M60,442 V478 L98,442 M408,442 V478 L370,442" stroke-width="1.6"/>
+
+    <!-- timber parts -->
+    <g fill="#9a7446" fill-opacity="0.4" stroke-width="1.6">
+      <path d="M56,72 H64 Q60,140 66,206 H58 Q52,140 56,72 Z M168,72 H176 Q180,140 174,206 H166 Q172,140 168,72 Z"/>
+      <rect x="62" y="136" width="108" height="6"/>
+      <ellipse cx="62" cy="220" rx="5" ry="12"/><ellipse cx="170" cy="220" rx="5" ry="12"/>
+      <path d="M112,70 L122,104" stroke-width="3"/>
+      <path d="M206,62 Q196,72 200,112 H246 Q250,84 238,62 Z"/>
+      <path d="M280,88 H290 Q292,200 288,326 Q284,332 280,326 Q282,200 280,88 Z"/>
+      <path d="M364,80 H372 L373,322 Q368,328 363,322 Z"/>
+      <rect x="420" y="66" width="40" height="9"/><rect x="466" y="66" width="52" height="10"/><rect x="520" y="66" width="64" height="11"/>
+      <path d="M622,70 Q608,76 604,112 L612,114 Q614,82 626,78 Z M738,70 Q752,76 756,112 L748,114 Q746,82 734,78 Z"/>
+      <rect x="600" y="226" width="170" height="10"/>
+      <path d="M618,182 Q624,174 630,182 L629,224 H619 Z M657,182 Q664,174 671,182 L670,224 H658 Z M696,182 Q704,172 712,182 L711,224 H697 Z M735,182 Q744,172 753,182 L752,224 H736 Z"/>
+      <path d="M50,392 H212 Q224,396 222,430 H50 Z"/>
+      <path d="M74,392 L68,360 Q70,350 82,350 H92 Q98,352 96,360 L100,378 L112,392 Z"/>
+      <path d="M140,392 L128,360 H142 L152,392 Z"/>
+      <path d="M262,402 Q310,394 360,402 L362,430 H260 Z"/>
+      <path d="M302,402 L294,378 H306 L314,402 Z"/>
+    </g>
+    <ellipse cx="222" cy="90" rx="6" ry="12" stroke-width="1.4"/>
+    <path d="M80,384 L76,362 Q78,358 84,358 Q88,360 88,366 L92,384 Z" stroke-width="1.2"/>
+    <path d="M116,66 V78 M62,78 H170 M62,84 H170" stroke-width="1.2"/>
+
+    <!-- iron parts -->
+    <g fill="#56514b" fill-opacity="0.38" stroke-width="1.6">
+      <path d="M62,200 H170 V206 H62 Z"/>
+      <path d="M202,110 H246 L238,330 L220,330 Z"/>
+      <path d="M270,66 L294,66 L312,56 Q318,78 312,100 L294,90 L270,88 Z"/>
+      <path d="M358,62 H378 V82 H358 Z M378,66 Q402,66 412,96 L404,98 Q396,78 378,78 Z"/>
+      <path d="M438,75 H442 V236 H438 Z M489,76 H495 V236 H489 Z M549,77 H555 V236 H549 Z"/>
+      <path d="M437,236 H443 V266 Q440,276 437,266 Z M486,236 H498 V266 Q492,280 486,266 Z M542,236 H562 V264 Q552,284 542,264 Z"/>
+      <path d="M622,66 H738 V74 L734,80 H626 L622,74 Z"/>
+      <path d="M621,236 H627 V318 H621 Z M659,236 H669 V318 H659 Z M696,236 H712 V318 H696 Z M732,236 H756 V318 H732 Z"/>
+      <path d="M132,392 L120,362 L126,360 L138,392 Z M298,402 L290,380 L295,378 L304,402 Z" stroke-width="1.2"/>
+    </g>
+    <path d="M62,206 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 l3,4 l3,-4 M202,110 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5 l-4,5 l4.8,5" stroke-width="1"/>
+    <path d="M552,240 V266 M492,240 V268" stroke="#7a6a55" stroke-width="0.8"/>
+    <path d="M621,312 H627 M659,310 H669 M696,308 H712 M732,306 H756" stroke="#7a6a55" stroke-width="0.8"/>
+  </g>
+
+  <!-- Largest auger bit -->
+  <g stroke="#7a6a55" stroke-width="0.8" fill="none">
+    <path d="M542,270 V302 M562,270 V302"/>
+    <line x1="544" y1="296" x2="560" y2="296" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="14" text-anchor="middle">
+    <text x="116" y="258">Bow saw</text>
+    <text x="224" y="354">Hand saw</text>
+    <text x="292" y="354">Axe</text>
+    <text x="376" y="354">Adze</text>
+    <text x="570" y="300" text-anchor="start" font-size="13">5 cm</text>
+    <text x="496" y="330">Augers (hand drills):</text>
+    <text x="496" y="346">holes up to 5 cm across</text>
+    <text x="680" y="130">Drawknife</text>
+    <text x="686" y="346">Chisels</text>
+    <text x="234" y="466">Planes: jack and smoother</text>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Carpenter's Tools</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">On the wall rack and shelf · not to scale</text>
+  </g>
+</svg>

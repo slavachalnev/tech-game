@@ -6,9 +6,8 @@ from engine import state
 
 
 def test_money_round_trip():
-    assert state.parse_money("£3 4s 6d") == 774
-    assert state.parse_money("10s") == 120
-    assert [state.fmt_money(d) for d in (12000, 774, 108, 4, 0, -250)] == ["£50", "£3 4s 6d", "9s", "4d", "0d", "-£1 10d"]
+    assert [state.parse_money(t) for t in ("£3.25", "3.25", "£3", "45p", "£0.5")] == [325, 325, 300, 45, 50]
+    assert [state.fmt_money(p) for p in (5000, 4718, 150, 45, 0, -150)] == ["£50", "£47.18", "£1.50", "45p", "0p", "-£1.50"]
     with pytest.raises(SystemExit):
         state.parse_money("three pounds")
 
@@ -22,6 +21,18 @@ def test_clock_uses_old_style_weekdays_before_1752():
 @pytest.mark.parametrize("scenario", sorted(p.name for p in state.SCENARIOS.iterdir() if p.is_dir()))
 def test_scenario_start_state_is_valid(scenario):
     assert state.check_save(state.SCENARIOS / scenario / "start") == []
+
+
+def test_find_save_refuses_to_guess(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    monkeypatch.chdir(tmp_path)
+    state.new_save("cornwall-1705", "a")
+    assert state.find_save().name == "a"
+    state.new_save("cornwall-1705", "b")
+    with pytest.raises(SystemExit, match="several"):
+        state.find_save()
+    monkeypatch.chdir(tmp_path / "b" / "things")
+    assert state.find_save().name == "b"
 
 
 def test_new_save_is_a_dm_workspace(tmp_path, monkeypatch):
@@ -41,3 +52,5 @@ def test_check_file_rejects_bad_thing_and_misnumbered_turn(tmp_path, monkeypatch
     turn = {"turn": 2, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T09:00", "action": "a", "rulings": [], "narration": "n"}
     (save / "log/0001.json").write_text(json.dumps(turn))
     assert any("must live in log/0002.json" in p for p in state.check_file(save, save / "log/0001.json"))
+    (save / "maps/town.svg").write_text("<svg><title>Town</title>")
+    assert any("not well-formed SVG" in p for p in state.check_file(save, save / "maps/town.svg"))

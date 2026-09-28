@@ -3,18 +3,29 @@
   "name": "Wheal Fortune",
   "kind": "site",
   "status": "faulty",
-  "owner": "The Wheal Fortune adventurers",
-  "summary": "A tin and copper mine two miles east of Redruth, drowning below 24 fathoms.",
-  "location": "Two miles east of Redruth",
-  "dimensions": {"engine_shaft_depth_fm": 36, "adit_level_fm": 12, "water_level_fm": 24, "shaft_section_ft": "6 x 4"},
-  "performance": {
-    "drainage": "two horse whims with rag-and-chain pumps, horses in relays day and night, lifting to the adit",
-    "inflow": "about 30 gallons a minute in summer, 50 to 60 in winter (Captain Tregonning's reckoning)",
-    "drainage_cost": "about £12 a month in horses, fodder and boys"
+  "owner": "Wheal Fortune's shareholders",
+  "summary": "A tin and copper mine 3 km east of Redruth, flooded below 44 m.",
+  "location": "3 km east of Redruth",
+  "dimensions": {
+    "shaft_depth_m": 66,
+    "adit_depth_m": 22,
+    "water_level_m": 44,
+    "shaft_section_m": "1.8 x 1.2"
   },
-  "flaws": ["The whims only just hold the water at 24 fathoms; in a wet spell it rises", "The richest tin and copper ground lies below 26 fathoms, under water"],
+  "performance": {
+    "drainage": "two horse whims (horse-driven winches) working rag-and-chain pumps, with horses in shifts day and night, lifting the water up to the adit",
+    "inflow": "about 140 liters a minute in summer, 230 to 270 in winter (Captain Tregonning's estimate)",
+    "drainage_cost": "about £12 a month in fodder and stable boys"
+  },
+  "flaws": [
+    "The whims only just hold the water at 44 m; in a wet spell it rises",
+    "The richest tin and copper ore lies below about 48 m, under water"
+  ],
   "visual": "visuals/wheal-fortune.svg",
   "state": "flooded",
-  "states": ["flooded", "drained"],
-  "notes": "1 fathom = 6 ft. The adit drains by gravity to the valley, so pumps need only lift water to adit level."
+  "states": [
+    "flooded",
+    "drained"
+  ],
+  "notes": "The adit is a drainage tunnel at 22 m that drains by gravity to the valley, so pumps only need to lift the water up to it."
 }

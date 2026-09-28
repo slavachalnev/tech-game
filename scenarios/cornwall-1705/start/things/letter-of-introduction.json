@@ -3,6 +3,7 @@
   "name": "Letter of introduction",
   "kind": "document",
   "status": "ok",
-  "summary": "To Mr Nicholas Penrose, purser of Wheal Fortune, from a Truro attorney who owes you a favour.",
-  "location": "with you"
+  "summary": "Addressed to Nicholas Penrose, treasurer of Wheal Fortune, from a Truro lawyer who owes you a favor.",
+  "location": "with you",
+  "visual": "visuals/letter-of-introduction.svg"
 }

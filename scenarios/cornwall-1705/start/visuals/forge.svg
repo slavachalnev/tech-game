@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="5"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <pattern id="brick" width="30" height="30" patternUnits="userSpaceOnUse" y="330">
+      <path d="M0,15 H30 M0,30 H30 M10,0 V15 M25,15 V30" fill="none" stroke="#7a6a55" stroke-width="0.7"/>
+    </pattern>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#c0662b" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#c0662b" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+    <marker id="red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#9c3b25" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Hearth masonry (200 px = 1 m) -->
+  <path d="M450,480 V330 H490 V360 H590 V330 H690 V480 Z M512,480 V432 Q570,396 628,432 V480 Z" fill-rule="evenodd" fill="#8a7a62" fill-opacity="0.18"/>
+  <path d="M450,480 V330 H490 V360 H590 V330 H690 V480 Z M512,480 V432 Q570,396 628,432 V480 Z" fill-rule="evenodd" fill="url(#brick)"/>
+
+  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M450,480 V330 H490 V360 H590 V330 H690 V480 M512,480 V432 Q570,396 628,432 V480"/>
+    <path d="M20,480 H780"/>
+    <!-- coal in the fire pit, crucible -->
+    <path d="M490,360 V330 H486 L492,318 L500,315 L506,307 L516,309 L522,302 L532,306 L541,301 L558,302 L568,306 L576,313 L584,318 L594,330 H590 V360 Z" fill="#56514b" fill-opacity="0.55" stroke-width="1.2"/>
+    <path d="M498,324 l6,-5 l6,5 M514,318 l6,-5 l6,4 M566,318 l5,-5 l6,4 M522,342 l6,-4 l6,4 M562,346 l5,-4 l6,4 M540,330 l6,-4 l6,4" stroke="#7a6a55" stroke-width="0.8"/>
+    <path d="M540,298 H558 L554,322 H544 Z" fill="#8a7a62" fill-opacity="0.6" stroke-width="1.3"/>
+    <!-- tuyere through the hearth wall -->
+    <path d="M404,342 L450,344 V355 L404,357 Z" fill="#56514b" fill-opacity="0.4" stroke-width="1.5"/>
+    <path d="M450,345 L490,347 M450,354 L490,352" stroke-width="1" stroke-dasharray="3 2"/>
+    <!-- bellows, frame, lever and chain -->
+    <path d="M380,338 L124,290 Q104,320 112,352 Q104,384 124,410 L380,358 Z" fill="#9a7446" fill-opacity="0.3"/>
+    <path d="M112,352 L380,348" stroke-width="2.6"/>
+    <path d="M126,297 L378,343 M150,302 Q138,326 146,350 M200,311 Q190,330 196,350 M150,402 Q138,378 146,354 M200,392 Q190,374 196,354" stroke="#7a6a55" stroke-width="0.8"/>
+    <path d="M380,342 L412,346 V351 L380,355 Z" fill="#56514b" fill-opacity="0.4" stroke-width="1.4"/>
+    <path d="M160,480 V350 M350,480 V348 M160,444 H350" stroke-width="2.2"/>
+    <circle cx="160" cy="351" r="2.5" fill="#2b2118"/><circle cx="350" cy="348" r="2.5" fill="#2b2118"/>
+    <path d="M92,480 V230"/>
+    <path d="M28,248 L342,168" stroke-width="2.4"/>
+    <circle cx="92" cy="232" r="3" fill="#2b2118"/>
+    <path d="M338,170 V366" stroke-width="1.4" stroke-dasharray="4 2"/>
+  </g>
+
+  <!-- Welding heat at the nozzle -->
+  <circle cx="498" cy="350" r="24" fill="url(#glow)"/>
+  <circle cx="498" cy="350" r="10" fill="#c0662b" fill-opacity="0.55"/>
+
+  <!-- Flaws -->
+  <g fill="none" stroke="#9c3b25" stroke-width="1">
+    <path d="M20,236 V262" marker-start="url(#red)" marker-end="url(#red)"/>
+    <path d="M60,196 L34,240" stroke-width="0.8" marker-end="url(#red)"/>
+    <path d="M598,286 L560,312" stroke-width="0.8" marker-end="url(#red)"/>
+  </g>
+  <g fill="#9c3b25" font-style="italic" font-size="13">
+    <text x="20" y="152">needs a second person</text>
+    <text x="20" y="168">(or a boy) on this handle</text>
+    <text x="20" y="184">whenever the smith works</text>
+    <text x="600" y="290">can't melt iron in any quantity</text>
+  </g>
+
+  <!-- Dimensions and leaders -->
+  <g stroke="#7a6a55" stroke-width="0.8" fill="none">
+    <path d="M108,410 V512 M412,356 V512 M450,484 V512 M690,484 V512 M594,330 H612 M594,360 H612"/>
+    <line x1="110" y1="505" x2="410" y2="505" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <line x1="452" y1="505" x2="688" y2="505" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <line x1="606" y1="332" x2="606" y2="358" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M470,234 L496,340 M598,260 L560,300 M700,402 L680,410 M396,322 L416,344" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="14">
+    <text x="136" y="280">Leather and ash-wood bellows</text>
+    <text x="200" y="164">Rocking lever</text>
+    <text x="344" y="316">Cast-iron tuyere</text>
+    <text x="410" y="214">Welding heat, about 1300 °C, in a</text>
+    <text x="410" y="230">fist-sized spot at the nozzle</text>
+    <text x="600" y="258">Crucible: a few kg of</text>
+    <text x="600" y="274">brass, bronze or lead</text>
+    <text x="614" y="350">15 cm</text>
+    <text x="614" y="324" font-size="13">fire pit</text>
+    <text x="700" y="400">Brick and</text>
+    <text x="700" y="416">stone hearth</text>
+    <text x="260" y="524" text-anchor="middle">Bellows 1.5 m long</text>
+    <text x="570" y="524" text-anchor="middle">Hearth 1.2 m long, 0.9 m front to back</text>
+  </g>
+
+  <!-- Scale bar -->
+  <g stroke="#2b2118" stroke-width="0.8">
+    <rect x="30" y="552" width="100" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+    <rect x="130" y="552" width="100" height="6" fill="none"/>
+  </g>
+  <g fill="#2b2118" font-style="italic" font-size="12" text-anchor="middle">
+    <text x="30" y="574">0</text><text x="130" y="574">0.5</text><text x="230" y="574">1 m</text>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Hearth and Bellows</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Side view, fire pit cut open · to scale</text>
+  </g>
+</svg>

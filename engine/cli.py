@@ -12,11 +12,11 @@ from .server import make_server, shot
 def cmd_new(args):
     save = state.new_save(args.scenario, args.name or args.scenario)
     rel = save.relative_to(Path.cwd()) if save.is_relative_to(Path.cwd()) else save
-    print(f"Created {rel}\n\nTo play:\n  uv run tg serve             # live view, in one terminal\n  cd {rel} && claude    # the referee, in another")
+    print(f"Created {rel}\n\nTo play:\n  uv run tg serve {save.name}    # live view, in one terminal\n  cd {rel} && claude    # the referee, in another")
 
 
 def cmd_serve(args):
-    save = state.find_save(args.save)
+    save = state.find_save(args.name or args.save)
     server = make_server(save, args.port)
     print(f"Serving {save.name} at http://127.0.0.1:{args.port}  (Ctrl-C to stop)")
     try:
@@ -32,12 +32,13 @@ def cmd_status(args):
     unseen = state.unseen_sketches(save)
     print(f"Save:    {save.name} ({world['title']})")
     print(f"Clock:   {state.fmt_clock(world['clock'])}")
-    print(f"Purse:   {state.fmt_money(world['purse_d'])}")
+    print(f"Purse:   {state.fmt_money(world['purse_p'])}")
     print(f"Next turn: {state.next_turn(save)}")
     things = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "things").glob("*.json"))]
     people = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "people").glob("*.json"))]
     print("Things:\n" + "\n".join(f"  {t['id']}: {t.get('name')} ({t.get('status')}{', ' + t['owner'] if 'owner' in t else ''})" for t in things))
     print("People:\n" + "\n".join(f"  {p['id']}: {p.get('name')}, {p.get('role')}" for p in people))
+    print(f"Maps: {', '.join(m['id'] for m in state.maps(save)) or 'none'}")
     print(f"Unseen sketches: {', '.join(unseen) or 'none'}")
     print("Problems:" + "".join(f"\n  - {p}" for p in problems) if problems else "Problems: none")
 
@@ -64,9 +65,9 @@ def cmd_money(sign):
     def run(args):
         amount = state.parse_money(args.amount)
         path, world = open_world(args)
-        world["purse_d"] += sign * amount
+        world["purse_p"] += sign * amount
         state.write_json(path, world)
-        print(f"{'Paid' if sign < 0 else 'Received'} {state.fmt_money(amount)}. Purse: {state.fmt_money(world['purse_d'])}")
+        print(f"{'Paid' if sign < 0 else 'Received'} {state.fmt_money(amount)}. Purse: {state.fmt_money(world['purse_p'])}")
     return run
 
 
@@ -95,7 +96,7 @@ def cmd_hook(args):
 
 def main():
     parser = argparse.ArgumentParser(prog="tg", description="Time Travel Game tools.")
-    parser.add_argument("--save", help="save name or path (default: the save you're in, else the latest)")
+    parser.add_argument("--save", help="save name or path (default: the save you're in, or the only one)")
     sub = parser.add_subparsers(required=True)
 
     p = sub.add_parser("new", help="start a new game from a scenario")
@@ -103,7 +104,8 @@ def main():
     p.add_argument("--name", help="save name (default: the scenario name)")
     p.set_defaults(run=cmd_new)
 
-    p = sub.add_parser("serve", help="serve the live view")
+    p = sub.add_parser("serve", help="serve the live view of a save")
+    p.add_argument("name", nargs="?", help="save name (default: the save you're in, or the only one)")
     p.add_argument("--port", type=int, default=8765)
     p.set_defaults(run=cmd_serve)
 
@@ -115,7 +117,7 @@ def main():
     p.set_defaults(run=cmd_advance)
 
     for name, sign in (("pay", -1), ("receive", 1)):
-        p = sub.add_parser(name, help=f"{name} money, e.g. \"£2 3s 6d\"")
+        p = sub.add_parser(name, help=f"{name} money, e.g. \"£2.35\" or \"45p\"")
         p.add_argument("amount")
         p.set_defaults(run=cmd_money(sign))
 
@@ -125,7 +127,7 @@ def main():
     p.set_defaults(run=cmd_roll)
 
     p = sub.add_parser("shot", help="screenshot the view with headless Chromium; prints the PNG path")
-    p.add_argument("target", nargs="?", default="workshop", help="workshop | people | journal | sketch | <thing-id>")
+    p.add_argument("target", nargs="?", default="workshop", help="workshop | people | map | map/<id> | journal | sketch | <thing-id>")
     p.add_argument("--state", help="visual state to show, e.g. running")
     p.add_argument("--sheet", action="store_true", help="the thing's whole spec-sheet page, not just its drawing")
     p.set_defaults(run=cmd_shot)

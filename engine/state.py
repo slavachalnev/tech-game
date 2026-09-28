@@ -25,7 +25,7 @@ def save_of(path):
 
 
 def find_save(name=None):
-    """A save by name or path; else the one we're standing in; else the most recently played."""
+    """A save by name or path; else the one we're standing in; else the only one there is."""
     if name:
         path = Path(name) if Path(name).exists() else SAVES / name
         if not (path / "world.json").is_file():
@@ -34,17 +34,19 @@ def find_save(name=None):
     here = save_of(Path.cwd())
     if here:
         return here
-    saves = [d for d in SAVES.glob("*") if (d / "world.json").is_file()]
+    saves = sorted(d.name for d in SAVES.glob("*") if (d / "world.json").is_file())
+    if len(saves) == 1:
+        return SAVES / saves[0]
     if not saves:
-        raise SystemExit("No saves yet. Start one with: uv run tg new cornwall-1705")
-    return max(saves, key=lambda d: (d / "world.json").stat().st_mtime)
+        raise SystemExit("No saves yet. Start one with: uv run tg new cornwall-1705 --name mygame")
+    raise SystemExit(f"Which save? There are several: {', '.join(saves)}. Name one, e.g. uv run tg serve {saves[0]}")
 
 
 def new_save(scenario, name):
     """Copy a scenario's start state into saves/<name> and make it a DM workspace."""
     dst = SAVES / name
-    shutil.copytree(SCENARIOS / scenario / "start", dst)
-    for sub in ("things", "people", "log", "fermi", "visuals", "sketches"):
+    shutil.copytree(SCENARIOS / scenario / "start", dst, ignore=shutil.ignore_patterns(".*"))
+    for sub in ("things", "people", "log", "fermi", "visuals", "maps", "sketches"):
         (dst / sub).mkdir(exist_ok=True)
     template = ROOT / "dm" / "save_template"
     (dst / "CLAUDE.md").write_text((template / "CLAUDE.md").read_text().replace("{scenario}", scenario))
@@ -85,10 +87,19 @@ def load_state(save):
         "things": things,
         "people": folder("people"),
         "log": folder("log"),
+        "maps": maps(save),
         "sketches": [f"sketches/{p.name}" for p in sorted((save / "sketches").glob("*.png"))],
         "briefing": briefing.read_text() if briefing.is_file() else "",
         "problems": check_save(save),
     }
+
+
+def maps(save):
+    """The save's maps, each titled by its SVG <title> (else its file name)."""
+    def title(p):
+        m = re.search(r"<title>(.*?)</title>", p.read_text(), re.S)
+        return m[1].strip() if m else p.stem.replace("-", " ").capitalize()
+    return [{"id": p.stem, "visual": f"maps/{p.name}", "_v": p.stat().st_mtime_ns, "title": title(p)} for p in sorted((save / "maps").glob("*.svg"))]
 
 
 def signature(save):
@@ -128,7 +139,7 @@ def check_file(save, path):
     """Problems with one file in a save (schema, id/file-name match, SVG well-formedness)."""
     path = Path(path).resolve()
     rel = path.relative_to(save)
-    if rel.parts[0] == "visuals" and rel.suffix == ".svg":
+    if rel.parts[0] in ("visuals", "maps") and rel.suffix == ".svg":
         try:
             ElementTree.parse(path)
         except ElementTree.ParseError as e:
@@ -181,22 +192,25 @@ def check_save(save):
     return problems
 
 
-# --- Money (pence) and clock ---
+# --- Money (pence, 100p = £1) and clock ---
 
-def fmt_money(d):
-    """Pence -> '£2 3s 6d' (zero parts left out)."""
-    a = abs(d)
-    parts = [a >= 240 and f"£{a // 240}", a % 240 >= 12 and f"{a % 240 // 12}s", a % 12 and f"{a % 12}d"]
-    return ("-" if d < 0 else "") + (" ".join(p for p in parts if p) or "0d")
+def fmt_money(p):
+    """Pence -> '£47.18', '£50', '45p'."""
+    sign, a = ("-" if p < 0 else ""), abs(p)
+    if a < 100:
+        return f"{sign}{a}p"
+    return f"{sign}£{a // 100}" + (f".{a % 100:02d}" if a % 100 else "")
 
 
 def parse_money(text):
-    """'£2 3s 6d', '10s', '4d', '£5' -> pence."""
-    m = re.fullmatch(r"\s*(?:£\s*(\d+))?\s*(?:(\d+)\s*s)?\s*(?:(\d+)\s*d)?\s*", text)
-    if not m or not any(m.groups()):
-        raise SystemExit(f"Can't read {text!r} as money. Write it like '£2 3s 6d', '10s' or '4d'.")
-    pounds, shillings, pence = (int(g or 0) for g in m.groups())
-    return pounds * 240 + shillings * 12 + pence
+    """'£3.25', '3.25', '£3', '45p' -> pence."""
+    m = re.fullmatch(r"\s*£?\s*(\d+)(?:\.(\d{1,2}))?\s*", text)
+    if m:
+        return int(m[1]) * 100 + int((m[2] or "0").ljust(2, "0"))
+    m = re.fullmatch(r"\s*(\d+)\s*p\s*", text)
+    if m:
+        return int(m[1])
+    raise SystemExit(f"Can't read {text!r} as money. Write it like '£3.25', '£3' or '45p'.")
 
 
 def advance_clock(clock, span):

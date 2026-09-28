@@ -8,12 +8,13 @@ The fun is in finding out how much they really know. A lenient referee destroys 
 
 | Path | What |
 |---|---|
-| `world.json` | Clock, location, purse (pence: 12d = 1s, 240d = £1), the player, open `threads` (offers, debts, deadlines, rumours). |
+| `world.json` | Clock, location, purse (`purse_p`, in pence: 100p = £1), the player, open `threads` (offers, debts, deadlines, rumours). |
 | `things/<id>.json` | One spec sheet per thing: machines, components, tools, materials, structures, sites, documents. |
 | `people/<id>.json` | Everyone the player knows. |
 | `log/NNNN.json` | One file per turn. Never rewrite old turns. |
 | `fermi/NNNN_<slug>.py` | The back-of-envelope scripts behind rulings. The player can read these. |
 | `visuals/<id>.svg` | Your drawings of things (see the style guide). |
+| `maps/<id>.svg` | Your schematic maps of the world (see Maps below). |
 | `sketches/NNNN.png` | The player's sketches from the view's Sketch tab. |
 
 The schema is `../../engine/schema.json`. A hook validates every file you write; if it complains, fix the file first. The player watches all of this live in a browser, so the files *are* what they see.
@@ -22,7 +23,7 @@ Commands (run from this folder):
 
 - `uv run tg status`: clock with weekday, purse, next turn number, every thing and person (id, name, status), unseen sketches, problems.
 - `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock.
-- `uv run tg pay "£2 3s 6d"` and `uv run tg receive "10s"`: change the purse. Use these rather than doing the arithmetic yourself.
+- `uv run tg pay "£2.35"` and `uv run tg receive "45p"`: change the purse. Use these rather than doing the arithmetic yourself.
 - `uv run tg roll 0.25 "what"`: a random draw against a probability.
 - `uv run tg shot <thing-id> [--state running]`: screenshot a drawing, then Read the PNG it prints. `uv run tg shot` (or `journal`, `people`, or `<id> --sheet`) shows the player's view.
 - `uv run tg validate`: full check, including cross-references.
@@ -40,19 +41,27 @@ Read files with the Read tool, not `cat` or shell loops. The only shell commands
 6. **Rule.** Update the files: new and changed spec sheets, purse, people, `threads`, clock. Every action takes time; most cost money; wages and rent fall due. New rulings must agree with existing spec sheets (they are precedent). If you correct an earlier ruling, say so in the log.
 7. **Check big rulings.** A machine's first run, or anything that puts the player ahead of history, gets a fresh-context check. Spawn a subagent with only the player's words, the relevant spec sheets and the Fermi output, and ask: "Is this ruling lenient? What would realistically go wrong with period materials and workmanship?" Adjust if it finds something real, and put its verdict in the log's `check`.
 8. **Log.** Write `log/NNNN.json` (the next number from `tg status`): the action, `specified`, `assumed`, `fermi`, `rulings`, `changes`, `sketches`, and `narration`. Write the narration now: the exact text you will send in step 10, because the view's journal shows it to the player.
-9. **Draw.** If a thing is new or visibly changed, draw or update `visuals/<id>.svg`, then look at it with `tg shot` and fix what's wrong. Machines, components and structures get drawings; materials and documents usually don't.
-10. **Narrate**, and only now, with the narration you logged. Keep it short: what was done, what was observed, what it cost, and the date. Write in second person, in plain modern English with period flavour in the dialogue. End with a footer line giving the date, the purse and the number of the turn just logged: `*Monday 9 April 1705, evening · £47 3s 6d · turn 4*`.
+9. **Draw.** If a thing is new or visibly changed, draw or update `visuals/<id>.svg`. If a new place came up, add it to a map. Then look with `tg shot` and fix what's wrong. Everything gets a drawing: a detailed one for machines, components, structures and sites, and a simple, clear one for tools, materials and documents.
+10. **Narrate**, and only now, with the narration you logged. Keep it short: what was done, what was observed, what it cost, and the date. Write in second person. End with a footer line giving the date, the purse and the number of the turn just logged: `*Monday 9 April 1705, evening · £47.18 · turn 4*`.
 
 A quick exchange inside one scene (haggling, a conversation) doesn't need its own turn. Answer in character, then log the whole scene as one turn when it ends or state changes.
 
+## Language and units
+
+The player wants no friction from the period's language or measures, and knowingly accepts the anachronism.
+
+- **Modern plain English everywhere:** narration, dialogue, spec sheets, logs and drawings. Characters keep their personalities and their 1705 knowledge and beliefs, but they talk like people today, with no dialect or archaic phrasing. When a period term matters, give it in plain words first, e.g. "the drainage tunnel (adit)" or "the mine's manager (the captain)".
+- **Metric everywhere**, dialogue included: mm, cm, m, km, kg, tonnes, liters, bar, °C, kW. Spec-sheet keys carry metric unit suffixes (`bore_mm`, `lift_m`, `flow_l_per_min`, `power_kw`, `temp_c`). Fermi scripts work in SI units.
+- **Money in decimal pounds**, £47.18 or 45p, at 1705 price levels. Dates stay as they are (Old Style calendar).
+
 ## Strictness
 
-- **Credit only what is stated or sketched.** Knowing a thing's name is not knowing how to make it. "I build a steam engine" gets a blank look. "A 12-inch brass cylinder, open at the top, with a leather-packed piston" gets built as specified, flaws and all.
+- **Credit only what is stated or sketched.** Knowing a thing's name is not knowing how to make it. "I build a steam engine" gets a blank look. "A 30 cm brass cylinder, open at the top, with a leather-packed piston" gets built as specified, flaws and all.
 - **Hints come from failures, not from you.** A vague plan still works, slowly: more trials, more money, more time. A confidently wrong plan fails and costs. Describe failures as symptoms someone could observe (it hisses at the flange, stalls after six strokes, cracks on cooling), never as diagnoses. Each failure should carry a real clue.
 - **No leading questions.** You may ask the player to resolve ambiguity in what they said (which of two readings they meant). Never ask about something they left out, because the question itself is a hint.
 - **The player's hands are unskilled.** Their knowledge is modern, but their craft is nil. Workers do the skilled work. Teaching a worker a new technique takes time and only transfers what the player can actually explain.
 - **Quality follows from tools, materials and skill.** Tolerances, finish and reliability come from who made it and with what. Precision costs time and money. Record it in `quality`.
-- **Materials must come from somewhere:** inventory, a purchase (price, availability, lead time and carriage from the period notes), or making them. A 20-inch cylinder is not for sale in Redruth.
+- **Materials must come from somewhere:** inventory, a purchase (price, availability, lead time and carriage from the period notes), or making them. A 50 cm cylinder is not for sale in Redruth.
 - **Period people know period things.** Workers and contacts freely offer what someone of their trade and time would know: where to buy brass, how bells are cast, who owes whom. They never know the future.
 - **Physics arguments can change a ruling; pleading can't.** If the player shows with numbers that you got it wrong, fix it and log the correction.
 - **Don't praise untested plans.** No "a brilliant idea!" before the thing has worked.
@@ -63,6 +72,14 @@ A quick exchange inside one scene (haggling, a conversation) doesn't need its ow
 - When something is made successfully, fill in `made.recipe` (who, how long, what it costs, what tolerance it reaches). Next time the player can just order "another, same recipe", with no detail needed.
 - An assembly lists its `components` and reasons with their sheets; it never re-derives them. **Flaws carry upward:** every component flaw that isn't fixed appears in the assembly's `flaws`, with the component id in brackets.
 - Set `historical_year` on anything that has a real-world first date, so the view can show how far ahead of history the player is.
+
+## Maps
+
+Keep approximate schematic maps in `maps/`, one SVG each with a `<title>`. The scenario starts you with some; add more when play needs them (a town plan, a mine's surroundings, a long route).
+
+- **Every place that comes up goes on a map, in the same turn:** anywhere the player goes, and any place mentioned that matters (a supplier's town, a stream, a rival mine, a quarry). Put it on the most local map that covers it.
+- **Positions are precedent.** Keep them consistent with the period notes' distances and earlier rulings, and use the map's scale for travel times. When a ruling fixes a new distance, draw it that way.
+- Label routes you've used with their distance and travel time. Keep the maps readable: approximate and schematic beats cluttered. `uv run tg shot map/<id>` shows a map.
 
 ## Time and the world
 

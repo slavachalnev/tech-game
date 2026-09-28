@@ -119,6 +119,9 @@ a.card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(60, 40, 2
 .states { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .states a { padding: 1px 10px; font: 15px var(--fell-sc); color: var(--faded); text-decoration: none; border: 1px solid var(--rule); border-radius: 2px; }
 .states a.on { color: var(--paper-light); background: var(--ink); border-color: var(--ink); }
+.map-list { margin: 14px 0 12px; }
+.plate.map { position: static; }
+.plate.map img { max-height: calc(100vh - 210px); object-fit: contain; }
 .spec h3 { margin: 20px 0 6px; padding-bottom: 2px; font: 17px var(--fell-sc); letter-spacing: 0.03em; color: var(--faded); border-bottom: 1px solid var(--rule); }
 .spec h3:first-child { margin-top: 0; }
 .spec ul { margin: 0; padding-left: 20px; }

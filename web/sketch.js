@@ -6,7 +6,7 @@ export function initSketch(root, { traces, toast }) {
   root.innerHTML = `
     <div class="sketch-tools">
       <span class="group">
-        <button data-tool="pen" class="on">Pen</button><button data-tool="text">Label</button><button data-tool="erase">Eraser</button>
+        <button data-tool="pen" class="on">Pen</button><button data-tool="line" title="Straight line; hold Shift to snap to 15° steps">Line</button><button data-tool="text">Label</button><button data-tool="erase">Eraser</button>
       </span>
       <span class="group">
         <button data-color="ink" class="on"><i class="swatch ink"></i>Ink</button><button data-color="red"><i class="swatch red"></i>Red</button>
@@ -21,7 +21,7 @@ export function initSketch(root, { traces, toast }) {
       </span>
     </div>
     <div class="sketch-sheet"><canvas id="sk-bg"></canvas><canvas id="sk-ink"></canvas></div>
-    <p class="hint">Draw your design and label the parts. Saving puts it in the game's <code>sketches/</code> folder and copies its path: paste that into the terminal with your message, and the referee will look at it.</p>`;
+    <p class="hint">Draw your design and label the parts. Line draws straight lines; hold Shift to snap the angle. Saving puts it in the game's <code>sketches/</code> folder and copies its path: paste that into the terminal with your message, and the referee will look at it.</p>`;
 
   const [bg, ink] = [root.querySelector("#sk-bg"), root.querySelector("#sk-ink")];
   for (const c of [bg, ink]) Object.assign(c, { width: W, height: H });
@@ -74,6 +74,14 @@ export function initSketch(root, { traces, toast }) {
   const undo = () => (items.pop(), redraw());
   const at = (e) => [(e.offsetX / ink.clientWidth) * W, (e.offsetY / ink.clientHeight) * H];
 
+  // End point of a straight line; with Shift, the angle snaps to 15° steps.
+  function lineEnd([x0, y0], [x, y], snap) {
+    if (!snap) return [x, y];
+    const step = Math.PI / 12, len = Math.hypot(x - x0, y - y0);
+    const angle = Math.round(Math.atan2(y - y0, x - x0) / step) * step;
+    return [x0 + len * Math.cos(angle), y0 + len * Math.sin(angle)];
+  }
+
   ink.addEventListener("pointerdown", (e) => {
     const [x, y] = at(e);
     if (tool === "text") {
@@ -82,12 +90,13 @@ export function initSketch(root, { traces, toast }) {
       return;
     }
     ink.setPointerCapture(e.pointerId);
-    current = { tool, color, width: Number(widthSel.value), pts: [[x, y]] };
+    current = { tool, color, width: Number(widthSel.value), pts: tool === "line" ? [[x, y], [x, y]] : [[x, y]] };
     items.push(current);
     draw(current);
   });
   ink.addEventListener("pointermove", (e) => {
     if (!current) return;
+    if (current.tool === "line") return (current.pts[1] = lineEnd(current.pts[0], at(e), e.shiftKey)), redraw();
     const last = current.pts.at(-1), p = at(e);
     current.pts.push(p);
     pen(current);

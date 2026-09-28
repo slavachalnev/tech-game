@@ -4,9 +4,10 @@ import { initSketch } from "./sketch.js";
 const $ = (sel) => document.querySelector(sel);
 const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const KINDS = { machine: "Machines", component: "Components", structure: "Structures", tool: "Tools", material: "Materials", document: "Papers", site: "Sites", other: "Other" };
-const STATUS = { planned: "planned", building: "building", ok: "sound", faulty: "faulty", broken: "broken", consumed: "used up" };
-const UNIT = /^(.*?)_((?:in|ft|fm|yd|mi|mm|cm|m|lb|oz|cwt|tons?|kg|atm|psi|hp|gal|min|h|s|d|days|weeks|deg|pct)(?:_per_[a-z]+)?)$/;
+const KINDS = { machine: "Machines", component: "Components", structure: "Structures", tool: "Tools", material: "Materials", document: "Documents", site: "Sites", other: "Other" };
+const STATUS = { planned: "planned", building: "being built", ok: "OK", faulty: "faulty", broken: "broken", consumed: "used up" };
+const UNIT = /^(.*?)_((?:mm|cm|m|km|m2|m3|g|kg|t|l|ml|bar|kpa|mpa|atm|w|kw|c|pct|s|min|h|days|weeks|p)(?:_per_[a-z0-9]+)?)$/;
+const UNIT_LABEL = { m2: "m²", m3: "m³", l: "L", ml: "mL", kpa: "kPa", mpa: "MPa", w: "W", kw: "kW", c: "°C", pct: "%" };
 
 let S = null; // latest state from the server
 let seen = new Map(); // key -> JSON last rendered, to highlight what the referee just changed
@@ -15,10 +16,10 @@ let renderId = 0;
 
 // ---------- formatting ----------
 
-function money(d) {
-  const a = Math.abs(d);
-  const parts = [a >= 240 && `£${Math.floor(a / 240)}`, a % 240 >= 12 && `${Math.floor((a % 240) / 12)}s`, a % 12 && `${a % 12}d`];
-  return (d < 0 ? "-" : "") + (parts.filter(Boolean).join(" ") || "0d");
+function money(p) {
+  const a = Math.abs(p), sign = p < 0 ? "-" : "";
+  if (a < 100) return `${sign}${a}p`;
+  return `${sign}£${Math.floor(a / 100)}${a % 100 ? "." + String(a % 100).padStart(2, "0") : ""}`;
 }
 function day(clock) {
   const [y, m, d] = clock.slice(0, 10).split("-").map(Number);
@@ -28,8 +29,9 @@ const span = (a, b) => (day(a) === day(b) ? day(a) : `${day(a)} – ${day(b)}`);
 function prop(key, value) {
   const m = key.match(UNIT);
   const name = (m ? m[1] : key).replace(/_/g, " ");
-  if (m?.[2] === "d" && typeof value === "number") return [name, money(value)];
-  return [m ? `${name} (${m[2].replace("_per_", "/")})` : name, value === true ? "yes" : value === false ? "no" : value];
+  if (m?.[2] === "p" && typeof value === "number") return [name, money(value)];
+  const unit = m?.[2].split("_per_").map((u) => UNIT_LABEL[u] ?? u).join("/");
+  return [unit ? `${name} (${unit})` : name, value === true ? "yes" : value === false ? "no" : value];
 }
 const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>").replace(/`(.+?)`/g, "<code>$1</code>");
 function markdown(text) {
@@ -49,7 +51,7 @@ const table = (title, obj) =>
     : "";
 const fermi = (paths) =>
   paths?.length
-    ? `<h3>Fermi workings</h3>${paths.map((p) => `<details class="fermi" data-key="${esc(p)}" data-src="${esc(p)}"><summary>${esc(p)}</summary><pre>…</pre></details>`).join("")}`
+    ? `<h3>Fermi estimates</h3>${paths.map((p) => `<details class="fermi" data-key="${esc(p)}" data-src="${esc(p)}"><summary>${esc(p)}</summary><pre>…</pre></details>`).join("")}`
     : "";
 const history = (items) => list("History", items?.map((h) => `<span class="turn-ref">Turn ${h.turn}.</span> ${esc(h.note)}`), "history");
 
@@ -99,9 +101,9 @@ async function workshop() {
   const others = S.things.filter((t) => t.owner);
   return `
     <details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>
-    ${S.world.threads.length ? `<section><h2>Open matters</h2><ul class="threads">${S.world.threads.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
+    ${S.world.threads.length ? `<section><h2>Open threads</h2><ul class="threads">${S.world.threads.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
     ${(await Promise.all(groups.map(async ([k, ts]) => `<section><h2>${KINDS[k]}</h2>${await cards(ts)}</section>`))).join("")}
-    ${others.length ? `<section><h2>Elsewhere</h2>${await cards(others)}</section>` : ""}`;
+    ${others.length ? `<section><h2>Not yours</h2>${await cards(others)}</section>` : ""}`;
 }
 
 async function thingPage(id, query) {
@@ -113,7 +115,7 @@ async function thingPage(id, query) {
   const link = (x) => `<a href="#/thing/${x.id}">${esc(x.name)}</a>`;
   const flawCount = (x) => (x?.flaws?.length ? ` <span class="flag">${x.flaws.length} flaw${x.flaws.length > 1 ? "s" : ""}</span>` : "");
   const m = t.made;
-  const madeRows = m && [["by", m.by?.join(", ")], ["took", m.took], ["cost", m.cost_d !== undefined && money(m.cost_d)], ["turn", m.turn]].filter(([, v]) => v || v === 0);
+  const madeRows = m && [["by", m.by?.join(", ")], ["took", m.took], ["cost", m.cost_p !== undefined && money(m.cost_p)], ["turn", m.turn]].filter(([, v]) => v || v === 0);
   return `<article class="sheet">
     <a class="back" href="#/workshop">← Workshop</a>
     <header>
@@ -135,7 +137,7 @@ async function thingPage(id, query) {
         ${list("Components", t.components?.map((c) => (byId[c] ? link(byId[c]) + flawCount(byId[c]) : esc(c))))}
         ${list("Used in", S.things.filter((x) => x.components?.includes(t.id)).map(link))}
         ${m ? `<h3>How it was made</h3><p>${esc(m.how)}</p><dl>${madeRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${m.recipe ? `<p class="recipe"><b>Recipe.</b> ${esc(m.recipe)}</p>` : ""}` : ""}
-        ${t.historical_year ? `<p class="dated">First made in our history: ${t.historical_year}.</p>` : ""}
+        ${t.historical_year ? `<p class="dated">First made in real history: ${t.historical_year}.</p>` : ""}
         ${fermi(t.fermi)}
         ${t.notes ? `<h3>Notes</h3><p>${esc(t.notes)}</p>` : ""}
         ${history(t.history)}
@@ -148,7 +150,7 @@ function people() {
   return `<div class="cards people">${S.people.map((p) => `
     <div class="card person${fresh.has("p:" + p.id) ? " fresh" : ""}"><div class="card-body">
       <h3>${esc(p.name)}</h3>
-      <div class="meta">${esc(p.role)}${p.employed ? ` · <b>in your pay</b>${p.wage_d_week ? `, ${money(p.wage_d_week)} a week` : ""}` : ""}</div>
+      <div class="meta">${esc(p.role)}${p.employed ? ` · <b>employed by you</b>${p.wage_p_week ? `, ${money(p.wage_p_week)} a week` : ""}` : ""}</div>
       ${p.attitude ? `<p class="attitude">${esc(p.attitude)}</p>` : ""}
       ${p.skills?.length ? `<p class="skills">${p.skills.map(esc).join(" · ")}</p>` : ""}
       ${p.location ? `<p class="where">${esc(p.location)}</p>` : ""}
@@ -166,13 +168,21 @@ function journal() {
       <blockquote>${esc(e.action)}</blockquote>
       ${e.sketches?.length ? `<div class="entry-sketches">${e.sketches.map((s) => `<a href="/save/${s}" target="_blank"><img src="/save/${s}" alt="${s}"></a>`).join("")}</div>` : ""}
       <div class="narration">${e.narration.split(/\n+/).map((p) => `<p>${inline(p)}</p>`).join("")}</div>
-      <details data-key="w${e.turn}"><summary>Referee's workings</summary>
-        ${workings("Credited to you", e.specified)}${workings("Filled in with period practice", e.assumed)}
+      <details data-key="w${e.turn}"><summary>How the referee ruled</summary>
+        ${workings("Credited to you", e.specified)}${workings("Filled in with standard period practice", e.assumed)}
         ${workings("Rulings", e.rulings)}${workings("Changes", e.changes)}
         ${e.check ? `<h4>Check</h4><p>${esc(e.check)}</p>` : ""}
         ${fermi(e.fermi)}
       </details>
     </article>`).join("");
+}
+
+async function map(id) {
+  if (!S.maps.length) return `<p class="empty">No maps yet. The referee draws them as places come up.</p>`;
+  const m = S.maps.find((x) => x.id === id) ?? S.maps[0];
+  const url = await drawing(m);
+  return `<nav class="states map-list">${S.maps.map((x) => `<a href="#/map/${x.id}" class="${x === m ? "on" : ""}">${esc(x.title)}</a>`).join("")}</nav>
+    <figure class="plate map${fresh.has("m:" + m.id) ? " fresh" : ""}"><a href="${url}" target="_blank" title="Open full size"><img src="${url}" alt="${esc(m.title)}"></a></figure>`;
 }
 
 async function plate(id, query) {
@@ -192,8 +202,10 @@ function masthead(route) {
   $("#title").textContent = w.title;
   $("#clock").textContent = S.clock_label;
   $("#place").textContent = w.location;
-  $("#purse").textContent = money(w.purse_d);
-  $("#purse").classList.toggle("debt", w.purse_d < 0);
+  $("#purse").textContent = money(w.purse_p);
+  $("#purse").classList.toggle("debt", w.purse_p < 0);
+  $("#save").textContent = `save: ${S.save}`;
+  document.title = `${w.title} · ${S.save}`;
   $("#turn").textContent = `turn ${S.log.length}`;
   $("#ahead").textContent = ahead ? ` · ${ahead.historical_year - year} years ahead of history` : "";
   $("#ahead").title = ahead ? ahead.name : "";
@@ -216,7 +228,7 @@ async function render() {
   const main = $("#main");
   main.hidden = route === "sketch";
   if (route === "sketch") sketch.refresh();
-  const views = { workshop, thing: thingPage, people, journal, visual: plate, sketch: () => "" };
+  const views = { workshop, thing: thingPage, people, map, journal, visual: plate, sketch: () => "" };
   const html = await (views[route] ?? workshop)(arg, query);
   if (id !== renderId) return; // a newer render started meanwhile
   const open = [...main.querySelectorAll("details[open]")].map((d) => d.dataset.key);
@@ -228,7 +240,7 @@ async function render() {
 }
 
 function markFresh(next) {
-  const keyed = [...next.things.map((t) => [t.id, t]), ...next.people.map((p) => ["p:" + p.id, p]), ...next.log.map((e) => ["t:" + e.turn, e])];
+  const keyed = [...next.things.map((t) => [t.id, t]), ...next.people.map((p) => ["p:" + p.id, p]), ...next.maps.map((m) => ["m:" + m.id, m]), ...next.log.map((e) => ["t:" + e.turn, e])];
   const changed = seen.size ? keyed.filter(([k, v]) => seen.get(k) !== JSON.stringify(v)).map(([k]) => k) : [];
   seen = new Map(keyed.map(([k, v]) => [k, JSON.stringify(v)]));
   changed.forEach((k) => fresh.add(k));
@@ -253,6 +265,7 @@ const sketch = initSketch($("#sketch"), {
   toast,
   traces: () => [
     ...S.things.filter((t) => t.visual && t._v).map((t) => ({ key: "t:" + t.id, label: t.name, url: () => drawing(t) })),
+    ...S.maps.map((m) => ({ key: "m:" + m.id, label: `Map: ${m.title}`, url: () => drawing(m) })),
     ...S.sketches.map((s) => ({ key: s, label: `Sketch ${s.slice(9, 13)}`, url: async () => `/save/${s}` })),
   ],
 });

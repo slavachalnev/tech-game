@@ -3,15 +3,35 @@
   "name": "The smithy",
   "kind": "structure",
   "status": "ok",
-  "summary": "A small rented smithy on the Truro road at the edge of Redruth.",
+  "summary": "A small rented blacksmith's workshop on the Truro road, at the edge of Redruth.",
   "location": "Redruth",
-  "materials": ["granite rubble walls", "slate roof on oak trusses", "beaten earth floor"],
-  "dimensions": {"length_ft": 30, "width_ft": 18, "eaves_height_ft": 9, "door_width_ft": 6},
-  "performance": {"workspace": "one room; room for a hearth, an anvil, a bench and a small job"},
-  "flaws": ["No water power: any machine must be driven by hand, horse or something you build", "Dark inside; fine work needs the doorway light"],
-  "components": ["forge", "anvil"],
+  "materials": [
+    "granite rubble walls",
+    "slate roof on oak trusses",
+    "packed earth floor"
+  ],
+  "dimensions": {
+    "length_m": 9,
+    "width_m": 5.5,
+    "eaves_height_m": 2.7,
+    "door_width_m": 1.8
+  },
+  "performance": {
+    "workspace": "one room, with space for a hearth, an anvil, a workbench and one small job"
+  },
+  "flaws": [
+    "No water power: any machine must be driven by hand, by a horse, or by something you build",
+    "Dark inside; fine work needs the light from the doorway"
+  ],
+  "components": [
+    "forge",
+    "anvil"
+  ],
   "visual": "visuals/smithy.svg",
   "state": "idle",
-  "states": ["idle", "fire-lit"],
-  "notes": "Rent £1 10s a quarter, paid to Midsummer."
+  "states": [
+    "idle",
+    "fire-lit"
+  ],
+  "notes": "Rent is £1.50 a quarter, paid until 24 June."
 }

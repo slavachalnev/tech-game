@@ -83,11 +83,11 @@ def shot(save, target, visual_state=None, sheet=False):
 
     server = make_server(save, 0)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    tab = target in ("workshop", "people", "journal", "sketch") and not sheet
+    tab = (target in ("workshop", "people", "map", "journal", "sketch") or "/" in target) and not sheet
     route = f"#/{target}" if tab else f"#/{'thing' if sheet else 'visual'}/{target}"
     if visual_state:
         route += f"?state={visual_state}"
-    out = save / ".shots" / f"{target}{'-sheet' if sheet else ''}{'-' + visual_state if visual_state else ''}.png"
+    out = save / ".shots" / f"{target.replace('/', '-')}{'-sheet' if sheet else ''}{'-' + visual_state if visual_state else ''}.png"
     out.parent.mkdir(exist_ok=True)
     errors = []
     with sync_playwright() as p:

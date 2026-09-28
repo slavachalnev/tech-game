@@ -1,10 +1,14 @@
 {
   "id": "thomas-hocking",
   "name": "Thomas Hocking",
-  "role": "Millwright at Carnkie",
-  "skills": ["Water wheels and their gearing", "Rag-and-chain and bucket pumps", "Heavy timber work"],
+  "role": "Millwright at Carnkie (builds mills, water wheels and pumps)",
+  "skills": [
+    "Water wheels and their gearing",
+    "Rag-and-chain and bucket pumps",
+    "Heavy timber work"
+  ],
   "employed": false,
-  "wage_d_week": 144,
-  "attitude": "Not yet met. Jacca says he's the best wheelwright in the district and knows it.",
-  "location": "Carnkie, three miles south"
+  "wage_p_week": 60,
+  "attitude": "Not met yet. Jacca says he's the best millwright in the district, and he knows it.",
+  "location": "Carnkie, 5 km south"
 }

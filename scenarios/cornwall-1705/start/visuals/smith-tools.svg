@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/>
+      <feDisplacementMap in="SourceGraphic" scale="2"/>
+    </filter>
+    <pattern id="cut" width="4" height="4" patternUnits="userSpaceOnUse">
+      <path d="M0,4 L4,0 M0,0 L4,4" stroke="#7a6a55" stroke-width="0.5"/>
+    </pattern>
+    <marker id="red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#9c3b25" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Bench top, seen from above -->
+  <rect x="24" y="36" width="580" height="420" fill="#9a7446" fill-opacity="0.12"/>
+  <path d="M24,170 H604 M24,304 H604" stroke="#7a6a55" stroke-width="0.7" stroke-dasharray="10 6"/>
+
+  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="24" y="36" width="580" height="420"/>
+    <!-- handles (timber) -->
+    <g fill="#9a7446" fill-opacity="0.4" stroke-width="1.6">
+      <path d="M65,76 H75 L77,382 Q70,390 63,382 Z"/>
+      <path d="M136,74 H144 L145,204 Q140,210 135,204 Z"/>
+      <path d="M201,74 H209 L210,212 Q205,218 200,212 Z"/>
+      <path d="M447,82 H453 L452,262 H448 Z M514,82 H520 L519,262 H515 Z"/>
+      <path d="M356,319 Q352,326 356,333 H396 L400,330 V322 L396,319 Z M356,343 Q352,350 356,357 H396 L400,354 V346 L396,343 Z M356,367 Q352,374 356,381 H396 L400,378 V370 L396,367 Z"/>
+    </g>
+    <!-- iron heads and tools -->
+    <g fill="#56514b" fill-opacity="0.38" stroke-width="1.6">
+      <rect x="42" y="54" width="56" height="22"/>
+      <path d="M114,56 H150 L164,61 L168,65 L164,69 L150,74 H114 Z"/>
+      <path d="M182,56 H224 Q231,65 224,74 H182 Z"/>
+      <path d="M424,54 L436,58 V84 L424,88 Z M436,60 H468 V82 H436 Z"/>
+      <path d="M502,60 H532 V82 H502 Q488,71 502,60 Z"/>
+      <path d="M110,321 H176 L198,326 L176,331 H110 Z M110,337 H180 L196,340 V344 L180,347 H110 Z M110,354 H172 L190,356 V360 L172,362 H110 Z M110,369 H184 L194,372 V376 L184,379 H110 Z"/>
+      <path d="M226,320 H300 L322,324 V328 L300,332 H226 Z M226,340 H302 L322,344 V348 L302,352 H226 Z M226,361 H296 L316,364 V368 L296,371 H226 Z"/>
+      <path d="M400,324 H412 M400,348 H412 M400,372 H412" stroke-width="3"/>
+      <path d="M412,321 Q500,318 580,323 L594,326 L580,329 Q500,334 412,331 Z"/>
+      <path d="M412,346 L592,349 V351 L412,354 Z"/>
+      <path d="M412,367 H572 L592,371 V377 L572,381 H412 Z"/>
+    </g>
+    <path d="M226,326 H300 M226,346 H302 M226,366 H296" stroke="#7a6a55" stroke-width="0.7"/>
+    <!-- tongs -->
+    <g stroke-width="2.2">
+      <path d="M270,100 Q258,76 266,54 M270,100 Q282,76 274,54 M266,104 L260,256 M274,104 L280,256"/>
+      <path d="M330,100 Q312,78 326,54 M330,100 Q348,78 334,54 M326,104 L320,256 M334,104 L340,256"/>
+      <path d="M390,100 Q378,80 382,62 L390,54 M390,100 Q402,80 398,62 L390,54 M386,104 L380,256 M394,104 L400,256"/>
+    </g>
+    <circle cx="270" cy="100" r="4" fill="#2b2118" fill-opacity="0.4" stroke-width="1.2"/>
+    <circle cx="330" cy="100" r="4" fill="#2b2118" fill-opacity="0.4" stroke-width="1.2"/>
+    <circle cx="390" cy="100" r="4" fill="#2b2118" fill-opacity="0.4" stroke-width="1.2"/>
+
+    <!-- leg vice, side view, on the bench edge -->
+    <path d="M610,470 H790"/>
+    <rect x="732" y="150" width="58" height="16" fill="#9a7446" fill-opacity="0.35" stroke-width="1.6"/>
+    <path d="M766,166 V470 M780,166 V470" stroke-width="1.6"/>
+    <path d="M728,174 H766" stroke-width="2.4"/>
+    <g fill="#56514b" fill-opacity="0.4" stroke-width="1.8">
+      <path d="M714,126 H734 V156 L728,164 V470 H718 V164 L714,156 Z"/>
+      <path d="M692,126 H712 V156 L708,164 L718,412 Q716,424 710,416 L698,164 L692,156 Z"/>
+      <rect x="728" y="184" width="34" height="12"/>
+    </g>
+    <path d="M668,190 H762" stroke-width="3"/>
+    <path d="M668,158 V222" stroke-width="2.6"/>
+    <circle cx="668" cy="156" r="3.5" fill="#2b2118"/><circle cx="668" cy="224" r="3.5" fill="#2b2118"/>
+    <path d="M718,252 Q702,230 706,204" stroke-width="1.2"/>
+    <circle cx="718" cy="420" r="3.5" stroke-width="1.2"/>
+    <path d="M713,128 V154" stroke="#7a6a55" stroke-width="3" stroke-dasharray="1 2"/>
+  </g>
+
+  <!-- Files: the bottom one shows the worn teeth -->
+  <path d="M412,321 Q500,318 580,323 L594,326 L580,329 Q500,334 412,331 Z M412,346 L592,349 V351 L412,354 Z M412,367 H520 V381 H412 Z M566,367 H572 L592,371 V377 L572,381 H566 Z" fill="url(#cut)"/>
+
+  <!-- Flaw -->
+  <ellipse cx="543" cy="374" rx="28" ry="12" fill="none" stroke="#9c3b25" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M566,414 L552,390" fill="none" stroke="#9c3b25" stroke-width="0.8" marker-end="url(#red)"/>
+  <g fill="#9c3b25" font-style="italic" font-size="13">
+    <text x="410" y="428">hand-cut and worn: with patience they</text>
+    <text x="410" y="444">flatten a surface to about 1 mm</text>
+  </g>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="14" text-anchor="middle">
+    <text x="172" y="238">Hand hammers</text>
+    <text x="330" y="280">Tongs</text>
+    <text x="482" y="282">Fuller and flatter</text>
+    <text x="482" y="298" font-size="13">(shaping tools)</text>
+    <text x="70" y="406">Sledge</text>
+    <text x="152" y="406">Punches</text>
+    <text x="274" y="406">Chisels</text>
+    <text x="476" y="406">Files</text>
+    <text x="688" y="132" font-size="13" text-anchor="end">Jaws</text>
+    <text x="638" y="194" font-size="13">Screw</text>
+    <text x="700" y="498">Leg vice, fixed to the</text>
+    <text x="700" y="514">bench (side view)</text>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Blacksmith's Tools</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Laid out on the bench · not to scale</text>
+  </g>
+</svg>

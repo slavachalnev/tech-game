@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#7a6a55" stroke-width="0.6"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+    <marker id="red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#9c3b25" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Side view: anvil on its stump (5 px = 1 cm) -->
+  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M184,260 L376,260 L382,500 L178,500 Z" fill="#9a7446" fill-opacity="0.3"/>
+    <path d="M212,268 Q217,380 209,494 M252,266 Q246,380 253,496 M302,266 Q307,380 299,496 M346,268 Q341,380 349,494" stroke="#7a6a55" stroke-width="0.8"/>
+    <path d="M58,133 Q105,126 160,130 L200,130 L200,125 L205,120 Q290,134 371,120 L380,126 L380,152 Q346,154 336,182 L333,212 Q336,238 362,244 L362,260 L196,260 L196,244 Q222,238 226,212 L224,192 C212,160 130,142 58,133 Z" fill="#56514b" fill-opacity="0.35"/>
+    <path d="M200,125 L205,120 Q290,134 371,120 L380,126 L380,131 Q290,145 200,132 Z" fill="url(#hatch)" stroke="none"/>
+    <path d="M200,132 Q290,145 380,131" stroke-width="1.2"/>
+    <path d="M338,121 V150 M343,121 V150 M353,121 V152 M364,122 V152" stroke-width="1" stroke-dasharray="3 2"/>
+    <path d="M20,500 H460" />
+    <path d="M30,500 l-8,8 M60,500 l-8,8 M90,500 l-8,8 M120,500 l-8,8 M150,500 l-8,8 M410,500 l-8,8 M440,500 l-8,8" stroke="#7a6a55" stroke-width="0.8"/>
+  </g>
+
+  <!-- The face from above -->
+  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M530,206 H510 M530,244 H510" stroke-width="1.4"/>
+    <path d="M510,202 L506,216 L514,226 L506,236 L510,248" stroke="#7a6a55" stroke-width="1"/>
+    <rect x="530" y="200" width="180" height="50" fill="#56514b" fill-opacity="0.25"/>
+    <rect x="684" y="219" width="12" height="12" stroke-width="1.2"/>
+    <circle cx="667" cy="225" r="3" stroke-width="1.2"/>
+  </g>
+
+  <!-- Flaws: dished face, chipped edges -->
+  <g fill="#9c3b25" fill-opacity="0.55" stroke="#9c3b25" stroke-width="0.8">
+    <path d="M372,120 L380,120 L380,126 Z M200,120 L206,120 L200,125 Z"/>
+    <path d="M530,200 H538 L530,207 Z M554,200 L560,207 L567,200 Z M645,200 L650,206 L658,200 Z M583,250 L590,243 L598,250 Z M702,250 L710,242 V250 Z"/>
+  </g>
+  <g fill="none" stroke="#9c3b25" stroke-width="1">
+    <path d="M194,120 H386" stroke-dasharray="5 3"/>
+    <ellipse cx="612" cy="225" rx="56" ry="16" stroke-dasharray="4 3"/>
+    <ellipse cx="612" cy="225" rx="26" ry="7" stroke-dasharray="4 3"/>
+    <path d="M568,274 L588,254 M680,286 L638,236" stroke-width="0.8" marker-end="url(#red)"/>
+  </g>
+  <g fill="#9c3b25" font-style="italic" font-size="13">
+    <text x="206" y="106">face slightly dished (depth exaggerated)</text>
+    <text x="500" y="288">chipped at the edges</text>
+    <text x="640" y="302">dished in the middle</text>
+  </g>
+
+  <!-- Dimensions -->
+  <g stroke="#7a6a55" stroke-width="0.8" fill="none">
+    <path d="M26,120 H196"/>
+    <line x1="34" y1="122" x2="34" y2="498" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M530,196 V172 M710,196 V172 M714,200 H742 M714,250 H742"/>
+    <line x1="532" y1="180" x2="708" y2="180" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <line x1="734" y1="202" x2="734" y2="248" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M84,160 L96,140 M198,226 L240,220 M134,388 L184,380 M392,134 L362,126 M392,180 L360,148" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="14">
+    <text x="40" y="318">76 cm</text>
+    <text x="60" y="174">Horn</text>
+    <text x="60" y="228">Wrought-iron body,</text>
+    <text x="60" y="244">76 kg in all</text>
+    <text x="60" y="392">Elm stump</text>
+    <text x="396" y="138">Steel face,</text>
+    <text x="396" y="154">forge-welded on</text>
+    <text x="396" y="186">Hardy hole</text>
+    <text x="620" y="174" text-anchor="middle">36 cm</text>
+    <text x="742" y="230">10 cm</text>
+    <text x="530" y="142" font-size="15">The face, from above</text>
+  </g>
+
+  <!-- Scale bar -->
+  <g stroke="#2b2118" stroke-width="0.8">
+    <rect x="40" y="552" width="50" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+    <rect x="90" y="552" width="50" height="6" fill="none"/>
+    <rect x="140" y="552" width="50" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+  </g>
+  <g fill="#2b2118" font-style="italic" font-size="12" text-anchor="middle">
+    <text x="40" y="574">0</text><text x="90" y="574">10</text><text x="140" y="574">20</text><text x="190" y="574">30 cm</text>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Anvil</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Side view and face from above · to scale</text>
+  </g>
+</svg>

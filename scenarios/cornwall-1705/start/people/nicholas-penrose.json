@@ -1,9 +1,12 @@
 {
   "id": "nicholas-penrose",
   "name": "Nicholas Penrose",
-  "role": "Purser of Wheal Fortune",
-  "skills": ["Keeps the mine's accounts", "Speaks for the adventurers"],
+  "role": "Treasurer (\"purser\") of Wheal Fortune",
+  "skills": [
+    "Keeps the mine's accounts",
+    "Speaks for the shareholders"
+  ],
   "employed": false,
-  "attitude": "Not yet met. Said to be careful with money and tired of projectors.",
+  "attitude": "Not met yet. Said to be careful with money and tired of inventors with schemes.",
   "location": "Redruth"
 }

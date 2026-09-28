@@ -28,6 +28,6 @@
 
   <g font-style="italic" fill="#2b2118">
     <text x="780" y="570" text-anchor="end" font-size="20" font-variant="small-caps" font-style="normal">Name of Thing</text>
-    <text x="780" y="590" text-anchor="end" font-size="13">Scale: 1 in to 1 ft</text>
+    <text x="780" y="590" text-anchor="end" font-size="13">Scale 1:20</text>
   </g>
 </svg>

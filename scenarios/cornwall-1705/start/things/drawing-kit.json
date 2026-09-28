@@ -3,7 +3,10 @@
   "name": "Drawing instruments",
   "kind": "tool",
   "status": "ok",
-  "summary": "A quire of paper, iron-gall ink, quills, a two-foot brass rule and dividers.",
+  "summary": "Paper, ink, quill pens, a 60 cm brass ruler and a pair of dividers.",
   "location": "with you",
-  "quality": {"rule": "marked in inches and eighths"}
+  "quality": {
+    "ruler": "marked in millimeters"
+  },
+  "visual": "visuals/drawing-kit.svg"
 }

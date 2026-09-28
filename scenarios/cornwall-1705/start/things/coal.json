@@ -1,0 +1,11 @@
+{
+  "id": "coal",
+  "name": "Coal",
+  "kind": "material",
+  "status": "ok",
+  "summary": "Welsh coal, shipped to Portreath and carted up.",
+  "location": "the smithy",
+  "quantity": 500,
+  "unit": "kg",
+  "visual": "visuals/coal.svg"
+}

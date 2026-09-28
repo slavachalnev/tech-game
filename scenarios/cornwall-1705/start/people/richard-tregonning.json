@@ -1,9 +1,13 @@
 {
   "id": "richard-tregonning",
   "name": "Captain Richard Tregonning",
-  "role": "Mine captain at Wheal Fortune",
-  "skills": ["Runs the underground work", "Knows the lodes and the water", "Horse whims and rag-and-chain pumps"],
+  "role": "Manager (\"captain\") of Wheal Fortune",
+  "skills": [
+    "Runs the underground work",
+    "Knows the ore veins and the water",
+    "Horse whims and rag-and-chain pumps"
+  ],
   "employed": false,
-  "attitude": "Not yet met. Practical, proud, and suspicious of gentlemen with notions.",
+  "attitude": "Not met yet. Practical, proud, and suspicious of gentlemen with big ideas.",
   "location": "Wheal Fortune"
 }

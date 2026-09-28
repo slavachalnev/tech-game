@@ -17,7 +17,7 @@ uv run playwright install chromium
 
 ```sh
 uv run tg new cornwall-1705 --name mygame   # start a game
-uv run tg serve                             # terminal 1: open http://127.0.0.1:8765
+uv run tg serve mygame                      # terminal 1: open http://127.0.0.1:8765
 cd saves/mygame && claude                   # terminal 2: the referee
 ```
 

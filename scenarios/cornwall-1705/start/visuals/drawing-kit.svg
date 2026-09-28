@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/>
+      <feDisplacementMap in="SourceGraphic" scale="2"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- paper: two quarto sheets (10 px = 1 cm) -->
+    <rect x="80" y="58" width="210" height="270" transform="rotate(-1 180 190)" stroke-width="1.4"/>
+    <rect x="75" y="55" width="210" height="270" transform="rotate(-5 180 190)" fill="#f8f1e1" stroke-width="1.6"/>
+    <g transform="rotate(-5 180 190)" stroke="#7a6a55" stroke-width="0.8">
+      <path d="M95,82 q20,-3 40,0 t40,0 t40,0 M95,98 q20,-3 40,0 t40,0 t60,0 M95,114 q20,-3 40,0 t40,0"/>
+      <rect x="120" y="160" width="60" height="110"/>
+      <path d="M120,200 H180 M150,200 V150 M120,285 H180 M200,160 V270" stroke-dasharray="4 3"/>
+      <path d="M196,160 h8 M196,270 h8"/>
+    </g>
+    <!-- quill pens -->
+    <g transform="translate(330,320) rotate(-50)"><path d="M0,0 L10,-2 L100,-3 L300,0 L100,3 L10,2 Z" fill="#9a7446" fill-opacity="0.25"/><path d="M80,-3 Q180,-26 300,0 Q200,-4 80,-3 Z M110,3 Q210,14 300,0" stroke-width="1.3"/><path d="M110,-6 l10,-10 M140,-9 l12,-12 M170,-12 l12,-11 M200,-12 l12,-10 M230,-11 l12,-8 M260,-8 l12,-5 M140,5 l8,5 M180,7 l8,4 M220,6 l8,3" stroke="#7a6a55" stroke-width="0.7"/></g>
+    <g transform="translate(362,334) rotate(-42) scale(0.93)"><path d="M0,0 L10,-2 L100,-3 L300,0 L100,3 L10,2 Z" fill="#9a7446" fill-opacity="0.25"/><path d="M80,-3 Q180,-26 300,0 Q200,-4 80,-3 Z M110,3 Q210,14 300,0" stroke-width="1.3"/><path d="M110,-6 l10,-10 M140,-9 l12,-12 M170,-12 l12,-11 M200,-12 l12,-10 M230,-11 l12,-8 M260,-8 l12,-5 M140,5 l8,5 M180,7 l8,4 M220,6 l8,3" stroke="#7a6a55" stroke-width="0.7"/></g>
+    <!-- ink pot -->
+    <path d="M620,112 Q614,170 626,182 H674 Q686,170 680,112 Q676,96 660,94 H640 Q624,96 620,112 Z" fill="#8a7a62" fill-opacity="0.35"/>
+    <path d="M638,94 V86 H662 V94" stroke-width="1.6"/>
+    <rect x="641" y="74" width="18" height="12" fill="#9a7446" fill-opacity="0.45" stroke-width="1.4"/>
+    <path d="M624,140 Q650,146 676,140" stroke="#7a6a55" stroke-width="0.8"/>
+    <!-- dividers -->
+    <path d="M684,200 L650,318 L656,320 L694,204 Z M696,200 L728,316 L722,318 L688,204 Z" fill="#b08d3c" fill-opacity="0.45" stroke-width="1.5"/>
+    <path d="M650,318 L646,342 L656,320 M728,316 L736,338 L722,318" fill="#56514b" fill-opacity="0.4" stroke-width="1.3"/>
+    <circle cx="690" cy="198" r="9" fill="#b08d3c" fill-opacity="0.45" stroke-width="1.5"/>
+    <path d="M690,189 V178" stroke-width="2"/><circle cx="690" cy="175" r="3.5" stroke-width="1.4"/>
+    <!-- brass ruler -->
+    <rect x="100" y="412" width="600" height="30" fill="#b08d3c" fill-opacity="0.35"/>
+    <!-- detail of the ruler, enlarged -->
+    <rect x="185" y="478" width="220" height="40" fill="#b08d3c" fill-opacity="0.3" stroke-width="1.4"/>
+  </g>
+  <g fill="none" stroke="#2b2118">
+    <path d="M100,412 v14 M110,412 v5 M120,412 v5 M130,412 v5 M140,412 v5 M150,412 v9 M160,412 v5 M170,412 v5 M180,412 v5 M190,412 v5 M200,412 v14 M210,412 v5 M220,412 v5 M230,412 v5 M240,412 v5 M250,412 v9 M260,412 v5 M270,412 v5 M280,412 v5 M290,412 v5 M300,412 v14 M310,412 v5 M320,412 v5 M330,412 v5 M340,412 v5 M350,412 v9 M360,412 v5 M370,412 v5 M380,412 v5 M390,412 v5 M400,412 v14 M410,412 v5 M420,412 v5 M430,412 v5 M440,412 v5 M450,412 v9 M460,412 v5 M470,412 v5 M480,412 v5 M490,412 v5 M500,412 v14 M510,412 v5 M520,412 v5 M530,412 v5 M540,412 v5 M550,412 v9 M560,412 v5 M570,412 v5 M580,412 v5 M590,412 v5 M600,412 v14 M610,412 v5 M620,412 v5 M630,412 v5 M640,412 v5 M650,412 v9 M660,412 v5 M670,412 v5 M680,412 v5 M690,412 v5 M700,412 v14" stroke-width="0.9"/>
+    <path d="M195,478 v16 M200,478 v6 M205,478 v6 M210,478 v6 M215,478 v6 M220,478 v10 M225,478 v6 M230,478 v6 M235,478 v6 M240,478 v6 M245,478 v16 M250,478 v6 M255,478 v6 M260,478 v6 M265,478 v6 M270,478 v10 M275,478 v6 M280,478 v6 M285,478 v6 M290,478 v6 M295,478 v16 M300,478 v6 M305,478 v6 M310,478 v6 M315,478 v6 M320,478 v10 M325,478 v6 M330,478 v6 M335,478 v6 M340,478 v6 M345,478 v16 M350,478 v6 M355,478 v6 M360,478 v6 M365,478 v6 M370,478 v10 M375,478 v6 M380,478 v6 M385,478 v6 M390,478 v6 M395,478 v16" stroke-width="0.8"/>
+  </g>
+  <path d="M300,442 L185,478 M340,442 L405,478" stroke="#7a6a55" stroke-width="0.8" stroke-dasharray="3 3"/>
+  <rect x="298" y="410" width="44" height="34" fill="none" stroke="#7a6a55" stroke-width="0.8" stroke-dasharray="3 3"/>
+
+  <!-- Dimensions and leaders -->
+  <g stroke="#7a6a55" stroke-width="0.8" fill="none">
+    <path d="M100,408 V380 M700,408 V380"/>
+    <line x1="102" y1="386" x2="698" y2="386" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M462,306 L420,290 M700,128 L684,132 M738,258 L716,262" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Labels -->
+  <g fill="#2b2118" font-style="italic" font-size="14">
+    <text x="400" y="380" text-anchor="middle">60 cm brass ruler</text>
+    <text x="84" y="356">Paper</text>
+    <text x="466" y="310">Quill pens</text>
+    <text x="704" y="132">Ink</text>
+    <text x="742" y="262">Dividers</text>
+    <text x="418" y="496" font-size="13">Detail, enlarged:</text>
+    <text x="418" y="512" font-size="13">marked in millimetres</text>
+  </g>
+  <g fill="#2b2118" font-style="italic" font-size="10" text-anchor="middle"><text x="200" y="438">10</text><text x="300" y="438">20</text><text x="400" y="438">30</text><text x="500" y="438">40</text><text x="600" y="438">50</text><text x="195" y="508">20</text><text x="245" y="508">21</text><text x="295" y="508">22</text><text x="345" y="508">23</text><text x="395" y="508">24</text></g>
+
+  <!-- Scale bar -->
+  <g stroke="#2b2118" stroke-width="0.8">
+    <rect x="24" y="552" width="100" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+    <rect x="124" y="552" width="100" height="6" fill="none"/>
+  </g>
+  <g fill="#2b2118" font-style="italic" font-size="12" text-anchor="middle">
+    <text x="24" y="574">0</text><text x="124" y="574">10</text><text x="224" y="574">20 cm</text>
+  </g>
+
+  <!-- Cartouche -->
+  <g fill="#2b2118">
+    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Drawing Instruments</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Laid out on the table · to scale</text>
+  </g>
+</svg>

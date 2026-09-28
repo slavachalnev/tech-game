@@ -57,7 +57,7 @@
   </path>
   <path d="M767,246 Q772,256 780,262" fill="none" stroke="#4f7390" stroke-opacity="0.6" stroke-width="3"/>
 
-  <!-- Flooded: water stands at 24 fathoms -->
+  <!-- Flooded: water stands at 44 m -->
   <g data-state="flooded">
     <g fill="#4f7390" fill-opacity="0.42">
       <rect x="241" y="370" width="24" height="143"/>
@@ -69,8 +69,8 @@
       <animateTransform attributeName="transform" type="translate" values="0,0; 0,-1.5; 0,0" dur="4s" repeatCount="indefinite"/>
     </path>
     <g fill="#9c3b25" font-style="italic" font-size="13">
-      <text x="468" y="374">24 fm level: water stands here</text>
-      <text x="410" y="476">Richest ground, drowned</text>
+      <text x="468" y="374">44 m level: water stands here</text>
+      <text x="410" y="476">Richest ore, flooded</text>
     </g>
     <path d="M466,370 L462,370" stroke="#9c3b25"/>
   </g>
@@ -79,8 +79,8 @@
   <g data-state="drained">
     <rect x="241" y="500" width="24" height="13" fill="#4f7390" fill-opacity="0.42"/>
     <g fill="#2b2118" font-style="italic" font-size="13">
-      <text x="468" y="374">24 fm level</text>
-      <text x="410" y="476">Richest ground, now workable</text>
+      <text x="468" y="374">44 m level</text>
+      <text x="410" y="476">Richest ore, now reachable</text>
     </g>
   </g>
 
@@ -90,21 +90,21 @@
     <path d="M44,106 H52 M44,172 H52 M44,238 H52 M44,304 H52 M44,370 H52 M44,436 H52 M44,502 H52"/>
   </g>
   <g fill="#7a6a55" font-size="12" font-style="italic" text-anchor="end">
-    <text x="40" y="110">0</text><text x="40" y="176">6</text><text x="40" y="242">12</text><text x="40" y="308">18</text>
-    <text x="40" y="374">24</text><text x="40" y="440">30</text><text x="40" y="506">36</text>
-    <text x="52" y="524" text-anchor="middle">fathoms</text>
+    <text x="40" y="110">0</text><text x="40" y="176">11</text><text x="40" y="242">22</text><text x="40" y="308">33</text>
+    <text x="40" y="374">44</text><text x="40" y="440">55</text><text x="40" y="506">66</text>
+    <text x="52" y="524" text-anchor="middle">meters</text>
   </g>
 
   <!-- Labels -->
   <g fill="#2b2118" font-style="italic" font-size="13">
-    <text x="84" y="44">Horse whim</text>
-    <text x="290" y="54">Headframe over the engine shaft</text>
-    <text x="440" y="226">Adit: drains by gravity to the valley</text>
-    <text x="428" y="308">18 fm level</text>
-    <text x="478" y="440">30 fm level</text>
-    <text x="438" y="506">36 fm, the bottom</text>
+    <text x="84" y="44">Horse whim (winch)</text>
+    <text x="290" y="54">Headframe over the main shaft</text>
+    <text x="440" y="226">Adit: drainage tunnel out to the valley</text>
+    <text x="428" y="308">33 m level</text>
+    <text x="478" y="440">55 m level</text>
+    <text x="438" y="506">66 m, the bottom</text>
     <text x="96" y="208">Rag-and-chain pumps</text>
-    <text x="424" y="148">Lode</text>
+    <text x="424" y="148">Lode (ore vein)</text>
   </g>
   <g stroke="#7a6a55" stroke-width="0.8" fill="none">
     <path d="M180,212 Q230,218 258,226" marker-end="url(#arrow)"/>
@@ -114,6 +114,6 @@
   <!-- Cartouche -->
   <g fill="#2b2118">
     <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Wheal Fortune</text>
-    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Section through the engine shaft · depths in fathoms, breadth not to scale</text>
+    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Section through the main shaft · depths in meters, width not to scale</text>
   </g>
 </svg>

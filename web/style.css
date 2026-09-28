@@ -120,8 +120,21 @@ a.card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(60, 40, 2
 .states a { padding: 1px 10px; font: 15px var(--fell-sc); color: var(--faded); text-decoration: none; border: 1px solid var(--rule); border-radius: 2px; }
 .states a.on { color: var(--paper-light); background: var(--ink); border-color: var(--ink); }
 .map-list { margin: 14px 0 12px; }
-.plate.map { position: static; }
-.plate.map img { max-height: calc(100vh - 210px); object-fit: contain; }
+.plate.map { position: relative; top: auto; }
+.full-size { display: block; margin-top: 6px; text-align: right; font: italic 14px var(--fell); color: var(--faded); }
+.place-card {
+  position: absolute; z-index: 3; width: min(340px, 90%); padding: 12px 16px 10px;
+  font-size: 15.5px; line-height: 1.4; background: var(--paper-light); border: 1px solid var(--faded);
+  box-shadow: 0 4px 18px rgba(60, 40, 20, 0.25);
+}
+.place-card h3 { margin: 0 24px 2px 0; font: 21px var(--fell); }
+.place-card h4 { margin: 10px 0 2px; font: 14px var(--fell-sc); color: var(--faded); }
+.place-card p { margin: 6px 0; }
+.place-card ul { margin: 0; padding-left: 18px; }
+.place-card .close { position: absolute; top: 4px; right: 4px; padding: 0 8px; font-size: 20px; color: var(--faded); background: none; border: none; }
+.place-info + .place-info { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.gazetteer tr[data-place] { cursor: pointer; }
+.gazetteer tr[data-place]:hover td { background: rgba(156, 59, 37, 0.06); }
 .spec h3 { margin: 20px 0 6px; padding-bottom: 2px; font: 17px var(--fell-sc); letter-spacing: 0.03em; color: var(--faded); border-bottom: 1px solid var(--rule); }
 .spec h3:first-child { margin-top: 0; }
 .spec ul { margin: 0; padding-left: 20px; }

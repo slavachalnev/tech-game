@@ -85,6 +85,7 @@ The player wants no friction from the period's language or measures, and knowing
 `places.json` is the source of truth for geography; the maps in `maps/` (one SVG each, with a `<title>`) are drawings of it. Look places up with `tg places` rather than reading the SVGs. The scenario starts you with some maps; add more when play needs them (a town plan, a mine's surroundings, a long route).
 
 - **Every place that comes up goes into `places.json` and onto a map, in the same turn:** anywhere the player goes, and any place mentioned that matters (a supplier's town, a stream, a rival mine, a quarry). Put it on the most local map that covers it. The validator checks that each place's name is labelled on every map it lists.
+- **Notes are what the player knows.** Keep each place's `notes` short: the key facts the player has learned about it. Clicking a place on a map shows its notes, its linked spec sheet (`thing`), people whose `location` names it, its routes and the turns that mention it. So use place names in people's `location`.
 - **Positions and routes are precedent.** Keep them consistent with the period notes and earlier rulings. When a ruling fixes a distance or a travel time, add or update the route. Set `visited` when the player first goes there.
 - Keep the maps readable: approximate and schematic beats cluttered. `uv run tg shot map/<id>` shows a map.
 

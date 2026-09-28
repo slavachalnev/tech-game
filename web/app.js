@@ -17,6 +17,7 @@ const opened = JSON.parse(localStorage.getItem("opened") ?? "{}"); // details op
 const scrolls = {}; // scroll position per page, restored when you come back
 let shownHash = null;
 let lastMap = null;
+let mapToMount = null; // the map to draw into the page once the Map view's HTML is in place
 const COMPASS = "N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW".split(" ");
 
 // ---------- formatting ----------
@@ -62,15 +63,21 @@ const history = (items) => list("History", items?.map((h) => `<span class="turn-
 
 // ---------- drawings ----------
 
+const sources = new Map(); // "path@version" -> SVG text
 const drawings = new Map(); // "path@version@state" -> object URL
+
+async function svgText(item) {
+  const key = `${item.visual}@${item._v}`;
+  if (!sources.has(key)) sources.set(key, await (await fetch(`/save/${item.visual}`)).text());
+  return sources.get(key);
+}
 
 // A thing's SVG, with only the groups for `state` kept, as an <img>-ready URL (isolates each drawing's ids and styles).
 async function drawing(thing, state = thing.state ?? thing.states?.[0] ?? "") {
   if (!thing.visual || !thing._v) return null;
   const key = `${thing.visual}@${thing._v}@${state}`;
   if (!drawings.has(key)) {
-    const text = await (await fetch(`/save/${thing.visual}`)).text();
-    const svg = new DOMParser().parseFromString(text, "image/svg+xml").documentElement;
+    const svg = new DOMParser().parseFromString(await svgText(thing), "image/svg+xml").documentElement;
     svg.querySelectorAll("[data-state]").forEach((el) => {
       if (!el.getAttribute("data-state").split(/\s+/).includes(state)) el.remove();
     });
@@ -207,21 +214,84 @@ async function map(id) {
   if (!S.maps.length) return `<p class="empty">No maps yet. The referee draws them as places come up.</p>`;
   const m = S.maps.find((x) => x.id === (id ?? lastMap)) ?? S.maps[0];
   lastMap = m.id;
-  const url = await drawing(m);
+  const [url, svg] = await Promise.all([drawing(m), svgText(m)]);
+  mapToMount = { m, svg };
   return `<nav class="states map-list">${S.maps.map((x) => `<a href="#/map/${x.id}" class="${x === m ? "on" : ""}">${esc(x.title)}</a>`).join("")}</nav>
-    <figure class="plate map${fresh.has("m:" + m.id) ? " fresh" : ""}"><a href="${url}" target="_blank" title="Open full size"><img src="${url}" alt="${esc(m.title)}"></a></figure>
+    <figure class="plate map${fresh.has("m:" + m.id) ? " fresh" : ""}"><div class="map-host"></div><div class="place-card" hidden></div></figure>
+    <a class="full-size" href="${url}" target="_blank">Open full size</a>
     ${gazetteer(m.id)}`;
 }
 
-// The places on a map, nearest to the origin first, and the routes between them.
+// Places are matched to map labels by name, ignoring a leading "the" or "your".
+const plain = (s) => s.toLowerCase().replace(/\s+/g, " ").trim().replace(/^(the|your) /, "");
+const mentions = (text, name) => plain(text ?? "").includes(plain(name));
+const byPlaceId = () => Object.fromEntries(S.places.places.map((p) => [p.id, p]));
+const dist = (p, o) => Math.hypot(p.x_km - o.x_km, p.y_km - o.y_km);
+const where = (p, o) => `${dist(p, o).toFixed(1)} km ${COMPASS[Math.round((Math.atan2(p.x_km - o.x_km, p.y_km - o.y_km) * 180) / Math.PI / 22.5 + 16) % 16]}`;
+
+// Draw the map into the page, in a shadow root so its ids and styles stay its own, and make place labels clickable.
+function mountMap(host, { m, svg }) {
+  const root = host.attachShadow({ mode: "open" });
+  root.innerHTML = `<style>
+    svg { display: block; width: 100%; height: auto; max-height: calc(100vh - 230px); }
+    text.place { cursor: pointer; }
+    text.place:hover, text.place.on { fill: #9c3b25; }
+  </style>${svg}`;
+  const places = S.places.places.filter((p) => p.maps.includes(m.id));
+  for (const label of root.querySelectorAll("text")) {
+    const hits = places.filter((p) => mentions(label.textContent, p.name));
+    if (!hits.length) continue;
+    label.classList.add("place");
+    label.addEventListener("click", (e) => (e.stopPropagation(), showPlaces(hits, label)));
+  }
+  host.addEventListener("click", closePlaces);
+}
+
+// A card of what the player knows about some places, next to the label they clicked.
+function showPlaces(places, label) {
+  const root = label.getRootNode(), figure = root.host.closest("figure"), card = figure.querySelector(".place-card");
+  root.querySelectorAll("text.on").forEach((t) => t.classList.remove("on"));
+  label.classList.add("on");
+  card.innerHTML = `<button class="close" title="Close">×</button>${places.map(placeInfo).join("")}`;
+  card.querySelector(".close").onclick = closePlaces;
+  card.hidden = false;
+  const box = label.getBoundingClientRect(), frame = figure.getBoundingClientRect();
+  const below = box.bottom - frame.top + 8, above = box.top - frame.top - card.offsetHeight - 8;
+  card.style.left = `${Math.max(10, Math.min(box.left - frame.left, frame.width - card.offsetWidth - 10))}px`;
+  card.style.top = `${below + card.offsetHeight > frame.height && above > 0 ? above : below}px`;
+}
+
+function closePlaces() {
+  const card = document.querySelector(".place-card");
+  if (!card || card.hidden) return;
+  card.hidden = true;
+  document.querySelector(".map-host")?.shadowRoot?.querySelectorAll("text.on").forEach((t) => t.classList.remove("on"));
+}
+
+function placeInfo(p) {
+  const byId = byPlaceId(), o = byId[S.places.origin];
+  const thing = S.things.find((t) => t.id === p.thing);
+  const people = S.people.filter((x) => mentions(x.location, p.name));
+  const routes = S.places.routes.filter((r) => r.from === p.id || r.to === p.id);
+  const turns = S.log.filter((e) => mentions(e.narration, p.name)).map((e) => e.turn);
+  return `<div class="place-info">
+    <h3>${esc(p.name)}</h3>
+    <div class="meta">${esc(p.kind)}${o && p !== o ? ` · ${where(p, o)} from ${esc(o.name)}` : ""} · ${p.visited ? "you've been here" : "not visited yet"}</div>
+    ${p.notes ? `<p>${esc(p.notes)}</p>` : ""}
+    ${thing ? `<p><a href="#/thing/${thing.id}">${esc(thing.name)}</a> ${stamp(thing.status)} ${esc(thing.summary)}</p>` : ""}
+    ${people.length ? `<h4>People here</h4><ul>${people.map((x) => `<li>${esc(x.name)}, ${esc(x.role)}</li>`).join("")}</ul>` : ""}
+    ${routes.length ? `<h4>Routes</h4><ul>${routes.map((r) => `<li>${esc(byId[r.from === p.id ? r.to : r.from]?.name ?? "?")}: ${r.km} km by ${r.by}, ${esc(r.time)}</li>`).join("")}</ul>` : ""}
+    ${turns.length ? `<p class="dated">In your <a href="#/journal">journal</a>: turn${turns.length > 1 ? "s" : ""} ${turns.join(", ")}</p>` : ""}
+  </div>`;
+}
+
+// The places on a map, nearest to the origin first, and the routes between them. Clicking a row shows it on the map.
 function gazetteer(mapId) {
-  const g = S.places, byId = Object.fromEntries(g.places.map((p) => [p.id, p])), o = byId[g.origin];
+  const g = S.places, byId = byPlaceId(), o = byId[g.origin];
   if (!o) return "";
   const here = g.places.filter((p) => p.maps.includes(mapId));
-  const dist = (p) => Math.hypot(p.x_km - o.x_km, p.y_km - o.y_km);
-  const bearing = (p) => COMPASS[Math.round((Math.atan2(p.x_km - o.x_km, p.y_km - o.y_km) * 180) / Math.PI / 22.5 + 16) % 16];
-  const rows = here.sort((a, b) => dist(a) - dist(b)).map((p) => `<tr${p.visited ? ' class="visited"' : ""}>
-    <td>${esc(p.name)}</td><td>${esc(p.kind)}</td><td>${p === o ? "" : `${dist(p).toFixed(1)} km ${bearing(p)}`}</td><td>${esc(p.notes ?? "")}</td></tr>`);
+  const rows = here.sort((a, b) => dist(a, o) - dist(b, o)).map((p) => `<tr data-place="${p.id}"${p.visited ? ' class="visited"' : ""}>
+    <td>${esc(p.name)}</td><td>${esc(p.kind)}</td><td>${p === o ? "" : where(p, o)}</td><td>${esc(p.notes ?? "")}</td></tr>`);
   const ids = new Set(here.map((p) => p.id));
   const routes = g.routes.filter((r) => ids.has(r.from) && ids.has(r.to))
     .map((r) => `<li>${esc(byId[r.from].name)} – ${esc(byId[r.to].name)}: ${r.km} km by ${r.by}, ${esc(r.time)}${r.notes ? `. ${esc(r.notes)}` : ""}</li>`);
@@ -278,6 +348,7 @@ async function render() {
   const navigated = location.hash !== shownHash;
   if (navigated) scrolls[shownHash] = scrollY;
   main.innerHTML = html;
+  if (route === "map" && mapToMount) mountMap(main.querySelector(".map-host"), mapToMount);
   main.querySelectorAll("details[data-key]").forEach((d) => d.dataset.key in opened && (d.open = opened[d.dataset.key]));
   await Promise.all([...main.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
   await document.fonts.ready;
@@ -302,6 +373,17 @@ function toast(message) {
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => (el.hidden = true), 7000);
 }
+
+// Clicking a row of the places table shows that place on the map.
+document.addEventListener("click", (e) => {
+  const row = e.target.closest?.("tr[data-place]");
+  const place = row && byPlaceId()[row.dataset.place];
+  const label = place && [...(document.querySelector(".map-host")?.shadowRoot?.querySelectorAll("text.place") ?? [])].find((t) => mentions(t.textContent, place.name));
+  if (!label) return;
+  label.scrollIntoView({ block: "center" });
+  showPlaces([place], label);
+});
+addEventListener("keydown", (e) => e.key === "Escape" && closePlaces());
 
 // Remember which sections are open; Fermi scripts load when opened.
 document.addEventListener("toggle", async (e) => {

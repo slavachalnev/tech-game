@@ -66,3 +66,40 @@ def test_places_must_be_labelled_on_their_maps(tmp_path, monkeypatch):
     problems = state.check_save(save)
     assert any("'St Agnes' isn't labelled on maps/district.svg" in p for p in problems)
     assert any("unknown place 'atlantis'" in p for p in problems)
+
+
+def test_undo_and_restore_turns(tmp_path, monkeypatch):
+    from engine import history
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    assert history.snapshot(save) == "start"
+    for n in (1, 2):
+        world = state.read_json(save / "world.json")
+        world["purse_p"] -= 100
+        state.write_json(save / "world.json", world)
+        turn = {"turn": n, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T09:00", "action": f"act {n}", "rulings": [], "narration": "n"}
+        state.write_json(save / f"log/{n:04d}.json", turn)
+        assert history.snapshot(save) == f"turn {n}: act {n}"
+    (save / "secret.md").write_text("a hidden fact")  # a later, non-turn edit
+    assert history.snapshot(save) == "after turn 2"
+    assert history.snapshot(save) is None  # nothing changed
+
+    assert history.undo(save)[0] == 2
+    assert state.next_turn(save) == 2 and state.read_json(save / "world.json")["purse_p"] == 4900
+    assert "hidden fact" not in (save / "secret.md").read_text()
+    tag = history.undo(save)[1]
+    assert state.next_turn(save) == 1
+    history.restore(save, tag)  # changed my mind
+    assert state.next_turn(save) == 2
+
+
+def test_recipes_link_to_real_tools_people_and_things(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    recipe = {"id": "hoops", "name": "Forge iron hoops", "makes": "iron hoops up to 1 m across", "how": "bend and forge-weld bar",
+              "tools": ["forge", "anvil"], "people": ["jacca-pascoe"], "time": "1 day each", "cost_p": 30, "quality": {"roundness_mm": 5}}
+    state.write_json(save / "recipes/hoops.json", recipe)
+    assert state.check_save(save) == []
+    state.write_json(save / "recipes/hoops.json", {**recipe, "tools": ["lathe"], "first_made": "hoop-1"})
+    problems = state.check_save(save)
+    assert any("unknown tool 'lathe'" in p for p in problems) and any("unknown first_made thing 'hoop-1'" in p for p in problems)

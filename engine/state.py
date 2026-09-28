@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SAVES = ROOT / "saves"
 SCENARIOS = ROOT / "scenarios"
 SCHEMA = json.loads((Path(__file__).parent / "schema.json").read_text())
-DIR_KINDS = {"things": "thing", "people": "person", "log": "turn"}
+DIR_KINDS = {"things": "thing", "people": "person", "recipes": "recipe", "log": "turn"}
 CLOCK_FMT = "%Y-%m-%dT%H:%M"
 
 
@@ -46,10 +46,11 @@ def new_save(scenario, name):
     """Copy a scenario's start state into saves/<name> and make it a DM workspace."""
     dst = SAVES / name
     shutil.copytree(SCENARIOS / scenario / "start", dst, ignore=shutil.ignore_patterns(".*"))
-    for sub in ("things", "people", "log", "fermi", "visuals", "maps", "sketches"):
+    for sub in ("things", "people", "recipes", "log", "fermi", "visuals", "maps", "sketches"):
         (dst / sub).mkdir(exist_ok=True)
     template = ROOT / "dm" / "save_template"
     (dst / "CLAUDE.md").write_text((template / "CLAUDE.md").read_text().replace("{scenario}", scenario))
+    shutil.copy(template / "secret.md", dst / "secret.md")
     shutil.copytree(template / ".claude", dst / ".claude")
     return dst
 
@@ -86,6 +87,7 @@ def load_state(save):
         "clock_label": fmt_clock(world["clock"]) if world else "",
         "things": things,
         "people": folder("people"),
+        "recipes": folder("recipes"),
         "log": folder("log"),
         "maps": maps(save),
         "places": read_json(save / "places.json") or {"origin": None, "places": [], "routes": []},
@@ -156,7 +158,7 @@ def check_file(save, path):
         f"{rel}: {'/'.join(map(str, e.absolute_path)) or '(top level)'}: {e.message}"
         for e in validator(kind).iter_errors(data)
     ]
-    if kind in ("thing", "person") and data.get("id") != path.stem:
+    if kind in ("thing", "person", "recipe") and data.get("id") != path.stem:
         problems.append(f"{rel}: id must match the file name ({path.stem!r})")
     if kind == "turn" and path.stem != f"{data.get('turn', 0):04d}":
         problems.append(f"{rel}: turn {data.get('turn')} must live in log/{data.get('turn', 0):04d}.json")
@@ -165,8 +167,11 @@ def check_file(save, path):
 
 def check_save(save):
     """check_file for every file, plus cross-references between files."""
-    problems = [p for f in sorted(save.rglob("*")) if f.is_file() for p in check_file(save, f)]
+    files = [f for f in sorted(save.rglob("*")) if f.is_file() and not any(part.startswith(".") for part in f.relative_to(save).parts)]
+    problems = [p for f in files for p in check_file(save, f)]
     things = {p.stem: read_json(p) for p in (save / "things").glob("*.json")}
+    people = {p.stem for p in (save / "people").glob("*.json")}
+    recipes = {p.stem: read_json(p) for p in (save / "recipes").glob("*.json")}
     turns = [read_json(p) for p in sorted((save / "log").glob("*.json"))]
     world = read_json(save / "world.json") or {}
 
@@ -180,6 +185,16 @@ def check_save(save):
         problems += exists(f"things/{tid}", t.get("fermi", []) + ([t["visual"]] if "visual" in t else []))
         if "state" in t and "states" in t and t["state"] not in t["states"]:
             problems.append(f"things/{tid}: state {t['state']!r} is not one of its states {t['states']}")
+        recipe = t.get("made", {}).get("recipe")
+        if recipe and recipe not in recipes:
+            problems.append(f"things/{tid}: unknown recipe {recipe!r}")
+    for rid, r in recipes.items():
+        if not r:
+            continue
+        problems += [f"recipes/{rid}: unknown tool {x!r}" for x in r.get("tools", []) if x not in things]
+        problems += [f"recipes/{rid}: unknown person {x!r}" for x in r.get("people", []) if x not in people]
+        if "first_made" in r and r["first_made"] not in things:
+            problems.append(f"recipes/{rid}: unknown first_made thing {r['first_made']!r}")
     for i, turn in enumerate(turns, 1):
         if not turn:
             continue

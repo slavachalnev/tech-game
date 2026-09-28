@@ -6,12 +6,13 @@ import random
 import sys
 from pathlib import Path
 
-from . import state
+from . import history, state
 from .server import make_server, shot
 
 
 def cmd_new(args):
     save = state.new_save(args.scenario, args.name or args.scenario)
+    history.snapshot(save)
     rel = save.relative_to(Path.cwd()) if save.is_relative_to(Path.cwd()) else save
     print(f"Created {rel}\n\nTo play:\n  uv run tg serve {save.name}    # live view, in one terminal\n  cd {rel} && claude    # the referee, in another")
 
@@ -39,6 +40,8 @@ def cmd_status(args):
     people = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "people").glob("*.json"))]
     print("Things:\n" + "\n".join(f"  {t['id']}: {t.get('name')} ({t.get('status')}{', ' + t['owner'] if 'owner' in t else ''})" for t in things))
     print("People:\n" + "\n".join(f"  {p['id']}: {p.get('name')}, {p.get('role')}" for p in people))
+    recipes = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "recipes").glob("*.json"))]
+    print("Recipes:" + ("".join(f"\n  {r['id']}: {r.get('name')}, {r.get('time')}" for r in recipes) or " none"))
     print(f"Maps: {', '.join(m['id'] for m in state.maps(save)) or 'none'}")
     print(f"Unseen sketches: {', '.join(unseen) or 'none'}")
     print("Problems:" + "".join(f"\n  - {p}" for p in problems) if problems else "Problems: none")
@@ -110,6 +113,30 @@ def cmd_hook(args):
         sys.exit(2)
 
 
+def cmd_snapshot(args):
+    """Claude Code Stop hook (after every referee reply): commit the save's changes to its history."""
+    cwd = None if sys.stdin.isatty() else json.load(sys.stdin).get("cwd")
+    save = state.save_of(cwd) if cwd else state.find_save(args.save)
+    if save:
+        history.snapshot(save)
+
+
+def cmd_history(args):
+    for commit, message in history.log(state.find_save(args.save)):
+        print(f"  {commit}  {message}")
+
+
+def cmd_undo(args):
+    turn, tag = history.undo(state.find_save(args.save))
+    print(f"Undid turn {turn}. The save is back to just before it.\nChanged your mind? uv run tg restore {tag}")
+
+
+def cmd_restore(args):
+    save = state.find_save(args.save)
+    tag = history.restore(save, args.ref)
+    print(f"Restored {args.ref}: {history.log(save)[0][1]}\nThe replaced state is kept as {tag}.")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="tg", description="Time Travel Game tools.")
     parser.add_argument("--save", help="save name or path (default: the save you're in, or the only one)")
@@ -147,12 +174,19 @@ def main():
     p.set_defaults(run=cmd_roll)
 
     p = sub.add_parser("shot", help="screenshot the view with headless Chromium; prints the PNG path")
-    p.add_argument("target", nargs="?", default="workshop", help="workshop | people | map | map/<id> | journal | sketch | <thing-id>")
+    p.add_argument("target", nargs="?", default="workshop", help="workshop | capabilities | people | map | map/<id> | journal | sketch | <thing-id>")
     p.add_argument("--state", help="visual state to show, e.g. running")
     p.add_argument("--sheet", action="store_true", help="the thing's whole spec-sheet page, not just its drawing")
     p.set_defaults(run=cmd_shot)
 
+    sub.add_parser("history", help="list the save's snapshots, newest first").set_defaults(run=cmd_history)
+    sub.add_parser("undo", help="put the save back to just before the last turn").set_defaults(run=cmd_undo)
+    p = sub.add_parser("restore", help="put the save back to a snapshot from tg history (or a tag)")
+    p.add_argument("ref")
+    p.set_defaults(run=cmd_restore)
+
     sub.add_parser("hook", help="(Claude Code hook) validate a state file just written").set_defaults(run=cmd_hook)
+    sub.add_parser("snapshot", help="(Claude Code hook) snapshot the save's changes into its history").set_defaults(run=cmd_snapshot)
 
     args = parser.parse_args()
     args.run(args)

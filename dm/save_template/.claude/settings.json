@@ -1,12 +1,31 @@
 {
   "permissions": {
-    "allow": ["Bash(uv run tg:*)", "Bash(uv run python:*)", "Edit(./**)"]
+    "allow": [
+      "Bash(uv run tg:*)",
+      "Bash(uv run python:*)",
+      "Edit(./**)"
+    ]
   },
   "hooks": {
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
-        "hooks": [{"type": "command", "command": "uv run --quiet --project \"$CLAUDE_PROJECT_DIR\" tg hook"}]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --quiet --project \"$CLAUDE_PROJECT_DIR\" tg hook"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --quiet --project \"$CLAUDE_PROJECT_DIR\" tg snapshot"
+          }
+        ]
       }
     ]
   }

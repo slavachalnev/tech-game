@@ -141,7 +141,7 @@ async function thingPage(id, query) {
         ${table("Quality", t.quality)}
         ${list("Components", t.components?.map((c) => (byId[c] ? link(byId[c]) + flawCount(byId[c]) : esc(c))))}
         ${list("Used in", S.things.filter((x) => x.components?.includes(t.id)).map(link))}
-        ${m ? `<h3>How it was made</h3><p>${esc(m.how)}</p><dl>${madeRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${m.recipe ? `<p class="recipe"><b>Recipe.</b> ${esc(m.recipe)}</p>` : ""}` : ""}
+        ${m ? `<h3>How it was made</h3><p>${esc(m.how)}</p><dl>${madeRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${m.recipe ? `<p class="recipe">Made by a known recipe: <a href="#/capabilities">${esc(S.recipes.find((r) => r.id === m.recipe)?.name ?? m.recipe)}</a></p>` : ""}` : ""}
         ${t.historical_year ? `<p class="dated">First made in real history: ${t.historical_year}.</p>` : ""}
         ${fermi(t.fermi)}
         ${t.notes ? `<h3>Notes</h3><p>${esc(t.notes)}</p>` : ""}
@@ -149,6 +149,27 @@ async function thingPage(id, query) {
       </div>
     </div>
   </article>`;
+}
+
+function capabilities() {
+  if (!S.recipes.length) return `<p class="empty">No capabilities yet. Once you've made something that can be made again, the referee writes down how, and you can simply order more.</p>`;
+  const year = Number(S.world.clock.slice(0, 4));
+  const name = (list, id) => esc(list.find((x) => x.id === id)?.name ?? id);
+  return `<div class="cards recipes">${S.recipes.map((r) => `
+    <div class="card${fresh.has("r:" + r.id) ? " fresh" : ""}"><div class="card-body">
+      <h3>${esc(r.name)}</h3>
+      <div class="meta">${esc(r.time)} · ${money(r.cost_p)} each${r.historical_year > year ? ` · <span class="ahead">${r.historical_year - year} years ahead of history</span>` : ""}</div>
+      <p>${esc(r.makes)}</p>
+      <div class="spec">
+        <h3>Method</h3><p>${esc(r.how)}</p>
+        ${table("Reliably achieves", r.quality)}
+        ${list("Needs", [...(r.tools ?? []).map((t) => `<a href="#/thing/${t}">${name(S.things, t)}</a>`), ...(r.inputs ?? []).map(esc)])}
+        ${list("Who knows how", (r.people ?? []).map((p) => name(S.people, p)))}
+        ${list("Known flaws", r.flaws?.map(esc), "flaws")}
+        ${r.first_made ? `<p class="dated">First made: <a href="#/thing/${r.first_made}">${name(S.things, r.first_made)}</a>${r.turn ? `, turn ${r.turn}` : ""}.</p>` : ""}
+        ${r.notes ? `<p>${esc(r.notes)}</p>` : ""}
+      </div>
+    </div></div>`).join("")}</div>`;
 }
 
 function people() {
@@ -219,8 +240,8 @@ async function plate(id, query) {
 function masthead(route) {
   const w = S.world;
   const year = Number(w.clock.slice(0, 4));
-  const ahead = S.things
-    .filter((t) => t.historical_year > year && !t.owner && ["ok", "faulty"].includes(t.status))
+  const ahead = [...S.things.filter((t) => !t.owner && ["ok", "faulty"].includes(t.status)), ...S.recipes]
+    .filter((x) => x.historical_year > year)
     .sort((a, b) => b.historical_year - a.historical_year)[0];
   $("#title").textContent = w.title;
   $("#clock").textContent = S.clock_label;
@@ -251,7 +272,7 @@ async function render() {
   const main = $("#main");
   main.hidden = route === "sketch";
   if (route === "sketch") sketch.refresh();
-  const views = { workshop, thing: thingPage, people, map, journal, visual: plate, sketch: () => "" };
+  const views = { workshop, thing: thingPage, capabilities, people, map, journal, visual: plate, sketch: () => "" };
   const html = await (views[route] ?? workshop)(arg, query);
   if (id !== renderId) return; // a newer render started meanwhile
   const navigated = location.hash !== shownHash;
@@ -267,7 +288,7 @@ async function render() {
 }
 
 function markFresh(next) {
-  const keyed = [...next.things.map((t) => [t.id, t]), ...next.people.map((p) => ["p:" + p.id, p]), ...next.maps.map((m) => ["m:" + m.id, m]), ...next.log.map((e) => ["t:" + e.turn, e])];
+  const keyed = [...next.things.map((t) => [t.id, t]), ...next.people.map((p) => ["p:" + p.id, p]), ...next.recipes.map((r) => ["r:" + r.id, r]), ...next.maps.map((m) => ["m:" + m.id, m]), ...next.log.map((e) => ["t:" + e.turn, e])];
   const changed = seen.size ? keyed.filter(([k, v]) => seen.get(k) !== JSON.stringify(v)).map(([k]) => k) : [];
   seen = new Map(keyed.map(([k, v]) => [k, JSON.stringify(v)]));
   changed.forEach((k) => fresh.add(k));

@@ -23,7 +23,9 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(state.load_state(self.save))
         if route == "/api/events":
             return self.stream_changes()
-        if route.startswith("/save/"):  # files inside the save: visuals, sketches, fermi scripts
+        if route.startswith("/save/"):  # files inside the save: visuals, maps, sketches, fermi scripts
+            if route == "/save/secret.md" or "/." in route:  # the referee's secrets and history stay private
+                return self.send_error(404)
             self.directory, self.path = str(self.save), self.path.removeprefix("/save")
         super().do_GET()
 
@@ -83,7 +85,7 @@ def shot(save, target, visual_state=None, sheet=False):
 
     server = make_server(save, 0)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    tab = (target in ("workshop", "people", "map", "journal", "sketch") or "/" in target) and not sheet
+    tab = (target in ("workshop", "capabilities", "people", "map", "journal", "sketch") or "/" in target) and not sheet
     route = f"#/{target}" if tab else f"#/{'thing' if sheet else 'visual'}/{target}"
     if visual_state:
         route += f"?state={visual_state}"

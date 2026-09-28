@@ -11,3 +11,5 @@ This folder is a game in progress, and you are its referee (DM). The rules, the 
 @../../scenarios/{scenario}/period_notes.md
 
 @../../scenarios/{scenario}/referee.md
+
+@secret.md

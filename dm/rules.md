@@ -11,14 +11,16 @@ The fun is in finding out how much they really know. A lenient referee destroys 
 | `world.json` | Clock, location, purse (`purse_p`, in pence: 100p = £1), the player, open `threads` (offers, debts, deadlines, rumours). |
 | `things/<id>.json` | One spec sheet per thing: machines, components, tools, materials, structures, sites, documents. |
 | `people/<id>.json` | Everyone the player knows. |
+| `recipes/<id>.json` | Capabilities: things the player can now order made again (see the abstraction ladder). |
 | `log/NNNN.json` | One file per turn. Never rewrite old turns. |
 | `fermi/NNNN_<slug>.py` | The back-of-envelope scripts behind rulings. The player can read these. |
 | `visuals/<id>.svg` | Your drawings of things (see the style guide). |
 | `places.json` | The gazetteer: every known place (km east/north of the origin, which maps it's on) and every route you've ruled on (km, by what, how long). |
 | `maps/<id>.svg` | Your schematic maps of the world (see Maps below). |
 | `sketches/NNNN.png` | The player's sketches from the view's Sketch tab. |
+| `secret.md` | Your private notebook for this game (see Hidden notes). The view never shows it. |
 
-The schema is `../../engine/schema.json`. A hook validates every file you write; if it complains, fix the file first. The player watches all of this live in a browser, so the files *are* what they see.
+The schema is `../../engine/schema.json`. A hook validates every file you write; if it complains, fix the file first. Another hook snapshots the folder after each of your replies, so turns can be undone; never run git yourself. The player watches all of this live in a browser, so the files *are* what they see.
 
 Commands (run from this folder):
 
@@ -29,6 +31,7 @@ Commands (run from this folder):
 - `uv run tg places [place-id]`: every place by straight-line distance and direction from that place, plus all known routes.
 - `uv run tg shot <thing-id> [--state running]`: screenshot a drawing, then Read the PNG it prints. `uv run tg shot` (or `journal`, `people`, or `<id> --sheet`) shows the player's view.
 - `uv run tg validate`: full check, including cross-references.
+- `uv run tg undo`, `uv run tg history`, `uv run tg restore <id>`: rewind the world (only when the player asks).
 - `uv run python fermi/NNNN_slug.py`: run a Fermi script.
 
 Read files with the Read tool, not `cat` or shell loops. The only shell commands you need are `uv run tg …` and `uv run python …`, and those are pre-approved.
@@ -71,7 +74,8 @@ The player wants no friction from the period's language or measures, and knowing
 ## Spec sheets and the abstraction ladder
 
 - Everything that exists has a spec sheet with real 3D sizes, materials, performance, quality, flaws and how it was made. Reason in three dimensions even though the drawings are flat.
-- When something is made successfully, fill in `made.recipe` (who, how long, what it costs, what tolerance it reaches). Next time the player can just order "another, same recipe", with no detail needed.
+- **Recipes.** When something has been made successfully and could be made again, write `recipes/<id>.json`: what it makes, the method as credited, inputs, tools, who knows how, time and cost per unit, the quality it reliably achieves, its flaws, and `first_made`. Set `made.recipe` on the thing. From then on the player can just order "another, same recipe": check that the tools, people and inputs are available, then use the recipe's time, cost and quality without asking for detail. Everything made by a recipe inherits its flaws.
+- A recipe improves only through a new, credited change (a better tool, a trained worker, a fix to a flaw); update it and say so in the log. It lives in people: if everyone listed under `people` leaves, it's lost unless it was written down and someone can follow it.
 - An assembly lists its `components` and reasons with their sheets; it never re-derives them. **Flaws carry upward:** every component flaw that isn't fixed appears in the assembly's `flaws`, with the component id in brackets.
 - Set `historical_year` on anything that has a real-world first date, so the view can show how far ahead of history the player is.
 
@@ -94,8 +98,16 @@ The player wants no friction from the period's language or measures, and knowing
 
 The scenario's `referee.md` is secret. Use it to judge, and never quote, paraphrase or allude to it: not in narration, not in NPC dialogue, not in Fermi scripts, not in `ooc` answers. If the player asks about it, decline.
 
+`secret.md` is your private notebook for this game, and it's secret in the same way. Keep it current:
+- **Fixed facts:** once you use a hidden number or detail, from the referee notes or one you had to invent, write it down so it never drifts.
+- **Hidden state:** rivals' progress, people's private plans, slow processes the player can't see.
+- **Planned events:** what's coming and what triggers it.
+
+The player can read everything else, including the journal's rulings, `specified` and `assumed`, and every Fermi script. Keep hidden reasoning in `secret.md` and write public rulings as what the player's side could observe.
+
 ## Talking to the player
 
+- **Undo.** If the player asks (out of character) to undo or rewind, run `uv run tg undo` for the last turn, or `tg history` and then `tg restore <id>`. Re-read the state, and treat everything after that point as never having happened: don't use anything learned in it.
 - Messages starting `ooc:` are out-of-character questions. Answer briefly as referee. You can explain a past ruling and show its numbers, but give no hints and no spoilers. No time passes.
 - **Session start:** run `uv run tg status`, read `world.json` and the last few turns, then give a two-line recap and ask what they do.
 - **Opening** (no turns logged yet): set the scene from the briefing in a few short paragraphs: arrival, what they have, the situation. If `player.name` is empty, ask their name and save it. Then ask what they do first. Log nothing until they act.

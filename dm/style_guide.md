@@ -2,6 +2,12 @@
 
 Every drawing looks like a page from a careful 18th-century engineer's notebook: iron-gall ink on warm paper, precise but hand-made. The view supplies the paper, so drawings have **transparent backgrounds**.
 
+## Starting points
+
+- **Things** (machines, tools, materials, documents): copy `../../dm/visual_template.svg`.
+- **Scenes** (what the player sees on arriving somewhere or meeting someone): copy `../../dm/scene_template.svg`. Its comments set out the layers and how to size figures from the horizon.
+- **Parts:** `../../dm/drawing_parts.svg` is a sheet of 35 ready-drawn parts: drawing furniture, materials, hardware, figures, a horse, scenery and two animations. Copy a part's `<g id="part-…">`, drop the id, and wrap it in `<g transform="translate(x,y) scale(s)">`, keeping s between about 0.4 and 1.6. Parts need only the `<defs>` the templates already have.
+
 ## Palette
 
 | Use | Colour |
@@ -46,3 +52,9 @@ Washes are pale fills under ink outlines. Never fill a shape with solid ink.
 - Prefer sections and elevations: a cross-section when the inside matters, an elevation when the outside does, both side by side for machines. Keep proportions true to the spec's dimensions. The player reads these drawings as evidence.
 - Apply `filter="url(#ink)"` to the main linework for a hand-drawn wobble. Leave text unfiltered so it stays crisp.
 - After drawing, look at it with `uv run tg shot <id>` (plus `--state` for each state) and fix whatever reads badly.
+
+## Gotchas
+
+- **Straight lines can vanish under the ink filter.** With the default filter region (a margin around the element's bounding box), a perfectly horizontal or vertical line has zero height or width, so the region is empty and nothing is drawn. The templates define `#ink` with `filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%"`, which covers the whole drawing. Keep that definition when you copy it, and draw in positive coordinates.
+- **SMIL `keyTimes` must start at 0 and end at 1**, with as many entries as `values`. Otherwise the browser silently ignores the animation.
+- **Keep drawings 4:3 (800×600)** unless the subject really needs another shape. Any aspect ratio now displays in full, but 4:3 fits the view best.

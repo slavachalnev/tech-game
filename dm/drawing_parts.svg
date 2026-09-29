@@ -1,0 +1,589 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1302" font-family="Georgia, 'Times New Roman', serif">
+<!--
+  Drawing parts: reusable pieces in the house style (see style_guide.md).
+
+  To use a part, copy its comment and <g id="part-..."> ... </g> into a drawing, drop the id (ids must be
+  unique), and wrap it:   <g transform="translate(x,y) scale(s)"> ...part... </g>
+  - Each part is drawn in its own coordinates from (0,0) to its native size (in its comment) and needs
+    only the <defs> below. Copy them unchanged; new parts should also stay in positive coordinates,
+    because the ink filter's region starts at (0,0).
+  - Parts carry their own filter="url(#ink)", so place them outside the drawing's filtered group.
+  - Line weights and the wobble scale with s: keep s between about 0.4 and 1.6, or edit stroke-width.
+  - Don't scale parts that hold text (cartouche, scale bars, dimension, leader, flaw); edit them instead.
+  - Real sizes: figures, horse and cart are 50 px = 1 m; tree, cottage and headframe 20 px = 1 m.
+    A figure beside a cottage at the same distance: scale the figure 0.4 (or the cottage 2.5).
+-->
+  <defs>
+    <!-- Hand-drawn wobble for linework: filter="url(#ink)". The region covers the whole drawing
+         (userSpaceOnUse, 0 to 100%), so perfectly straight lines don't vanish. Keep it as is. -->
+    <filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <!-- Section hatching: fill="url(#hatch-metal)" etc. -->
+    <pattern id="hatch-metal" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#7a6a55" stroke-width="0.7"/>
+    </pattern>
+    <pattern id="hatch-masonry" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r="0.7" fill="#7a6a55"/><circle cx="6.5" cy="7" r="0.6" fill="#7a6a55"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Sheet title -->
+  <g fill="#2b2118">
+    <text x="26" y="44" font-size="28" font-variant="small-caps">Drawing Parts</text>
+    <text x="26" y="68" font-size="13" font-style="italic">Copy a part's &lt;g id="part-…"&gt; into a drawing and wrap it in &lt;g transform="translate(x,y) scale(s)"&gt;. Sizes under each part are native, in px.</text>
+    <text x="26" y="86" font-size="13" font-style="italic">Figures, horse and cart: 50 px = 1 m. Tree, cottage and headframe: 20 px = 1 m. Keep s between 0.4 and 1.6; don't scale parts with text.</text>
+  </g>
+
+  <g transform="translate(31.6,155)">
+    <!-- part-cartouche: title and scale line, right-aligned at x=196. In an 800x600 drawing: translate(584,548), so the text ends at x=780 with baselines at 568 and 588. Native 200x46. -->
+    <g id="part-cartouche">
+      <g fill="#2b2118">
+        <text x="196" y="20" text-anchor="end" font-size="21" font-variant="small-caps">Name of Thing</text>
+        <text x="196" y="40" text-anchor="end" font-size="13" font-style="italic">Side view · Scale 1:20</text>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(254.7,163)">
+    <!-- part-scale-bar-m: 0-3 m at 50 px = 1 m (the figures' scale). For another scale, edit the rect widths and the label x's; don't scale() it or the text grows. Native 176x30. -->
+    <g id="part-scale-bar-m">
+      <g stroke="#2b2118" stroke-width="0.8">
+        <rect x="8" y="4" width="50" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+        <rect x="58" y="4" width="50" height="6" fill="none"/>
+        <rect x="108" y="4" width="50" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+      </g>
+      <g fill="#2b2118" font-style="italic" font-size="12" text-anchor="middle">
+        <text x="8" y="26">0</text><text x="58" y="26">1</text><text x="108" y="26">2</text><text x="158" y="26">3 m</text>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(453.9,163)">
+    <!-- part-scale-bar-cm: 0-30 cm at 5 px = 1 cm, first 10 cm split in two. Retarget as for the metre bar. Native 176x30. -->
+    <g id="part-scale-bar-cm">
+      <g stroke="#2b2118" stroke-width="0.8">
+        <rect x="8" y="4" width="25" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+        <rect x="33" y="4" width="25" height="6" fill="none"/>
+        <rect x="58" y="4" width="50" height="6" fill="#7a6a55" fill-opacity="0.5"/>
+        <rect x="108" y="4" width="50" height="6" fill="none"/>
+      </g>
+      <g fill="#2b2118" font-style="italic" font-size="12" text-anchor="middle">
+        <text x="8" y="26">0</text><text x="58" y="26">10</text><text x="108" y="26">20</text><text x="158" y="26">30 cm</text>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(653,158)">
+    <!-- part-dimension: measures from x=10 to x=170, object edge at y=0. Move the right extension line and the line's x2 to fit. Vertical: swap x and y, label beside the line. Native 180x40. -->
+    <g id="part-dimension">
+      <g stroke="#7a6a55" stroke-width="0.8" fill="none">
+        <path d="M10,4 V34 M170,4 V34"/>
+        <line x1="12" y1="28" x2="168" y2="28" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+      </g>
+      <text x="90" y="22" text-anchor="middle" fill="#2b2118" font-style="italic" font-size="14">1.2 m</text>
+    </g>
+  </g>
+  <g transform="translate(856.1,152)">
+    <!-- part-leader: label with a curved leader; the arrow tip is at (128,46). Native 150x52. -->
+    <g id="part-leader">
+      <text x="4" y="15" fill="#2b2118" font-style="italic" font-size="14">Cast-iron tuyere</text>
+      <path d="M62,21 Q68,42 128,46" fill="none" stroke="#7a6a55" stroke-width="0.8" marker-end="url(#arrow)"/>
+    </g>
+  </g>
+  <g transform="translate(1029.3,149)">
+    <!-- part-flaw: red-ochre ring round the fault, a crack, and a red label; the ring is centred at (18,42). Native 190x58. -->
+    <g id="part-flaw">
+      <g fill="none" stroke="#9c3b25" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="18" cy="42" rx="13" ry="10" stroke-width="1" stroke-dasharray="4 3"/>
+        <path d="M11,37 L16,41 L14,45 L21,48 L25,46" stroke-width="1.3"/>
+        <path d="M54,20 L31,34.5 M32.9,29.1 L31,34.5 L36.6,34.3" stroke-width="0.9"/>
+      </g>
+      <text x="56" y="16" fill="#9c3b25" font-style="italic" font-size="13">leaks here above 2 bar</text>
+    </g>
+  </g>
+  <g transform="translate(1287.4,140)">
+    <!-- part-north-arrow: compass needle, north up; maps put it in a corner. Native 36x76. -->
+    <g id="part-north-arrow">
+      <text x="18" y="16" text-anchor="middle" fill="#2b2118" font-size="16">N</text>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18,22 L18,50 L25,50 Z" fill="#7a6a55" fill-opacity="0.6"/>
+        <path d="M18,22 L25,50 L18,72 L11,50 Z"/>
+        <path d="M11,50 H25" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(43.7,333)">
+    <!-- part-brick: brick wall, 10 px courses, bonded. Crop by editing the rect; for a big wall repeat the courses. Native 150x88. -->
+    <g id="part-brick">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="142" height="80" fill="#8a7a62" fill-opacity="0.2"/>
+        <path d="M34,4 V14 M64,4 V14 M94,4 V14 M124,4 V14 M4,14 H146 M19,14 V24 M49,14 V24 M79,14 V24 M109,14 V24 M139,14 V24 M4,24 H146 M34,24 V34 M64,24 V34 M94,24 V34 M124,24 V34 M4,34 H146 M19,34 V44 M49,34 V44 M79,34 V44 M109,34 V44 M139,34 V44 M4,44 H146 M34,44 V54 M64,44 V54 M94,44 V54 M124,44 V54 M4,54 H146 M19,54 V64 M49,54 V64 M79,54 V64 M109,54 V64 M139,54 V64 M4,64 H146 M34,64 V74 M64,64 V74 M94,64 V74 M124,64 V74 M4,74 H146 M19,74 V84 M49,74 V84 M79,74 V84 M109,74 V84 M139,74 V84" stroke="#7a6a55" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(241.1,333)">
+    <!-- part-stone: coursed granite rubble with stipple; walls, hearths, engine houses. Native 150x88. -->
+    <g id="part-stone">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="142" height="80" fill="#8a7a62" fill-opacity="0.2"/>
+        <rect x="4" y="4" width="142" height="80" fill="url(#hatch-masonry)" stroke="none"/>
+        <path d="M4,31 Q26,27 50,32 T98,29 T146,32 M4,58 Q30,62 58,57 T110,60 T146,56 M40,4 L37,31 M84,5 L88,30 M120,4 L117,31 M22,32 L25,58 M64,31 L61,57 M104,30 L106,59 M132,31 L129,57 M46,58 L43,84 M92,58 L95,84 M124,57 L121,84" stroke-width="1.1"/>
+        <rect x="4" y="4" width="142" height="80"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(438.6,352)">
+    <!-- part-timber: a beam in elevation with grain and a knot, and its sawn end in section (growth rings). Native 176x50. -->
+    <g id="part-timber">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="10" width="126" height="30" fill="#9a7446" fill-opacity="0.3"/>
+        <path d="M8,16 Q40,14 64,18 Q76,21 80,21 M86,21 Q100,18 126,17 M8,33 Q36,35 62,32 Q76,29 80,30 M86,30 Q104,34 126,33 M10,25 Q30,23 56,25 Q70,26 72,23 Q80,18 88,23 Q96,27 126,25" stroke="#7a6a55" stroke-width="0.8"/>
+        <ellipse cx="83" cy="25.5" rx="4.5" ry="3" stroke-width="1"/>
+        <rect x="138" y="8" width="34" height="34" fill="#9a7446" fill-opacity="0.3"/>
+        <g stroke="#7a6a55" stroke-width="0.8"><circle cx="152" cy="27" r="4"/><circle cx="152" cy="27" r="9"/><circle cx="152" cy="27" r="14"/><path d="M152,27 L165,15"/></g>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(662,345)">
+    <!-- part-metal: cut metal: iron wash, then fill=url(#hatch-metal) on the same shape, then the outline. Native 150x64. -->
+    <g id="part-metal">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g fill="#56514b" fill-opacity="0.22" stroke="none"><rect x="6" y="8" width="64" height="48"/><circle cx="114" cy="32" r="24"/></g>
+        <rect x="6" y="8" width="64" height="48" fill="url(#hatch-metal)"/>
+        <circle cx="114" cy="32" r="24" fill="url(#hatch-metal)"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(859.4,337)">
+    <!-- part-water: water in section: wash, wavy surface line, ripples, and the level mark on the surface at x=120. Native 150x80. -->
+    <g id="part-water">
+      <path d="M4,22 Q14,19 24,22 T44,22 T64,22 T84,22 T104,22 T124,22 T146,22 V76 H4 Z" fill="#4f7390" fill-opacity="0.3"/>
+      <g filter="url(#ink)" fill="none" stroke="#4f7390" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4,22 Q14,19 24,22 T44,22 T64,22 T84,22 T104,22 T124,22 T146,22" stroke-width="1.5"/>
+        <path d="M18,34 H34 M60,40 H80 M26,52 H40 M96,48 H112 M58,64 H70 M118,62 H132" stroke-width="0.8" stroke-opacity="0.7"/>
+        <path d="M113,8 H127 L120,19 Z M114,26 H126 M117,30 H123" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1064.9,337)">
+    <!-- part-fire: coal fire with flames and glow; for a live fire add part-flame-anim flames on top. Native 110x80. -->
+    <g id="part-fire">
+      <ellipse cx="55" cy="54" rx="50" ry="24" fill="#c0662b" fill-opacity="0.15"/>
+      <ellipse cx="55" cy="56" rx="30" ry="14" fill="#c0662b" fill-opacity="0.25"/>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M34,52 Q30,34 38,22 Q40,34 46,38 Q44,20 54,6 Q58,24 64,30 Q68,20 66,14 Q80,30 76,52 Z" fill="#c0662b" fill-opacity="0.45" stroke="#c0662b" stroke-width="1.5"/>
+        <path d="M46,52 Q44,42 50,34 Q52,42 56,44 Q58,36 62,32 Q66,44 62,52 Z" fill="#e8a13a" fill-opacity="0.5" stroke="#c0662b" stroke-width="1"/>
+        <path d="M8,74 L14,62 L22,60 L28,54 L38,56 L46,50 L58,52 L66,49 L76,54 L86,54 L94,62 L102,74 Z" fill="#56514b" fill-opacity="0.55" stroke-width="1.2"/>
+        <path d="M18,68 l6,-5 l6,5 M40,62 l6,-5 l6,4 M64,62 l5,-5 l6,4 M84,68 l5,-4 l6,4" stroke="#7a6a55" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1243.3,322)">
+    <!-- part-smoke: puffs rising to the right. Steam: #9aa5a8 wash as here; smoke: fill #7a6a55 at 0.2. Native 100x110. -->
+    <g id="part-smoke">
+      <g filter="url(#ink)" fill="none" stroke="#7a6a55" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.8">
+        <g fill="#9aa5a8" fill-opacity="0.3">
+          <circle cx="20" cy="96" r="8"/>
+          <path d="M22,82 Q18,70 30,68 Q36,60 44,68 Q52,70 48,80 Q44,88 34,86 Q24,90 22,82 Z"/>
+          <path d="M36,56 Q30,42 44,38 Q48,26 62,30 Q74,28 74,40 Q82,48 72,56 Q66,64 54,60 Q40,66 36,56 Z"/>
+          <path d="M58,22 Q54,10 66,8 Q74,2 82,8 Q94,8 92,18 Q96,28 84,30 Q76,36 68,30 Q58,32 58,22 Z" fill-opacity="0.2"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(47.9,551)">
+    <!-- part-cogwheel: spur gear, 12 teeth, 4 arms, square bore for a timber shaft; centre (62,62), tip radius 54. Native 124x124. -->
+    <g id="part-cogwheel">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M66.6,71.5 L84.3,89.2 L89.2,84.3 L71.5,66.6 Z M52.5,66.6 L34.8,84.3 L39.7,89.2 L57.4,71.5 Z M57.4,52.5 L39.7,34.8 L34.8,39.7 L52.5,57.4 Z M71.5,57.4 L89.2,39.7 L84.3,34.8 L66.6,52.5 Z" fill="#56514b" fill-opacity="0.3" stroke-width="1.4"/>
+        <path d="M103.6,56.2 L115.8,57.8 A54,54 0 0 1 115.8,66.2 L103.6,67.8 A42,42 0 0 1 100.9,77.7 L100.9,77.7 L110.7,85.2 A54,54 0 0 1 106.5,92.6 L95.1,87.9 A42,42 0 0 1 87.9,95.1 L87.9,95.1 L92.6,106.5 A54,54 0 0 1 85.2,110.7 L77.7,100.9 A42,42 0 0 1 67.8,103.6 L67.8,103.6 L66.2,115.8 A54,54 0 0 1 57.8,115.8 L56.2,103.6 A42,42 0 0 1 46.3,100.9 L46.3,100.9 L38.8,110.7 A54,54 0 0 1 31.4,106.5 L36.1,95.1 A42,42 0 0 1 28.9,87.9 L28.9,87.9 L17.5,92.6 A54,54 0 0 1 13.3,85.2 L23.1,77.7 A42,42 0 0 1 20.4,67.8 L20.4,67.8 L8.2,66.2 A54,54 0 0 1 8.2,57.8 L20.4,56.2 A42,42 0 0 1 23.1,46.3 L23.1,46.3 L13.3,38.8 A54,54 0 0 1 17.5,31.4 L28.9,36.1 A42,42 0 0 1 36.1,28.9 L36.1,28.9 L31.4,17.5 A54,54 0 0 1 38.8,13.3 L46.3,23.1 A42,42 0 0 1 56.2,20.4 L56.2,20.4 L57.8,8.2 A54,54 0 0 1 66.2,8.2 L67.8,20.4 A42,42 0 0 1 77.7,23.1 L77.7,23.1 L85.2,13.3 A54,54 0 0 1 92.6,17.5 L87.9,28.9 A42,42 0 0 1 95.1,36.1 L95.1,36.1 L106.5,31.4 A54,54 0 0 1 110.7,38.8 L100.9,46.3 A42,42 0 0 1 103.6,56.2 Z M28,62 A34,34 0 1 0 96,62 A34,34 0 1 0 28,62 Z" fill="#56514b" fill-opacity="0.3" fill-rule="evenodd"/>
+        <path d="M51,62 A11,11 0 1 0 73,62 A11,11 0 1 0 51,62 Z M58,58 V66 H66 V58 Z" fill="#56514b" fill-opacity="0.35" fill-rule="evenodd" stroke-width="1.6"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(249.6,538)">
+    <!-- part-pulley: sheave hung from a hook, rope over it; wheel centre (40,82), rope falls at x=16.5 and x=63.5. Native 80x150. -->
+    <g id="part-pulley">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16.5,146 V82 A23.5,23.5 0 0 1 63.5,82 V146" stroke="#9a7446" stroke-width="3.2"/>
+        <circle cx="40" cy="82" r="26" fill="#56514b" fill-opacity="0.25"/>
+        <circle cx="40" cy="82" r="21" stroke-width="1"/>
+        <circle cx="40" cy="82" r="7" stroke-width="1.2"/>
+        <path d="M34,40 H46 L44,84 H36 Z" fill="#56514b" fill-opacity="0.4" stroke-width="1.6"/>
+        <circle cx="40" cy="80" r="2.5" fill="#2b2118" fill-opacity="0.5" stroke-width="1"/>
+        <path d="M40,40 V18 Q40,6 31,6 Q23,6 23,14 V17" stroke-width="3"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(457.3,538)">
+    <!-- part-chain: 9 links hanging, face-on and edge-on in turn, pitch 15 px; repeat the pattern for longer runs. Native 24x150. -->
+    <g id="part-chain">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="10" y="19" width="4" height="24" rx="2" fill="#56514b" fill-opacity="0.45"/>
+        <rect x="10" y="49" width="4" height="24" rx="2" fill="#56514b" fill-opacity="0.45"/>
+        <rect x="10" y="79" width="4" height="24" rx="2" fill="#56514b" fill-opacity="0.45"/>
+        <rect x="10" y="109" width="4" height="24" rx="2" fill="#56514b" fill-opacity="0.45"/>
+        <path d="M5,11 a7,7 0 0 1 14,0 v10 a7,7 0 0 1 -14,0 Z m4,1 v8 a3,3 0 0 0 6,0 v-8 a3,3 0 0 0 -6,0 Z" fill="#56514b" fill-opacity="0.3" fill-rule="evenodd"/>
+        <path d="M5,41 a7,7 0 0 1 14,0 v10 a7,7 0 0 1 -14,0 Z m4,1 v8 a3,3 0 0 0 6,0 v-8 a3,3 0 0 0 -6,0 Z" fill="#56514b" fill-opacity="0.3" fill-rule="evenodd"/>
+        <path d="M5,71 a7,7 0 0 1 14,0 v10 a7,7 0 0 1 -14,0 Z m4,1 v8 a3,3 0 0 0 6,0 v-8 a3,3 0 0 0 -6,0 Z" fill="#56514b" fill-opacity="0.3" fill-rule="evenodd"/>
+        <path d="M5,101 a7,7 0 0 1 14,0 v10 a7,7 0 0 1 -14,0 Z m4,1 v8 a3,3 0 0 0 6,0 v-8 a3,3 0 0 0 -6,0 Z" fill="#56514b" fill-opacity="0.3" fill-rule="evenodd"/>
+        <path d="M5,131 a7,7 0 0 1 14,0 v10 a7,7 0 0 1 -14,0 Z m4,1 v8 a3,3 0 0 0 6,0 v-8 a3,3 0 0 0 -6,0 Z" fill="#56514b" fill-opacity="0.3" fill-rule="evenodd"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(586,602)">
+    <!-- part-rope: hemp rope with its lay, whipped at the left end and frayed at the right. Native 170x22. -->
+    <g id="part-rope">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10,6 H156 M10,16 H156" fill="none" stroke-width="1.4"/>
+        <rect x="10" y="6" width="146" height="10" fill="#9a7446" fill-opacity="0.25" stroke="none"/>
+        <path d="M18,16 Q19,11 23,6 M23,16 Q24,11 28,6 M28,16 Q29,11 33,6 M33,16 Q34,11 38,6 M38,16 Q39,11 43,6 M43,16 Q44,11 48,6 M48,16 Q49,11 53,6 M53,16 Q54,11 58,6 M58,16 Q59,11 63,6 M63,16 Q64,11 68,6 M68,16 Q69,11 73,6 M73,16 Q74,11 78,6 M78,16 Q79,11 83,6 M83,16 Q84,11 88,6 M88,16 Q89,11 93,6 M93,16 Q94,11 98,6 M98,16 Q99,11 103,6 M103,16 Q104,11 108,6 M108,16 Q109,11 113,6 M113,16 Q114,11 118,6 M118,16 Q119,11 123,6 M123,16 Q124,11 128,6 M128,16 Q129,11 133,6 M133,16 Q134,11 138,6 M138,16 Q139,11 143,6 M143,16 Q144,11 148,6 M148,16 Q149,11 153,6 M153,16 Q154,11 158,6" stroke="#7a6a55" stroke-width="0.8"/>
+        <path d="M10,6 V16 M13,6 V16 M16,6 V16" stroke-width="1"/>
+        <path d="M156,7 Q162,4 166,2 M156,11 Q162,11 167,12 M156,15 Q161,18 165,20" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(827.7,558)">
+    <!-- part-bolt: section through two plates held by a square-headed bolt, washer and nut (the bolt is not hatched, by convention). Native 90x110. -->
+    <g id="part-bolt">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g fill="#56514b" fill-opacity="0.22" stroke="none"><path d="M8,38 H82 V76 H8 Z"/></g>
+        <path d="M8,38 H38 V58 H8 Z M52,38 H82 V58 H52 Z" fill="url(#hatch-metal)"/>
+        <path d="M8,58 H38 V76 H8 Z M52,58 H82 V76 H52 Z" fill="url(#hatch-metal)" transform="matrix(-1 0 0 1 90 0)"/>
+        <path d="M38,38 V94 M52,38 V94" stroke-width="1.6"/>
+        <path d="M30,24 H60 V38 H30 Z M28,76 H62 V80 H28 Z M30,80 H60 V94 H30 Z" fill="#56514b" fill-opacity="0.35" stroke-width="1.6"/>
+        <path d="M40,24 V38 M50,24 V38 M40,80 V94 M50,80 V94" stroke="#7a6a55" stroke-width="0.8"/>
+        <path d="M38,94 V104 H52 V94" stroke-width="1.6"/>
+        <path d="M38,97 L52,95 M38,100 L52,98 M38,103 L52,101" stroke="#7a6a55" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(989.4,575)">
+    <!-- part-pipe-flange: two pipe ends bolted flange to flange, bore dashed; pipe centre line y=38, joint at x=81. Native 170x76. -->
+    <g id="part-pipe-flange">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6,23 H72 V53 H6 M164,23 H90 V53 H164" fill="#56514b" fill-opacity="0.25"/>
+        <path d="M72,10 H80 V66 H72 Z M82,10 H90 V66 H82 Z" fill="#56514b" fill-opacity="0.35" stroke-width="1.6"/>
+        <path d="M6,28 H72 M6,48 H72 M90,28 H164 M90,48 H164" stroke="#7a6a55" stroke-width="0.8" stroke-dasharray="4 3"/>
+        <path d="M66,16 H96 M66,60 H96" stroke-width="1.2"/>
+        <path d="M64,11 H72 V21 H64 Z M90,11 H98 V21 H90 Z M64,55 H72 V65 H64 Z M90,55 H98 V65 H90 Z" fill="#56514b" fill-opacity="0.4" stroke-width="1.2"/>
+        <path d="M6,23 Q3,38 6,53 M164,23 Q167,38 164,53" stroke-width="1.2"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1213.1,563)">
+    <!-- part-valve: brass plug cock on a pipe, T-handle on top, flow arrow; pipe centre line y=68. Native 140x100. -->
+    <g id="part-valve">
+      <path d="M14,50 H44" stroke="#7a6a55" stroke-width="0.8" marker-end="url(#arrow)"/>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6,58 H52 M6,78 H52 M88,58 H134 M88,78 H134" fill="none"/>
+        <path d="M6,58 H52 V78 H6 Z M88,58 H134 V78 H88 Z" fill="#56514b" fill-opacity="0.2" stroke="none"/>
+        <path d="M6,58 Q3,68 6,78 M134,58 Q137,68 134,78" stroke-width="1.2"/>
+        <path d="M52,52 Q52,46 58,46 H82 Q88,46 88,52 V84 Q88,94 70,94 Q52,94 52,84 Z" fill="#b08d3c" fill-opacity="0.4"/>
+        <path d="M60,48 H80 L76,90 H64 Z" stroke="#7a6a55" stroke-width="0.8" stroke-dasharray="3 2"/>
+        <path d="M64,34 H76 V46 H64 Z" fill="#b08d3c" fill-opacity="0.4" stroke-width="1.6"/>
+        <path d="M67,34 V24 H73 V34 M48,18 H92 V24 H48 Z" fill="#b08d3c" fill-opacity="0.4" stroke-width="1.6"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(67.7,824)">
+    <!-- part-barrel: oak cask with iron hoops, seen slightly from above. Native 90x110. -->
+    <g id="part-barrel">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15,14 Q-1,56 15,98 A30,7 0 0 0 75,98 Q91,56 75,14 Z" fill="#9a7446" fill-opacity="0.3"/>
+        <path d="M71.3,17.4 Q85.4,59.4 71.3,101.4 M63.6,19.5 Q73.6,61.5 63.6,103.5 M54.5,20.6 Q59.5,62.6 54.5,104.6 M45,21 Q45,63 45,105 M35.6,20.6 Q30.6,62.6 35.6,104.6 M26.4,19.5 Q16.5,61.5 26.4,103.5 M18.7,17.4 Q4.7,59.4 18.7,101.4" stroke="#7a6a55" stroke-width="0.8"/>
+        <path d="M12.6,20.7 A32.4,7 0 0 0 77.4,20.7 L79.1,26.6 A34.1,7 0 0 1 10.9,26.6 Z M9.9,30.8 A35.1,7 0 0 0 80.1,30.8 L81.2,35.8 A36.2,7 0 0 1 8.8,35.8 Z M8.8,76.2 A36.2,7 0 0 0 81.2,76.2 L80.1,81.2 A35.1,7 0 0 1 9.9,81.2 Z M10.9,85.4 A34.1,7 0 0 0 79.1,85.4 L77.4,91.3 A32.4,7 0 0 1 12.6,91.3 Z" fill="#56514b" fill-opacity="0.45" stroke-width="1.2"/>
+        <ellipse cx="45" cy="14" rx="30" ry="7" fill="#9a7446" fill-opacity="0.2"/>
+        <ellipse cx="45" cy="14" rx="25" ry="5" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(266.1,841)">
+    <!-- part-crucible: clay crucible with a pouring lip, full of molten metal. Native 64x76. -->
+    <g id="part-crucible">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10,14 L18,62 Q32,74 46,62 L54,14" fill="#8a7a62" fill-opacity="0.35"/>
+        <ellipse cx="32" cy="14" rx="22" ry="5" fill="#c0662b" fill-opacity="0.55"/>
+        <path d="M10,14 Q5,11 4,8 Q10,9 14,10" stroke-width="1.6"/>
+        <path d="M14,30 Q32,34 50,30 M16,46 Q32,50 48,46" stroke="#7a6a55" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(420.6,839)">
+    <!-- part-bellows: great bellows, side view, nozzle to the right at (166,40); the leather folds are faded. Native 170x80. -->
+    <g id="part-bellows">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M146,34 L34,6 Q10,22 14,40 Q10,58 34,74 L146,46 Z" fill="#9a7446" fill-opacity="0.32"/>
+        <path d="M14,40 L146,40" stroke-width="2.6"/>
+        <path d="M44,11 Q34,25 38,39 M78,19 Q70,29 73,39 M44,69 Q34,55 38,41 M78,61 Q70,51 73,41" stroke="#7a6a55" stroke-width="0.8"/>
+        <path d="M146,34 L166,38 V42 L146,46 Z" fill="#56514b" fill-opacity="0.4" stroke-width="1.4"/>
+        <path d="M34,6 L18,2 M34,74 L18,78" stroke-width="2.4"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(663,794)">
+    <!-- part-cylinder: section: hatched walls, cover and stuffing box, piston on its rod, inlet at the bottom right. Bore x=22..78. Native 100x170. -->
+    <g id="part-cylinder">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g fill="#56514b" fill-opacity="0.22" stroke="none"><path d="M14,40 H22 V150 H78 V40 H86 V160 H14 Z M8,32 H92 V40 H8 Z M38,20 H62 V32 H38 Z"/></g>
+        <path d="M14,40 H22 V150 H14 Z M78,40 H86 V134 H78 Z M78,144 H86 V150 H78 Z M14,150 H86 V160 H14 Z M8,32 H46 V40 H8 Z M54,32 H92 V40 H54 Z M38,20 H46 V32 H38 Z M54,20 H62 V32 H54 Z" fill="url(#hatch-metal)"/>
+        <path d="M86,134 H98 M86,144 H98" stroke-width="1.6"/>
+        <path d="M46,6 H54 V92 H46 Z" fill="#56514b" fill-opacity="0.3" stroke-width="1.6"/>
+        <path d="M22,92 H78 V108 H22 Z" fill="#56514b" fill-opacity="0.35"/>
+        <path d="M22,97 H78 M22,103 H78" stroke="#7a6a55" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(873.4,832)">
+    <!-- part-person: a man in 1705 dress (tricorn, long coat, breeches), 1.75 m at 50 px = 1 m; feet on y=91. Native 50x94. -->
+    <g id="part-person">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18,60 V67 Q17,77 19,87 M23,60 V67 Q24,77 22.5,87 M27,60 V67 Q26,77 27.5,87 M32,60 V67 Q33,77 31,87" stroke-width="1.1"/>
+        <path d="M18,66.5 H23 M27,66.5 H32" stroke-width="0.9"/>
+        <path d="M14,91 Q15,87 19,87 H22.5 L23,91 Z M36,91 Q35,87 31,87 H27.5 L27,91 Z" fill="#56514b" fill-opacity="0.5" stroke-width="1"/>
+        <path d="M19,20 Q14,21 13,25 L11,60 Q18,62 25,61 Q32,62 39,60 L37,25 Q36,21 31,20 Z" fill="#8a7a62" fill-opacity="0.35"/>
+        <path d="M22,20.5 L25,29 L28,20.5 M25,29 V61" stroke-width="1"/>
+        <path d="M14,23 Q10,34 8.5,46 L13,47 Q14,37 17,29 M36,23 Q40,34 41.5,46 L37,47 Q36,37 33,29" fill="#8a7a62" fill-opacity="0.35" stroke-width="1.2"/>
+        <circle cx="10.5" cy="49.5" r="2.2" stroke-width="1"/><circle cx="39.5" cy="49.5" r="2.2" stroke-width="1"/>
+        <ellipse cx="25" cy="14.5" rx="4.5" ry="5.5" stroke-width="1.2"/>
+        <path d="M14,10 Q25,3 36,10 Q25,12.5 14,10 Z" fill="#2b2118" fill-opacity="0.45" stroke-width="1.2"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1020.9,832)">
+    <!-- part-person-at-bench: side view, filing a piece held in a vice on a bench 0.9 m high; 50 px = 1 m, floor at y=91. Native 130x94. -->
+    <g id="part-person-at-bench">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M64,46 H126 V51 H64 Z" fill="#9a7446" fill-opacity="0.35"/>
+        <path d="M68,51 V91 M122,51 V91 M68,76 H122"/>
+        <path d="M80,46 V36 H85 V46 M88,46 V36 H93 V46" fill="#56514b" fill-opacity="0.4" stroke-width="1.1"/>
+        <path d="M83,36 V31 H90 V36" fill="#56514b" fill-opacity="0.3" stroke-width="1"/>
+        <path d="M22,60 L19,87 M27,60 L24,87 M31,60 L37,87 M36,60 L42,87" stroke-width="1.1"/>
+        <path d="M17,91 H27 Q27,88 24,87 H19 Z M35,91 H46 Q46,88 42,87 H37 Z" fill="#56514b" fill-opacity="0.5" stroke-width="1"/>
+        <path d="M26,19 Q20,22 19,34 L16,61 Q27,63 39,58 L37,34 Q37,24 32,20 Z" fill="#8a7a62" fill-opacity="0.35"/>
+        <path d="M29,26.5 L39,41 L60,37.5 L60,32.5 L43,36 L33,23.5 Z" fill="#8a7a62" fill-opacity="0.35" stroke-width="1.2"/>
+        <circle cx="62" cy="35" r="2.2" stroke-width="1"/>
+        <path d="M64,33 L98,30.5" stroke="#56514b" stroke-width="1.6"/>
+        <ellipse cx="30" cy="13" rx="4.8" ry="5.5" stroke-width="1.2"/>
+        <path d="M34.6,12 L36.4,14.6 L34.6,15.6" stroke-width="1"/>
+        <path d="M21,9 Q28,3 36,7 L39,9 Q30,11 21,9 Z" fill="#2b2118" fill-opacity="0.45" stroke-width="1.2"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1210.3,829)">
+    <!-- part-horse: a cob in side view, facing left, 1.45 m at the withers at 50 px = 1 m; hooves on y=96. Native 140x100. -->
+    <g id="part-horse">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60,62 L62,76 L62,92 L64,96 H56 L56,92 L55,76 L53,64 M104,60 Q100,68 102,76 L102,92 L104,96 H96 L96,92 L95,76 Q94,68 96,62" fill="#9a7446" fill-opacity="0.2" stroke="#7a6a55" stroke-width="1.2"/>
+        <path d="M120,30 Q134,44 130,76 Q126,72 125,62 Q123,48 117,36 Z" fill="#9a7446" fill-opacity="0.45" stroke-width="1.2"/>
+        <path d="M8,44 Q9,34 16,26 Q22,16 28,12 Q46,10 60,24 Q80,30 106,24 Q120,26 122,42 Q122,52 116,60 L116,72 L117,92 L119,96 H110 L111,92 L110,74 Q108,64 102,58 Q78,64 56,60 L55,76 L55,92 L57,96 H48 L49,92 L48,76 Q46,66 44,58 Q40,52 38,46 Q34,36 28,32 Q26,38 20,42 Q14,48 8,44 Z" fill="#9a7446" fill-opacity="0.3"/>
+        <path d="M27,12 L28,4 L32,11" fill="#9a7446" fill-opacity="0.3" stroke-width="1.2"/>
+        <path d="M32,12 Q44,12 56,22 M36,11 L38,17 M42,12 L44,18 M48,14 L49,20 M53,17 L54,22" stroke="#7a6a55" stroke-width="1"/>
+        <circle cx="23" cy="21" r="1.2" fill="#2b2118"/>
+        <path d="M11,39 Q13,37 13,40" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(32.7,1070)">
+    <!-- part-tree: a wind-bent Cornish tree, leaning away from the west wind, about 7 m tall at 20 px = 1 m; trunk foot at (46,156). Native 140x160. -->
+    <g id="part-tree">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40,156 Q44,120 60,96 L70,98 Q56,124 54,156 Z" fill="#9a7446" fill-opacity="0.35"/>
+        <path d="M62,98 Q58,84 42,74 M66,97 Q82,82 104,70 M65,97 Q70,80 74,62" stroke-width="1.3"/>
+        <path d="M10,86 Q6,74 18,68 Q20,54 36,50 Q44,36 62,38 Q76,26 94,32 Q112,28 122,42 Q136,48 132,62 Q138,74 126,80 Q120,92 104,88 Q92,96 78,90 Q64,98 52,90 Q38,96 28,90 Q14,96 10,86 Z" fill="#8a7a62" fill-opacity="0.2"/>
+        <path d="M18,84 l6,-5 M30,88 l6,-5 M44,88 l6,-5 M58,88 l6,-5 M72,86 l6,-5 M86,86 l6,-5 M100,84 l6,-5 M114,78 l6,-5 M122,68 l6,-5 M40,78 l6,-5 M92,76 l6,-5 M106,72 l6,-5 M118,56 l5,-4" stroke="#7a6a55" stroke-width="0.9"/>
+        <path d="M22,156 H84" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(198.1,1105)">
+    <!-- part-hill: a far hill with hachures down the slopes; wrap it in opacity 0.5-0.7 for distance. Native 240x90. -->
+    <g id="part-hill">
+      <path d="M4,86 Q34,78 60,54 Q86,22 120,18 Q158,16 184,46 Q210,74 236,82 V86 Z" fill="#8a7a62" fill-opacity="0.15"/>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4,86 Q34,78 60,54 Q86,22 120,18 Q158,16 184,46 Q210,74 236,82"/>
+        <path d="M30,77.6 l-0.8,10.1 M44.1,69 l0.4,10.1 M57.7,58.4 l1.5,10 M71.1,44.3 l1.9,9.9 M85,32.9 l0.1,10.1 M99.9,24.9 l-2,9.9 M115.8,20.3 l-4.1,9.3 M152.2,24.7 l2.1,9.9 M167.3,32.9 l-0.3,10.1 M180.9,45 l-2.4,9.8 M194.1,58.4 l-1.7,10 M207.3,69.2 l-0.6,10.1 M220.6,77.4 l0.8,10.1" stroke="#7a6a55" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(463.6,1080)">
+    <!-- part-cottage: granite cottage with a thatched roof and gable chimney, oblique view, about 20 px = 1 m; ground at y=132. Native 180x140. -->
+    <g id="part-cottage">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8,132 L132,132 L132,84 L8,84 Z" fill="#8a7a62" fill-opacity="0.22"/>
+        <path d="M8,132 L132,132 L132,84 L8,84 Z" fill="url(#hatch-masonry)" stroke="none"/>
+        <path d="M132,132 L168,114 L168,66 L150,19 L132,84 Z" fill="#8a7a62" fill-opacity="0.32"/>
+        <path d="M2,88 L134,88 L152,19 L22,19 Z" fill="#9a7446" fill-opacity="0.35"/>
+        <path d="M14,86 L34,22 M24,86 L44,22 M34,86 L54,22 M44,86 L64,22 M54,86 L74,22 M64,86 L84,22 M74,86 L94,22 M84,86 L104,22 M94,86 L114,22 M104,86 L124,22 M114,86 L134,22 M124,86 L144,22" stroke="#7a6a55" stroke-width="0.7"/>
+        <path d="M134,88 L152,19 L172,70" stroke-width="1.3"/>
+        <path d="M148,34 V8 H158 V34" fill="#8a7a62" fill-opacity="0.3" stroke-width="1.3"/>
+        <path d="M146,8 H160" stroke-width="1.3"/>
+        <path d="M62,132 V98 H78 V132" fill="#9a7446" fill-opacity="0.35" stroke-width="1.3"/>
+        <path d="M26,114 h18 v14 h-18 Z M96,114 h18 v14 h-18 Z" fill="#f3dfa0" fill-opacity="0.45" stroke-width="1.2"/>
+        <path d="M35,114 v14 M105,114 v14" stroke-width="0.8"/>
+        <path d="M2,132 H176" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(669,1070)">
+    <!-- part-headframe: timber headframe over a shaft, with pulley, kibble (ore bucket) and spoil heap; the winding rope leaves to the right, towards a horse whim. About 20 px = 1 m; ground at y=146. Native 160x160. -->
+    <g id="part-headframe">
+      <path d="M4,146 Q20,112 36,110 Q50,112 62,146 Z" fill="#8a7a62" fill-opacity="0.25"/>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4,146 Q20,112 36,110 Q50,112 62,146" stroke-width="1.2"/>
+        <path d="M16,132 l-3,7 M26,121 l-2,7 M44,120 l2,7 M53,131 l3,7" stroke="#7a6a55" stroke-width="0.8"/>
+        <path d="M68,146 L98,18 L128,146 M76,112 H120 M84,78 H112 M76,112 L112,78 M120,112 L84,78"/>
+        <path d="M92,18 H104" stroke-width="2.4"/>
+        <path d="M89,24 V118 M107,24 L158,62" stroke="#9a7446" stroke-width="1.4"/>
+        <circle cx="98" cy="24" r="9" fill="#56514b" fill-opacity="0.25" stroke-width="1.3"/>
+        <circle cx="98" cy="24" r="1.5" fill="#2b2118"/>
+        <path d="M83,118 H95 L93,132 H85 Z M84,118 Q89,110 94,118" fill="#56514b" fill-opacity="0.35" stroke-width="1.2"/>
+        <path d="M2,146 H78 M118,146 H158 M78,146 V153 M118,146 V153"/>
+        <path d="M78,146 H118" stroke="#7a6a55" stroke-width="0.8" stroke-dasharray="3 3"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(854.4,1104)">
+    <!-- part-cart: two-wheeled tip cart with shafts to the left, 1.2 m wheels at 50 px = 1 m; wheel foot at y=88. To put part-horse in the shafts at the same scale s: translate it by (-58s, -8s) from the cart. Native 210x92. -->
+    <g id="part-cart">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6,50 Q40,52 96,50 M6,50 L10,54 L96,55" fill="none" stroke-width="1.8"/>
+        <path d="M90,16 H200 L196,50 H94 Z" fill="#9a7446" fill-opacity="0.3"/>
+        <path d="M92,27 H199 M93,38 H197 M120,16 V50 M160,16 V50" stroke="#7a6a55" stroke-width="0.8"/>
+        <circle cx="146" cy="58" r="30" stroke-width="2.2"/>
+        <circle cx="146" cy="58" r="26" stroke-width="1"/>
+        <circle cx="146" cy="58" r="7" fill="#9a7446" fill-opacity="0.4" stroke-width="1.2"/>
+        <path d="M153,58 L172,58 M151.7,62.1 L167,73.3 M148.2,64.7 L154,82.7 M143.8,64.7 L138,82.7 M140.3,62.1 L125,73.3 M139,58 L120,58 M140.3,53.9 L125,42.7 M143.8,51.3 L138,33.3 M148.2,51.3 L154,33.3 M151.7,53.9 L167,42.7" stroke-width="1.2"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1132.9,1105)">
+    <!-- part-flame-anim: a small flame on a candle; delete the candle to use the flame alone (a lamp, a burner, or several over part-fire). Put it inside <g data-state="lit">. Native 40x90. -->
+    <g id="part-flame-anim">
+      <ellipse cx="20" cy="42" rx="18" ry="24" fill="#c0662b" fill-opacity="0.12">
+        <animate attributeName="fill-opacity" values="0.12;0.2;0.1;0.16;0.12" dur="1.4s" repeatCount="indefinite"/>
+      </ellipse>
+      <path d="M20,58 Q8,46 14,32 Q17,22 20,8 Q24,22 27,32 Q32,46 20,58 Z" fill="#c0662b" fill-opacity="0.45" stroke="#c0662b" stroke-width="1.3" stroke-linejoin="round">
+        <animate attributeName="d" values="M20,58 Q8,46 14,32 Q17,22 20,8 Q24,22 27,32 Q32,46 20,58 Z;M20,58 Q6,46 13,33 Q18,24 23,10 Q25,24 28,33 Q33,46 20,58 Z;M20,58 Q9,45 15,31 Q16,20 17,6 Q23,21 26,31 Q31,47 20,58 Z;M20,58 Q8,46 14,32 Q17,22 20,8 Q24,22 27,32 Q32,46 20,58 Z" dur="0.9s" repeatCount="indefinite"/>
+      </path>
+      <path d="M20,57 Q14,50 17,42 Q19,36 20,30 Q22,36 23,42 Q26,50 20,57 Z" fill="#e8a13a" fill-opacity="0.6">
+        <animate attributeName="d" values="M20,57 Q14,50 17,42 Q19,36 20,30 Q22,36 23,42 Q26,50 20,57 Z;M20,57 Q13,50 17,43 Q20,37 22,31 Q23,37 24,43 Q27,50 20,57 Z;M20,57 Q14,49 16,42 Q18,35 19,29 Q22,36 23,42 Q26,51 20,57 Z;M20,57 Q14,50 17,42 Q19,36 20,30 Q22,36 23,42 Q26,50 20,57 Z" dur="0.7s" repeatCount="indefinite"/>
+      </path>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20,58 V63" stroke-width="1.2"/>
+        <path d="M11,64 Q20,60 29,64 V86 H11 Z" fill="#f3dfa0" fill-opacity="0.4"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(1274.3,1100)">
+    <!-- part-drip-anim: a drop gathers under a pipe end, falls and splashes into a puddle, every 2.4 s; the drop hangs at (32,20). Native 60x100. -->
+    <g id="part-drip-anim">
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4,6 H34 V16 H4 Z" fill="#56514b" fill-opacity="0.25"/>
+        <path d="M34,6 Q31,11 34,16" stroke-width="1"/>
+      </g>
+      <ellipse cx="32" cy="92" rx="22" ry="4" fill="#4f7390" fill-opacity="0.3"/>
+      <path d="M32,16 Q35,21 32,23 Q29,21 32,16 Z" fill="#4f7390" fill-opacity="0.6" stroke="#4f7390" stroke-width="0.8">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 0,0; 0,68; 0,68" keyTimes="0; 0.55; 0.8; 1" calcMode="spline" keySplines="0 0 1 1; 0.5 0 1 1; 0 0 1 1" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0; 0.3; 0.79; 0.8; 1" dur="2.4s" repeatCount="indefinite"/>
+      </path>
+      <ellipse cx="32" cy="91" rx="3" ry="1" fill="none" stroke="#4f7390" stroke-width="1">
+        <animate attributeName="rx" values="3;3;16" keyTimes="0; 0.8; 1" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="ry" values="1;1;3" keyTimes="0; 0.8; 1" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0;1;0" keyTimes="0; 0.79; 0.82; 1" dur="2.4s" repeatCount="indefinite"/>
+      </ellipse>
+    </g>
+  </g>
+
+  <!-- Sheet headings and labels (not parts) -->
+  <g fill="#2b2118" font-size="17" font-variant="small-caps">
+    <text x="26" y="114">Drawing furniture</text>
+    <path d="M26,121 H1374" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+    <text x="26" y="296">Materials</text>
+    <path d="M26,303 H1374" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+    <text x="26" y="512">Hardware</text>
+    <path d="M26,519 H1374" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+    <text x="26" y="768">Hardware, continued</text>
+    <path d="M26,775 H799.7" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+    <text x="811.7" y="768">Figures</text>
+    <path d="M811.7,775 H1374" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+    <text x="26" y="1044">Scenery</text>
+    <path d="M26,1051 H1071.1" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+    <text x="1083.1" y="1044">States (animated)</text>
+    <path d="M1083.1,1051 H1374" stroke="#7a6a55" stroke-width="0.6" fill="none"/>
+  </g>
+  <g fill="#2b2118" font-size="13" font-style="italic" text-anchor="middle">
+    <text x="131.6" y="240">Cartouche</text>
+    <text x="131.6" y="255" fill="#7a6a55" font-size="11">part-cartouche · 200×46</text>
+    <text x="342.7" y="240">Scale bar, metres</text>
+    <text x="342.7" y="255" fill="#7a6a55" font-size="11">part-scale-bar-m · 176×30</text>
+    <text x="541.9" y="240">Scale bar, centimetres</text>
+    <text x="541.9" y="255" fill="#7a6a55" font-size="11">part-scale-bar-cm · 176×30</text>
+    <text x="743" y="240">Dimension line</text>
+    <text x="743" y="255" fill="#7a6a55" font-size="11">part-dimension · 180×40</text>
+    <text x="931.1" y="240">Leader label</text>
+    <text x="931.1" y="255" fill="#7a6a55" font-size="11">part-leader · 150×52</text>
+    <text x="1124.3" y="240">Flaw marker</text>
+    <text x="1124.3" y="255" fill="#7a6a55" font-size="11">part-flaw · 190×58</text>
+    <text x="1305.4" y="240">North arrow</text>
+    <text x="1305.4" y="255" fill="#7a6a55" font-size="11">part-north-arrow · 36×76</text>
+    <text x="118.7" y="456">Brick</text>
+    <text x="118.7" y="471" fill="#7a6a55" font-size="11">part-brick · 150×88</text>
+    <text x="316.1" y="456">Stone</text>
+    <text x="316.1" y="471" fill="#7a6a55" font-size="11">part-stone · 150×88</text>
+    <text x="526.6" y="456">Timber</text>
+    <text x="526.6" y="471" fill="#7a6a55" font-size="11">part-timber · 176×50</text>
+    <text x="737" y="456">Metal in section</text>
+    <text x="737" y="471" fill="#7a6a55" font-size="11">part-metal · 150×64</text>
+    <text x="934.4" y="456">Water</text>
+    <text x="934.4" y="471" fill="#7a6a55" font-size="11">part-water · 150×80</text>
+    <text x="1119.9" y="456">Fire</text>
+    <text x="1119.9" y="471" fill="#7a6a55" font-size="11">part-fire · 110×80</text>
+    <text x="1293.3" y="456">Smoke or steam</text>
+    <text x="1293.3" y="471" fill="#7a6a55" font-size="11">part-smoke · 100×110</text>
+    <text x="109.9" y="712">Cogwheel</text>
+    <text x="109.9" y="727" fill="#7a6a55" font-size="11">part-cogwheel · 124×124</text>
+    <text x="289.6" y="712">Pulley</text>
+    <text x="289.6" y="727" fill="#7a6a55" font-size="11">part-pulley · 80×150</text>
+    <text x="469.3" y="712">Chain</text>
+    <text x="469.3" y="727" fill="#7a6a55" font-size="11">part-chain · 24×150</text>
+    <text x="671" y="712">Rope</text>
+    <text x="671" y="727" fill="#7a6a55" font-size="11">part-rope · 170×22</text>
+    <text x="872.7" y="712">Bolt through plates</text>
+    <text x="872.7" y="727" fill="#7a6a55" font-size="11">part-bolt · 90×110</text>
+    <text x="1074.4" y="712">Flanged pipe joint</text>
+    <text x="1074.4" y="727" fill="#7a6a55" font-size="11">part-pipe-flange · 170×76</text>
+    <text x="1283.1" y="712">Valve (plug cock)</text>
+    <text x="1283.1" y="727" fill="#7a6a55" font-size="11">part-valve · 140×100</text>
+    <text x="112.7" y="988">Barrel</text>
+    <text x="112.7" y="1003" fill="#7a6a55" font-size="11">part-barrel · 90×110</text>
+    <text x="298.1" y="988">Crucible</text>
+    <text x="298.1" y="1003" fill="#7a6a55" font-size="11">part-crucible · 64×76</text>
+    <text x="505.6" y="988">Bellows</text>
+    <text x="505.6" y="1003" fill="#7a6a55" font-size="11">part-bellows · 170×80</text>
+    <text x="713" y="988">Cylinder and piston</text>
+    <text x="713" y="1003" fill="#7a6a55" font-size="11">part-cylinder · 100×170</text>
+    <text x="898.4" y="988">Person standing</text>
+    <text x="898.4" y="1003" fill="#7a6a55" font-size="11">part-person · 50×94</text>
+    <text x="1085.9" y="988">Person at a bench</text>
+    <text x="1085.9" y="1003" fill="#7a6a55" font-size="11">part-person-at-bench · 130×94</text>
+    <text x="1280.3" y="988">Horse</text>
+    <text x="1280.3" y="1003" fill="#7a6a55" font-size="11">part-horse · 140×100</text>
+    <text x="102.7" y="1254">Tree</text>
+    <text x="102.7" y="1269" fill="#7a6a55" font-size="11">part-tree · 140×160</text>
+    <text x="318.1" y="1254">Hill</text>
+    <text x="318.1" y="1269" fill="#7a6a55" font-size="11">part-hill · 240×90</text>
+    <text x="553.6" y="1254">Cottage</text>
+    <text x="553.6" y="1269" fill="#7a6a55" font-size="11">part-cottage · 180×140</text>
+    <text x="749" y="1254">Mine headframe</text>
+    <text x="749" y="1269" fill="#7a6a55" font-size="11">part-headframe · 160×160</text>
+    <text x="959.4" y="1254">Cart</text>
+    <text x="959.4" y="1269" fill="#7a6a55" font-size="11">part-cart · 210×92</text>
+    <text x="1152.9" y="1254">Flickering flame</text>
+    <text x="1152.9" y="1269" fill="#7a6a55" font-size="11">part-flame-anim · 40×90</text>
+    <text x="1304.3" y="1254">Water drip</text>
+    <text x="1304.3" y="1269" fill="#7a6a55" font-size="11">part-drip-anim · 60×100</text>
+  </g>
+</svg>

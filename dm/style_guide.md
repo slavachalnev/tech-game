@@ -45,7 +45,7 @@ Washes are pale fills under ink outlines. Never fill a shape with solid ink.
 ## Technical conventions
 
 - Start from `../../dm/visual_template.svg`: `viewBox="0 0 800 600"`, transparent background, with the ink-wobble filter and hatch patterns already defined. Use a wider or taller viewBox when the subject needs it.
-- Drawings are shown as `<img>`: no scripts, no external files, no web fonts. Keep everything inside the SVG.
+- Drawings are shown as `<img>` (maps are drawn inline, so their place labels can be clicked): no scripts, no external files, no web fonts. Keep everything inside the SVG. Maps don't use `data-state` groups.
 - **States:** wrap the parts that differ by state in `<g data-state="running">`. A group may list several states, as in `data-state="running leaking"`. Parts with no `data-state` always show. The view shows only the groups that match the thing's current `state` (from its spec sheet), and the player can switch between the states listed in `states`.
 - **Animation:** use SMIL (`<animate>`, `<animateTransform>`) or CSS `@keyframes` in a `<style>` inside the SVG, only inside the state groups that move. Keep it slow and legible: a piston stroke takes 2–5 s, water drips and flows, fire flickers.
 - Tools, materials and documents get a simple, clear drawing too: the object itself, like a still life, with one or two labels.

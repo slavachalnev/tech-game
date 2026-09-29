@@ -1,5 +1,6 @@
 """Save folders: find, create, load and validate them. Money and clock helpers."""
 import json
+import os
 import re
 import shutil
 from datetime import datetime, time, timedelta
@@ -39,13 +40,17 @@ def find_save(name=None):
         return SAVES / saves[0]
     if not saves:
         raise SystemExit("No saves yet. Start one with: uv run tg new cornwall-1705 --name mygame")
-    raise SystemExit(f"Which save? There are several: {', '.join(saves)}. Name one, e.g. uv run tg serve {saves[0]}")
+    raise SystemExit(f"Which save? There are several: {', '.join(saves)}. Name one with --save (e.g. uv run tg --save {saves[0]} status), or run tg from inside the save's folder.")
 
 
 def new_save(scenario, name):
     """Copy a scenario's start state into saves/<name> and make it a DM workspace."""
-    dst = SAVES / name
-    shutil.copytree(SCENARIOS / scenario / "start", dst, ignore=shutil.ignore_patterns(".*"))
+    start, dst = SCENARIOS / scenario / "start", SAVES / name
+    if not start.is_dir():
+        raise SystemExit(f"No scenario {scenario!r}. There are: {', '.join(sorted(d.name for d in SCENARIOS.iterdir() if d.is_dir()))}")
+    if dst.exists():
+        raise SystemExit(f"{dst} already exists. Pick another --name.")
+    shutil.copytree(start, dst, ignore=shutil.ignore_patterns(".*"))
     for sub in ("things", "people", "recipes", "log", "fermi", "visuals", "maps", "sketches"):
         (dst / sub).mkdir(exist_ok=True)
     template = ROOT / "dm" / "save_template"
@@ -61,7 +66,7 @@ def read_json(path):
     """Parsed JSON, or None if the file doesn't exist or is mid-edit or broken (validation reports the latter)."""
     try:
         return json.loads(Path(path).read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
+    except (FileNotFoundError, UnicodeDecodeError, json.JSONDecodeError):
         return None
 
 
@@ -69,14 +74,20 @@ def write_json(path, data):
     Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
-def load_state(save):
-    """Everything the view needs, in one JSON-able dict."""
-    def folder(name):
-        items = [read_json(p) for p in sorted((save / name).glob("*.json"))]
-        return [i for i in items if i is not None]
+def valid(save, path):
+    """A state file's data if it passes check_file, else None (check_save reports why)."""
+    return None if check_file(save, path) else read_json(path)
 
-    world = read_json(save / "world.json") or {}
-    things = folder("things")
+
+def records(save, folder):
+    """The valid records in one of the save's folders: things/, people/, recipes/ or log/."""
+    return [r for r in (valid(save, p) for p in sorted((save / folder).glob("*.json"))) if r is not None]
+
+
+def load_state(save):
+    """Everything the view needs, in one JSON-able dict. Invalid files are left out and listed in `problems`."""
+    world = valid(save, save / "world.json") or {}
+    things = records(save, "things")
     for t in things:  # cache-buster for drawings
         svg = save / t.get("visual", "-")
         t["_v"] = svg.stat().st_mtime_ns if svg.is_file() else None
@@ -86,12 +97,12 @@ def load_state(save):
         "world": world,
         "clock_label": fmt_clock(world["clock"]) if world else "",
         "things": things,
-        "people": folder("people"),
-        "recipes": folder("recipes"),
-        "log": folder("log"),
+        "people": records(save, "people"),
+        "recipes": records(save, "recipes"),
+        "log": records(save, "log"),
         "maps": maps(save),
-        "places": read_json(save / "places.json") or {"origin": None, "places": [], "routes": []},
-        "stores": (read_json(save / "stores.json") or {}).get("items", []),
+        "places": valid(save, save / "places.json") or {"origin": None, "places": [], "routes": []},
+        "stores": (valid(save, save / "stores.json") or {"items": []})["items"],
         "visuals": {f"visuals/{p.name}": p.stat().st_mtime_ns for p in (save / "visuals").glob("*.svg")},
         "sketches": [f"sketches/{p.name}" for p in sorted((save / "sketches").glob("*.png"))],
         "briefing": briefing.read_text() if briefing.is_file() else "",
@@ -107,13 +118,16 @@ def maps(save):
     return [{"id": p.stem, "visual": f"maps/{p.name}", "_v": p.stat().st_mtime_ns, "title": title(p)} for p in sorted((save / "maps").glob("*.svg"))]
 
 
+def visible_files(save):
+    """Every file in the save outside dot-folders (.history, .claude, .shots), which aren't walked at all."""
+    for folder, dirs, files in os.walk(save):
+        dirs[:] = sorted(d for d in dirs if not d.startswith("."))
+        yield from (Path(folder) / f for f in sorted(files) if not f.startswith("."))
+
+
 def signature(save):
-    """Changes whenever any visible file in the save changes (dot-folders ignored)."""
-    return hash(tuple(
-        (str(p), p.stat().st_mtime_ns)
-        for p in sorted(save.rglob("*"))
-        if p.is_file() and not any(part.startswith(".") for part in p.relative_to(save).parts)
-    ))
+    """Changes whenever any visible file in the save changes."""
+    return hash(tuple((str(p), p.stat().st_mtime_ns) for p in visible_files(save)))
 
 
 def next_turn(save):
@@ -122,7 +136,7 @@ def next_turn(save):
 
 def unseen_sketches(save):
     """Sketches the player saved that no turn has used yet."""
-    seen = {s for p in (save / "log").glob("*.json") for s in (read_json(p) or {}).get("sketches", [])}
+    seen = {s for turn in records(save, "log") for s in turn.get("sketches", [])}
     sketches = (f"sketches/{p.name}" for p in sorted((save / "sketches").glob("*.png")))
     return [s for s in sketches if s not in seen]
 
@@ -141,8 +155,9 @@ def kind_of(rel):
 
 
 def check_file(save, path):
-    """Problems with one file in a save (schema, id/file-name match, SVG well-formedness)."""
-    path = Path(path).resolve()
+    """Problems with one file in a save: schema, id matching the file name, well-formed SVG. Bad content is
+    reported, never raised, because the Claude Code hook relies on this to block bad writes."""
+    path, save = Path(path).resolve(), Path(save).resolve()
     rel = path.relative_to(save)
     if rel.parts[0] in ("visuals", "maps") and rel.suffix == ".svg":
         try:
@@ -160,29 +175,28 @@ def check_file(save, path):
         f"{rel}: {'/'.join(map(str, e.absolute_path)) or '(top level)'}: {e.message}"
         for e in validator(kind).iter_errors(data)
     ]
-    if kind in ("thing", "person", "recipe") and data.get("id") != path.stem:
+    if problems:
+        return problems  # the checks below assume the right shape
+    if kind in ("thing", "person", "recipe") and data["id"] != path.stem:
         problems.append(f"{rel}: id must match the file name ({path.stem!r})")
-    if kind == "turn" and path.stem != f"{data.get('turn', 0):04d}":
-        problems.append(f"{rel}: turn {data.get('turn')} must live in log/{data.get('turn', 0):04d}.json")
+    if kind == "turn" and path.stem != f"{data['turn']:04d}":
+        problems.append(f"{rel}: turn {data['turn']} must live in log/{data['turn']:04d}.json")
     return problems
 
 
 def check_save(save):
-    """check_file for every file, plus cross-references between files."""
-    files = [f for f in sorted(save.rglob("*")) if f.is_file() and not any(part.startswith(".") for part in f.relative_to(save).parts)]
-    problems = [p for f in files for p in check_file(save, f)]
-    things = {p.stem: read_json(p) for p in (save / "things").glob("*.json")}
-    people = {p.stem for p in (save / "people").glob("*.json")}
-    recipes = {p.stem: read_json(p) for p in (save / "recipes").glob("*.json")}
-    turns = [read_json(p) for p in sorted((save / "log").glob("*.json"))]
-    world = read_json(save / "world.json") or {}
+    """check_file for every file, plus cross-references between the valid ones."""
+    save = Path(save).resolve()
+    problems = [p for f in visible_files(save) for p in check_file(save, f)]
+    things = {t["id"]: t for t in records(save, "things")}
+    people = {p["id"] for p in records(save, "people")}
+    recipes = {r["id"]: r for r in records(save, "recipes")}
+    world = valid(save, save / "world.json")
 
     def exists(owner, paths):
         return [f"{owner}: missing file {p}" for p in paths if not (save / p).is_file()]
 
     for tid, t in things.items():
-        if not t:
-            continue
         problems += [f"things/{tid}: unknown component {c!r}" for c in t.get("components", []) if c not in things]
         problems += exists(f"things/{tid}", t.get("fermi", []) + ([t["visual"]] if "visual" in t else []))
         if "state" in t and "states" in t and t["state"] not in t["states"]:
@@ -191,47 +205,52 @@ def check_save(save):
         if recipe and recipe not in recipes:
             problems.append(f"things/{tid}: unknown recipe {recipe!r}")
     for rid, r in recipes.items():
-        if not r:
-            continue
         problems += [f"recipes/{rid}: unknown tool {x!r}" for x in r.get("tools", []) if x not in things]
         problems += [f"recipes/{rid}: unknown person {x!r}" for x in r.get("people", []) if x not in people]
         if "first_made" in r and r["first_made"] not in things:
             problems.append(f"recipes/{rid}: unknown first_made thing {r['first_made']!r}")
-    for i, turn in enumerate(turns, 1):
-        if not turn:
-            continue
-        if turn.get("turn") != i:
-            problems.append(f"log: turns must be numbered 1, 2, 3… without gaps (found {turn.get('turn')} at position {i})")
-        problems += exists(f"log/{i:04d}", turn.get("fermi", []) + turn.get("sketches", []) + turn.get("visuals", []))
-        if turn.get("clock_end", "") < turn.get("clock_start", ""):
-            problems.append(f"log/{i:04d}: clock_end is before clock_start")
-    if turns and turns[-1] and world.get("clock", "") < turns[-1].get("clock_end", ""):
+    names = [p.stem for p in sorted((save / "log").glob("*.json"))]
+    if names != [f"{i:04d}" for i in range(1, len(names) + 1)]:
+        problems.append("log: turn files must be numbered 0001, 0002, 0003… without gaps")
+    turns = records(save, "log")
+    for turn in turns:
+        name = f"log/{turn['turn']:04d}"
+        problems += exists(name, turn.get("fermi", []) + turn.get("sketches", []) + turn.get("visuals", []))
+        if turn["clock_end"] < turn["clock_start"]:
+            problems.append(f"{name}: clock_end is before clock_start")
+    if turns and world and world["clock"] < turns[-1]["clock_end"]:
         problems.append("world.json: clock is behind the last turn's clock_end")
     return problems + check_places(save, things)
 
 
+def plain(text):
+    """Lower-case, single-spaced, without a leading "the" or "your". Place names match map labels this way
+    (web/app.js does the same)."""
+    return re.sub(r"^(the|your) ", "", " ".join(text.lower().split()))
+
+
 def map_labels(svg_path):
-    """All the text on a map, lower-cased, for checking that places are labelled."""
+    """The text of each <text> element on a map, made plain."""
     root = ElementTree.parse(svg_path).getroot()
-    return " ".join(" ".join(t.itertext()) for t in root.iter("{http://www.w3.org/2000/svg}text")).lower()
+    return [plain("".join(t.itertext())) for t in root.iter("{http://www.w3.org/2000/svg}text")]
 
 
 def check_places(save, things):
-    gazetteer = read_json(save / "places.json")
+    gazetteer = valid(save, save / "places.json")
     if not gazetteer:
         return []
-    places = {p["id"]: p for p in gazetteer.get("places", [])}
+    places = {p["id"]: p for p in gazetteer["places"]}
     labels = {p.stem: map_labels(p) for p in (save / "maps").glob("*.svg") if not check_file(save, p)}
-    problems = [] if gazetteer.get("origin") in places else [f"places.json: origin {gazetteer.get('origin')!r} is not a place"]
+    problems = [] if gazetteer["origin"] in places else [f"places.json: origin {gazetteer['origin']!r} is not a place"]
     for p in places.values():
-        for m in p.get("maps", []):
+        for m in p["maps"]:
             if m not in labels:
                 problems.append(f"places.json: {p['id']} is on map {m!r}, but maps/{m}.svg doesn't exist")
-            elif " ".join(p["name"].lower().split()) not in " ".join(labels[m].split()):
+            elif not any(plain(p["name"]) in label for label in labels[m]):
                 problems.append(f"places.json: {p['name']!r} isn't labelled on maps/{m}.svg")
         if "thing" in p and p["thing"] not in things:
             problems.append(f"places.json: {p['id']} links to unknown thing {p['thing']!r}")
-    for r in gazetteer.get("routes", []):
+    for r in gazetteer["routes"]:
         problems += [f"places.json: route {r['from']}–{r['to']} uses unknown place {end!r}" for end in (r["from"], r["to"]) if end not in places]
     return problems
 

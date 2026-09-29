@@ -28,22 +28,18 @@ def cmd_serve(args):
 
 
 def cmd_status(args):
-    save = state.find_save(args.save)
-    world = state.read_json(save / "world.json")
+    save, world = open_world(args)
     problems = state.check_save(save)
-    unseen = state.unseen_sketches(save)
     print(f"Save:    {save.name} ({world['title']})")
+    print(f"Player:  {world['player']['name'] or '(no name yet)'}")
     print(f"Clock:   {state.fmt_clock(world['clock'])}")
     print(f"Purse:   {state.fmt_money(world['purse_p'])}")
     print(f"Next turn: {state.next_turn(save)}")
-    things = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "things").glob("*.json"))]
-    people = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "people").glob("*.json"))]
-    print("Things:\n" + "\n".join(f"  {t['id']}: {t.get('name')} ({t.get('status')}{', ' + t['owner'] if 'owner' in t else ''})" for t in things))
-    print("People:\n" + "\n".join(f"  {p['id']}: {p.get('name')}, {p.get('role')}" for p in people))
-    recipes = [state.read_json(p) or {"id": p.stem} for p in sorted((save / "recipes").glob("*.json"))]
-    print("Recipes:" + ("".join(f"\n  {r['id']}: {r.get('name')}, {r.get('time')}" for r in recipes) or " none"))
+    print("Things:" + "".join(f"\n  {t['id']}: {t['name']} ({t['status']}{', ' + t['owner'] if 'owner' in t else ''})" for t in state.records(save, "things")))
+    print("People:" + "".join(f"\n  {p['id']}: {p['name']}, {p['role']}" for p in state.records(save, "people")))
+    print("Recipes:" + ("".join(f"\n  {r['id']}: {r['name']}, {r['time']}" for r in state.records(save, "recipes")) or " none"))
     print(f"Maps: {', '.join(m['id'] for m in state.maps(save)) or 'none'}")
-    print(f"Unseen sketches: {', '.join(unseen) or 'none'}")
+    print(f"Unseen sketches: {', '.join(state.unseen_sketches(save)) or 'none'}")
     print("Problems:" + "".join(f"\n  - {p}" for p in problems) if problems else "Problems: none")
 
 
@@ -54,17 +50,21 @@ def cmd_validate(args):
 
 
 def open_world(args):
+    """The save and its world.json, which must be valid for commands that read or change it."""
     save = state.find_save(args.save)
-    return save / "world.json", state.read_json(save / "world.json")
+    world = state.valid(save, save / "world.json")
+    if world is None:
+        raise SystemExit("world.json fails validation:\n" + "\n".join(f"  - {p}" for p in state.check_file(save, save / "world.json")))
+    return save, world
 
 
 def cmd_advance(args):
-    path, world = open_world(args)
+    save, world = open_world(args)
     before, world["clock"] = world["clock"], state.advance_clock(world["clock"], args.span)
-    state.write_json(path, world)
+    state.write_json(save / "world.json", world)
     print(f"{state.fmt_clock(before)}  ->  {state.fmt_clock(world['clock'])}")
     due = state.paydays(before, world["clock"])
-    staff = [p for p in map(state.read_json, sorted((path.parent / "people").glob("*.json"))) if p and p.get("employed") and p.get("wage_p_week")]
+    staff = [p for p in state.records(save, "people") if p.get("employed") and p.get("wage_p_week")]
     if due and staff:
         weekly = sum(p["wage_p_week"] for p in staff)
         print(f"Payday passed: {', '.join(f'Saturday {d.day} {d:%B}' for d in due)}. Wages due each time: "
@@ -75,9 +75,9 @@ def cmd_advance(args):
 def cmd_money(sign):
     def run(args):
         amount = state.parse_money(args.amount)
-        path, world = open_world(args)
+        save, world = open_world(args)
         world["purse_p"] += sign * amount
-        state.write_json(path, world)
+        state.write_json(save / "world.json", world)
         print(f"{'Paid' if sign < 0 else 'Received'} {state.fmt_money(amount)}. Purse: {state.fmt_money(world['purse_p'])}")
     return run
 
@@ -85,7 +85,7 @@ def cmd_money(sign):
 def cmd_show(args):
     """Several records in one go, compactly: things, people, recipes or places by id, or paths like log/0003."""
     save = state.find_save(args.save)
-    gazetteer = state.read_json(save / "places.json") or {"places": [], "routes": []}
+    gazetteer = state.valid(save, save / "places.json") or {"places": [], "routes": []}
     places = {p["id"]: p for p in gazetteer["places"]}
     missing = []
     for name in args.ids:
@@ -93,7 +93,8 @@ def cmd_show(args):
         found = [p for p in paths if p.is_file()]
         for p in found:
             print(f"== {p.relative_to(save).with_suffix('')}")
-            for key, value in (state.read_json(p) or {"error": "not valid JSON"}).items():
+            data = state.read_json(p)
+            for key, value in (data if isinstance(data, dict) else {"error": "not a valid record; see tg validate"}).items():
                 print(f"{key}: {value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)}")
         if name in places:
             print(f"== place {name}\n{json.dumps(places[name], ensure_ascii=False)}")
@@ -107,8 +108,13 @@ def cmd_show(args):
 
 
 def cmd_places(args):
-    gazetteer = state.read_json(state.find_save(args.save) / "places.json")
+    save = state.find_save(args.save)
+    gazetteer = state.valid(save, save / "places.json")
+    if not gazetteer:
+        raise SystemExit("places.json is missing or fails validation (see tg validate).")
     places = {p["id"]: p for p in gazetteer["places"]}
+    if (args.origin or gazetteer["origin"]) not in places:
+        raise SystemExit(f"No place {args.origin!r}. Known: {', '.join(places)}")
     here = places[args.origin or gazetteer["origin"]]
     compass = "N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW".split()
     print(f"Places, straight-line from {here['name']} ({args.origin or gazetteer['origin']}):")
@@ -171,57 +177,63 @@ def cmd_restore(args):
 def main():
     parser = argparse.ArgumentParser(prog="tg", description="Time Travel Game tools.")
     parser.add_argument("--save", help="save name or path (default: the save you're in, or the only one)")
+    # --save also works after the subcommand; SUPPRESS keeps it from overwriting a --save given before it.
+    save_after = argparse.ArgumentParser(add_help=False)
+    save_after.add_argument("--save", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     sub = parser.add_subparsers(required=True)
 
-    p = sub.add_parser("new", help="start a new game from a scenario")
+    def command(name, **kwargs):
+        return sub.add_parser(name, parents=[save_after], **kwargs)
+
+    p = command("new", help="start a new game from a scenario")
     p.add_argument("scenario", help="a folder name under scenarios/")
     p.add_argument("--name", help="save name (default: the scenario name)")
     p.set_defaults(run=cmd_new)
 
-    p = sub.add_parser("serve", help="serve the live view of a save")
+    p = command("serve", help="serve the live view of a save")
     p.add_argument("name", nargs="?", help="save name (default: the save you're in, or the only one)")
     p.add_argument("--port", type=int, default=8765)
     p.set_defaults(run=cmd_serve)
 
-    sub.add_parser("status", help="clock, purse, next turn, unseen sketches, problems").set_defaults(run=cmd_status)
-    sub.add_parser("validate", help="check every state file and cross-reference").set_defaults(run=cmd_validate)
+    command("status", help="clock, purse, next turn, things, people, recipes, maps, unseen sketches, problems").set_defaults(run=cmd_status)
+    command("validate", help="check every state file and cross-reference").set_defaults(run=cmd_validate)
 
-    p = sub.add_parser("advance", help="move the clock forward: 3d, 4h, 1w2d, 90m")
+    p = command("advance", help="move the clock forward: 3d, 4h, 1w2d, 90m")
     p.add_argument("span")
     p.set_defaults(run=cmd_advance)
 
     for name, sign in (("pay", -1), ("receive", 1)):
-        p = sub.add_parser(name, help=f"{name} money, e.g. \"£2.35\" or \"45p\"")
+        p = command(name, help=f"{name} money, e.g. \"£2.35\" or \"45p\"")
         p.add_argument("amount")
         p.set_defaults(run=cmd_money(sign))
 
-    p = sub.add_parser("show", help="print several things, people, recipes or places (by id), or paths like log/0003")
+    p = command("show", help="print several things, people, recipes or places (by id), or paths like log/0003")
     p.add_argument("ids", nargs="+")
     p.set_defaults(run=cmd_show)
 
-    p = sub.add_parser("places", help="the gazetteer: places by distance, and known routes")
+    p = command("places", help="the gazetteer: places by distance, and known routes")
     p.add_argument("origin", nargs="?", help="measure from this place id (default: the gazetteer's origin)")
     p.set_defaults(run=cmd_places)
 
-    p = sub.add_parser("roll", help='draw against a probability: roll 0.25 "Penrose is at the mine"')
+    p = command("roll", help='draw against a probability: roll 0.25 "Penrose is at the mine"')
     p.add_argument("p", type=float)
     p.add_argument("what", nargs="?", default="roll")
     p.set_defaults(run=cmd_roll)
 
-    p = sub.add_parser("shot", help="screenshot the view with headless Chromium; prints the PNG path")
-    p.add_argument("target", nargs="?", default="workshop", help="workshop | capabilities | people | map | map/<id> | journal | sketch | <thing-id>")
+    p = command("shot", help="screenshot the view with headless Chromium; prints the PNG path")
+    p.add_argument("target", nargs="?", default="workshop", help="a tab (workshop, capabilities, people, map, map/<id>, journal, sketch), or a drawing: a thing id or visuals/<name>.svg's name")
     p.add_argument("--state", help="visual state to show, e.g. running")
     p.add_argument("--sheet", action="store_true", help="the thing's whole spec-sheet page, not just its drawing")
     p.set_defaults(run=cmd_shot)
 
-    sub.add_parser("history", help="list the save's snapshots, newest first").set_defaults(run=cmd_history)
-    sub.add_parser("undo", help="put the save back to just before the last turn").set_defaults(run=cmd_undo)
-    p = sub.add_parser("restore", help="put the save back to a snapshot from tg history (or a tag)")
+    command("history", help="list the save's snapshots, newest first").set_defaults(run=cmd_history)
+    command("undo", help="put the save back to just before the last turn").set_defaults(run=cmd_undo)
+    p = command("restore", help="put the save back to a snapshot from tg history (or a tag)")
     p.add_argument("ref")
     p.set_defaults(run=cmd_restore)
 
-    sub.add_parser("hook", help="(Claude Code hook) validate a state file just written").set_defaults(run=cmd_hook)
-    sub.add_parser("snapshot", help="(Claude Code hook) snapshot the save's changes into its history").set_defaults(run=cmd_snapshot)
+    command("hook", help="(Claude Code hook) validate a state file just written").set_defaults(run=cmd_hook)
+    command("snapshot", help="(Claude Code hook) snapshot the save's changes into its history").set_defaults(run=cmd_snapshot)
 
     args = parser.parse_args()
     args.run(args)

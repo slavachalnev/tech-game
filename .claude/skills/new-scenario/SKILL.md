@@ -11,6 +11,6 @@ description: Draft a new game scenario (e.g. "build a computer in 1850") from a 
    - `scenario.md`: the player briefing (arrival, who you are, what you have, the situation, settings).
    - `period_notes.md`: DM-facing but not secret. Prices, materials, crafts, institutions, places. No engineering insights.
    - `referee.md`: secret. What really matters per technology, failure symptoms, benchmarks, traps, world events, historical years.
-   - `start/`: `world.json`, `things/*.json`, `people/*.json`, and drawings in `visuals/` for the main site or structure (see `dm/style_guide.md`).
-4. Check it: `uv run tg --save scenarios/<id>/start validate`, `uv run pytest`, and a `tg shot` of a test save.
+   - `start/`: `world.json`, `places.json` (the gazetteer), `things/*.json`, `people/*.json`, optionally `stores.json`, drawings in `visuals/` for every thing (see `dm/style_guide.md` and its starting points), and at least a local and a regional map in `maps/` whose labels match `places.json`.
+4. Check it: `uv run tg --save scenarios/<id>/start validate`, `uv run pytest` (it validates every scenario's start state), and look at `uv run tg --save scenarios/<id>/start shot map` and `shot workshop`.
 5. Don't show `referee.md`'s content to the user: they'll play it. Delegate writing it to a subagent that reports back without content.

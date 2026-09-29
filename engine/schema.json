@@ -8,7 +8,7 @@
     "texts": {"type": "array", "items": {"$ref": "#/$defs/text"}},
     "paths": {"type": "array", "items": {"type": "string", "pattern": "^[a-z]+/[^/]+$"}},
     "props": {
-      "description": "Free-form measured properties, metric. Prefer snake_case keys with a unit suffix, e.g. bore_mm: 530.",
+      "description": "Free-form measured properties, metric. Use snake_case keys with a unit suffix the view understands: _mm _cm _m _km _m2 _m3 _g _kg _t _l _ml _bar _kpa _mpa _atm _w _kw _c _pct _s _min _h _days _weeks _p (money), optionally _per_<unit>, e.g. bore_mm: 530, flow_l_per_min: 140.",
       "type": "object",
       "additionalProperties": {"type": ["number", "string", "boolean"]}
     },

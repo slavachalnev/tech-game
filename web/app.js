@@ -50,8 +50,8 @@ function markdown(text) {
   }).join("");
 }
 const stamp = (s) => `<span class="stamp s-${s}">${STATUS[s] ?? s}</span>`;
-const list = (title, items, cls = "") => (items?.length ? `<h3>${title}</h3><ul class="${cls}">${items.map((i) => `<li>${i}</li>`).join("")}</ul>` : "");
-const table = (title, obj) =>
+const bullets = (title, items, cls = "") => (items?.length ? `<h3>${title}</h3><ul class="${cls}">${items.map((i) => `<li>${i}</li>`).join("")}</ul>` : "");
+const facts = (title, obj) =>
   obj && Object.keys(obj).length
     ? `<h3>${title}</h3><dl>${Object.entries(obj).map(([k, v]) => prop(k, v)).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`
     : "";
@@ -59,7 +59,7 @@ const fermi = (paths) =>
   paths?.length
     ? `<h3>Fermi estimates</h3>${paths.map((p) => `<details class="fermi" data-key="${esc(p)}" data-src="${esc(p)}"><summary>${esc(p)}</summary><pre>…</pre></details>`).join("")}`
     : "";
-const history = (items) => list("History", items?.map((h) => `<span class="turn-ref">Turn ${h.turn}.</span> ${esc(h.note)}`), "history");
+const historyNotes = (items) => bullets("History", items?.map((h) => `<span class="turn-ref">Turn ${h.turn}.</span> ${esc(h.note)}`), "history");
 
 // ---------- drawings ----------
 
@@ -144,18 +144,18 @@ async function thingPage(id, query) {
         ${t.states?.length > 1 ? `<nav class="states">${t.states.map((s) => `<a href="#/thing/${t.id}?state=${esc(s)}" class="${s === state ? "on" : ""}">${esc(s)}</a>`).join("")}</nav>` : ""}
       </figure>
       <div class="spec">
-        ${list("Known flaws", t.flaws?.map(esc), "flaws")}
-        ${list("Materials", t.materials?.map(esc))}
-        ${table("Dimensions", t.dimensions)}
-        ${table("Performance", t.performance)}
-        ${table("Quality", t.quality)}
-        ${list("Components", t.components?.map((c) => (byId[c] ? link(byId[c]) + flawCount(byId[c]) : esc(c))))}
-        ${list("Used in", S.things.filter((x) => x.components?.includes(t.id)).map(link))}
+        ${bullets("Known flaws", t.flaws?.map(esc), "flaws")}
+        ${bullets("Materials", t.materials?.map(esc))}
+        ${facts("Dimensions", t.dimensions)}
+        ${facts("Performance", t.performance)}
+        ${facts("Quality", t.quality)}
+        ${bullets("Components", t.components?.map((c) => (byId[c] ? link(byId[c]) + flawCount(byId[c]) : esc(c))))}
+        ${bullets("Used in", S.things.filter((x) => x.components?.includes(t.id)).map(link))}
         ${m ? `<h3>How it was made</h3><p>${esc(m.how)}</p><dl>${madeRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${m.recipe ? `<p class="recipe">Made by a known recipe: <a href="#/capabilities">${esc(S.recipes.find((r) => r.id === m.recipe)?.name ?? m.recipe)}</a></p>` : ""}` : ""}
         ${t.historical_year ? `<p class="dated">First made in real history: ${t.historical_year}.</p>` : ""}
         ${fermi(t.fermi)}
         ${t.notes ? `<h3>Notes</h3><p>${esc(t.notes)}</p>` : ""}
-        ${history(t.history)}
+        ${historyNotes(t.history)}
       </div>
     </div>
   </article>`;
@@ -172,23 +172,23 @@ function aheadOfHistory() {
 
 function capabilities() {
   const ahead = aheadOfHistory();
-  const table = ahead.length ? `<section class="listing"><h2>Ahead of history</h2><table>
+  const aheadTable = ahead.length ? `<section class="listing"><h2>Ahead of history</h2><table>
     <tr><th>What</th><th>Kind</th><th>First in real history</th><th>Years ahead</th></tr>
     ${ahead.map((x) => `<tr><td><a href="${x.href}">${esc(x.name)}</a></td><td>${esc(x.kind)}</td><td>${x.year}</td><td>${x.ahead}</td></tr>`).join("")}</table></section>` : "";
-  if (!S.recipes.length) return table + `<p class="empty">No capabilities yet. Once you've made something that can be made again, the referee writes down how, and you can simply order more.</p>`;
+  if (!S.recipes.length) return aheadTable + `<p class="empty">No capabilities yet. Once you've made something that can be made again, the referee writes down how, and you can simply order more.</p>`;
   const year = Number(S.world.clock.slice(0, 4));
-  const name = (list, id) => esc(list.find((x) => x.id === id)?.name ?? id);
-  return table + `<section><h2>Capabilities</h2><div class="cards recipes">${S.recipes.map((r) => `
+  const name = (records, id) => esc(records.find((x) => x.id === id)?.name ?? id);
+  return aheadTable + `<section><h2>Capabilities</h2><div class="cards recipes">${S.recipes.map((r) => `
     <div class="card${fresh.has("r:" + r.id) ? " fresh" : ""}"><div class="card-body">
       <h3>${esc(r.name)}</h3>
       <div class="meta">${esc(r.time)} · ${money(r.cost_p)} each${r.historical_year > year ? ` · <span class="ahead">${r.historical_year - year} years ahead of history</span>` : ""}</div>
       <p>${esc(r.makes)}</p>
       <div class="spec">
         <h3>Method</h3><p>${esc(r.how)}</p>
-        ${table("Reliably achieves", r.quality)}
-        ${list("Needs", [...(r.tools ?? []).map((t) => `<a href="#/thing/${t}">${name(S.things, t)}</a>`), ...(r.inputs ?? []).map(esc)])}
-        ${list("Who knows how", (r.people ?? []).map((p) => name(S.people, p)))}
-        ${list("Known flaws", r.flaws?.map(esc), "flaws")}
+        ${facts("Reliably achieves", r.quality)}
+        ${bullets("Needs", [...(r.tools ?? []).map((t) => `<a href="#/thing/${t}">${name(S.things, t)}</a>`), ...(r.inputs ?? []).map(esc)])}
+        ${bullets("Who knows how", (r.people ?? []).map((p) => name(S.people, p)))}
+        ${bullets("Known flaws", r.flaws?.map(esc), "flaws")}
         ${r.first_made ? `<p class="dated">First made: <a href="#/thing/${r.first_made}">${name(S.things, r.first_made)}</a>${r.turn ? `, turn ${r.turn}` : ""}.</p>` : ""}
         ${r.notes ? `<p>${esc(r.notes)}</p>` : ""}
       </div>
@@ -196,7 +196,16 @@ function capabilities() {
 }
 
 function people() {
-  return `<div class="cards people">${S.people.map((p) => `
+  const me = S.world.player;
+  const you = `<div class="card person you"><div class="card-body">
+    <h3>${esc(me.name || "You")}</h3><div class="meta">you</div>
+    <p class="attitude">${esc(me.status)}</p>
+    ${me.skills?.length ? `<p class="skills">${me.skills.map(esc).join(" · ")}</p>` : ""}
+    ${me.reputation ? `<p><b>Reputation:</b> ${esc(me.reputation)}</p>` : ""}
+    ${me.health ? `<p><b>Health:</b> ${esc(me.health)}</p>` : ""}
+    ${me.notes ? `<p>${esc(me.notes)}</p>` : ""}
+  </div></div>`;
+  return `<div class="cards people">${you}${S.people.map((p) => `
     <div class="card person${fresh.has("p:" + p.id) ? " fresh" : ""}"><div class="card-body">
       <h3>${esc(p.name)}</h3>
       <div class="meta">${esc(p.role)}${p.employed ? ` · <b>employed by you</b>${p.wage_p_week ? `, ${money(p.wage_p_week)} a week` : ""}` : ""}</div>
@@ -204,7 +213,7 @@ function people() {
       ${p.skills?.length ? `<p class="skills">${p.skills.map(esc).join(" · ")}</p>` : ""}
       ${p.location ? `<p class="where">${esc(p.location)}</p>` : ""}
       ${p.notes ? `<p>${esc(p.notes)}</p>` : ""}
-      ${history(p.history)}
+      ${historyNotes(p.history)}
     </div></div>`).join("")}</div>`;
 }
 
@@ -334,7 +343,10 @@ async function plate(id, query) {
 // ---------- page ----------
 
 function masthead(route) {
+  $("#problems").hidden = !S.problems.length;
+  $("#problems").innerHTML = `<b>State problems</b> (the referee should fix these)<ul>${S.problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`;
   const w = S.world;
+  if (!w.clock) return; // world.json is broken; the problems say why
   const ahead = aheadOfHistory()[0];
   $("#title").textContent = w.title;
   $("#clock").textContent = S.clock_label;
@@ -348,8 +360,6 @@ function masthead(route) {
   $("#ahead").title = ahead ? `Furthest ahead: ${ahead.name}. See all.` : "";
   const tab = route === "thing" ? "workshop" : route;
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#/${tab}`));
-  $("#problems").hidden = !S.problems.length;
-  $("#problems").innerHTML = `<b>State problems</b> (the referee should fix these)<ul>${S.problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`;
 }
 
 async function render() {
@@ -366,7 +376,8 @@ async function render() {
   main.hidden = route === "sketch";
   if (route === "sketch") sketch.refresh();
   const views = { workshop, thing: thingPage, capabilities, people, map, journal, visual: plate, sketch: () => "" };
-  const html = await (views[route] ?? workshop)(arg, query);
+  const broken = `<p class="empty">world.json is broken, so there's nothing to show until the referee fixes the problems above.</p>`;
+  const html = S.world.clock ? await (views[route] ?? workshop)(arg, query) : broken;
   if (id !== renderId) return; // a newer render started meanwhile
   const navigated = location.hash !== shownHash;
   if (navigated) scrolls[shownHash] = scrollY;

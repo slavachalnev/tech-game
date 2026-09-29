@@ -13,7 +13,7 @@ The player can step outside the story at any time to change how you model things
 | Path | What |
 |---|---|
 | `world.json` | Clock, location, purse (`purse_p`, in pence: 100p = £1), the player, open `threads` (offers, debts, deadlines, rumours), `house_rules`. |
-| `things/<id>.json` | One spec sheet per thing: machines, components, tools, structures, sites, documents, and materials whose properties matter. |
+| `things/<id>.json` | One spec sheet per thing: machines, components, tools, structures, sites, documents, and materials whose properties matter. Things that belong to someone else (the mine, a rival's engine) have an `owner` and show under "Not yours". |
 | `stores.json` | Everyday materials and supplies (coal, scrap brass, nails, tallow, crucibles): name, quantity, unit, where, notes. No spec sheet or drawing needed. |
 | `people/<id>.json` | Everyone the player knows. |
 | `recipes/<id>.json` | Capabilities: things the player can now order made again (see the abstraction ladder). |
@@ -29,13 +29,13 @@ The schema is `../../engine/schema.json`. A hook validates every file you write;
 
 Commands (run from this folder):
 
-- `uv run tg status`: clock with weekday, purse, next turn number, every thing and person (id, name, status), unseen sketches, problems.
+- `uv run tg status`: player, clock with weekday, purse, next turn number, every thing, person and recipe, the maps, unseen sketches, problems.
 - `uv run tg show <id> <id> …`: several spec sheets, people, recipes or places at once, compactly; also paths like `log/0003`. Cheaper than reading the files one by one.
 - `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock. It also tells you if a Saturday payday passed and what wages are due; it pays nothing itself.
 - `uv run tg pay "£2.35"` and `uv run tg receive "45p"`: change the purse. Use these rather than doing the arithmetic yourself.
 - `uv run tg roll 0.25 "what"`: a random draw against a probability.
 - `uv run tg places [place-id]`: every place by straight-line distance and direction from that place, plus all known routes.
-- `uv run tg shot <thing-id> [--state running]`: screenshot a drawing, then Read the PNG it prints. `uv run tg shot` (or `journal`, `people`, or `<id> --sheet`) shows the player's view.
+- `uv run tg shot <thing-id or drawing name> [--state running]`: screenshot one drawing (a thing's, or e.g. `scene-yard` for `visuals/scene-yard.svg`), then Read the PNG it prints. `tg shot` with `workshop`, `capabilities`, `people`, `map/<id>`, `journal` or `<id> --sheet` shows the player's view.
 - `uv run tg validate`: full check, including cross-references.
 - `uv run tg undo`, `uv run tg history`, `uv run tg restore <id>`: rewind the world (only when the player asks).
 - `uv run python fermi/NNNN_slug.py`: run a Fermi script.
@@ -49,7 +49,7 @@ Read files with the Read tool, not `cat` or shell loops. The only shell commands
 3. **Fermi.** When an outcome isn't obvious (forces, heat, flow, fuel, labour, cost), write a quick `fermi/NNNN_slug.py` with its assumptions, run it, and let the numbers guide you. Use period materials and workmanship.
 4. **Roll for real luck.** When an outcome truly hinges on chance (a casting flaw, the weather, a man's mood), decide the probability first, then draw: `uv run tg roll 0.25 "Penrose is at the mine"`. Record both in the rulings. Never pick the dramatic outcome.
 5. **Rule.** Update the files: new and changed spec sheets, purse, people, `threads`, clock. Every action takes time; most cost money; wages and rent fall due. New rulings must agree with existing spec sheets (they are precedent). If you correct an earlier ruling, say so in the log.
-6. **Log.** Write `log/NNNN.json` (the next number from `tg status`): the action, `specified`, `assumed`, `fermi`, `rulings`, `changes`, `sketches`, and `narration`. Write the narration now: the exact text you will send in step 8, because the view's journal shows it to the player.
+6. **Log.** Write `log/NNNN.json` (the next number from `tg status`): the action, `specified`, `assumed`, `fermi`, `rulings`, `changes`, `sketches`, `visuals` (step 7), and `narration`. Write the narration now: the exact text you will send in step 8, because the view's journal shows it to the player.
 7. **Draw, generously.** The player loves seeing things, so when in doubt, draw.
    - When they see something new (a place, a machine, a workshop, people at work), illustrate it: a scene goes in `visuals/scene-<slug>.svg`.
    - Draw new or visibly changed things as `visuals/<id>.svg`: detailed for machines, components, structures and sites, simple for tools and documents.
@@ -101,6 +101,7 @@ The player wants no friction from the period's language or measures, and knowing
 - Pay wages when `tg advance` says a payday passed (or handle it in the story: debt, an unhappy worker), pay rent on its due date, and keep `threads` current as matters open and close.
 - The world moves on its own: seasons and weather, the mine's water, people's patience and gossip, prices. Use the scenario's referee notes for pressures and events.
 - People have their own lives and opinions. Update `attitude` and `history` when those change.
+- Keep `world.json`'s `player` current too (status, reputation, health, skills learned); the view shows it on the People tab.
 
 ## Hidden notes
 

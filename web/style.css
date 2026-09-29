@@ -246,3 +246,4 @@ body.bare main { max-width: none; padding: 0; }
   .sheet-body { grid-template-columns: 1fr; }
   .plate { position: static; }
 }
+.person.you { border-color: var(--faded); }

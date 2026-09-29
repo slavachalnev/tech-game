@@ -145,3 +145,19 @@ def test_optional_files_can_be_missing(tmp_path, monkeypatch):
     assert not (save / "stores.json").exists()
     loaded = state.load_state(save)
     assert loaded["stores"] == [] and loaded["places"]["places"] == [] and state.check_save(save) == []
+
+
+def test_badly_shaped_files_are_reported_not_raised(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    state.write_json(save / "log/0001.json", {"turn": "1", "clock_start": "x", "action": "a", "rulings": [], "narration": "n"})
+    state.write_json(save / "things/odd.json", ["a list"])
+    gazetteer = state.read_json(save / "places.json")
+    gazetteer["places"].append({"id": "nameless", "kind": "village", "x_km": 0, "y_km": 0, "maps": []})
+    state.write_json(save / "places.json", gazetteer)
+    state.write_json(save / "world.json", {"scenario": "cornwall-1705"})
+    problems = state.check_save(save)
+    for name in ("log/0001.json", "things/odd.json", "places.json", "world.json"):
+        assert any(p.startswith(name) for p in problems), name
+    loaded = state.load_state(save)  # the view gets only valid records, plus the problems
+    assert loaded["world"] == {} and "odd" not in [t["id"] for t in loaded["things"]] and loaded["log"] == []

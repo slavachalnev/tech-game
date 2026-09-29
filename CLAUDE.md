@@ -1,46 +1,83 @@
 # Time Travel Game: developer notes
 
-A time-travel invention game. Claude Code is the referee (DM); a local web page shows the world state. The design is in `docs/design_doc.md`.
+A time-travel invention game. A Claude Code session is the referee (DM), a local web page shows the world, and the world itself is a folder of plain files. `docs/design_doc.md` is the original vision. Parts of it were never built (MCP server, Three.js, plugin API, in-browser chat, a metrics dashboard), and the referee turned out relaxed rather than strict. The real interfaces are the `tg` CLI, two Claude Code hooks and the static view.
 
 **If your working directory is inside `saves/`, you are the referee.** Follow that folder's CLAUDE.md and ignore this file, which is for work on the engine, the view, the rules and the scenarios.
 
+## How it fits together
+
+- **A save** (`saves/<name>/`, gitignored) is the world, and the referee's workspace. `dm/rules.md` ("The world is this folder") is the canonical description of its files:
+  - `world.json`, `places.json` and `stores.json`;
+  - folders `things/`, `people/`, `recipes/`, `log/`, `fermi/`, `visuals/`, `maps/` and `sketches/`;
+  - `hidden.md`, the referee's notebook;
+  - `.history/` (snapshots) and `.claude/settings.json` (hooks and permissions).
+- **Creation.** `tg new` copies `scenarios/<id>/start/` and `dm/save_template/` into the save.
+- **What reaches existing saves.** The save's CLAUDE.md @-imports `dm/rules.md`, `dm/style_guide.md` and the scenario's notes. Edits to those reach existing saves at the next referee session. **Edits to `dm/save_template/`, a scenario's `start/` or the schema don't update existing saves:** upgrade them by hand, e.g. copy in new template files and add missing fields.
+- **Hooks**, in the save's `.claude/settings.json`, active once the folder is trusted in Claude Code:
+  - `tg hook` (PostToolUse on Write/Edit) validates each file the referee writes. Exit 2 feeds the errors back to it, so `state.check_file` must report bad content and never raise.
+  - `tg snapshot` (Stop) commits the save into `.history/` after every reply. That's what `tg undo`, `tg history` and `tg restore` use.
+- **Validation** (`engine/state.py`) works in two layers:
+  - `check_file`: one file's schema, `id` matching the file name, well-formed SVG.
+  - `check_save`: adds cross-references between files (missing drawings, unknown components, tools or recipes, places not labelled on their maps). It feeds `tg validate`, `tg status` and the view's "State problems" banner.
+
+  `load_state` passes only valid records to the view.
+- **The view** (`web/`): `tg serve` streams a change event whenever a visible file in the save changes. The page refetches `/api/state` (`state.load_state`) and re-renders.
+  - Routes: `#/workshop`, `#/thing/<id>[?state=…]`, `#/capabilities`, `#/people`, `#/map[/<id>]`, `#/journal`, `#/sketch`, and `#/visual/<name>` (one drawing alone, for `tg shot`).
+  - Drawings are shown as `<img>` blob URLs, with any `data-state` groups for other states removed. That keeps each drawing's ids and styles separate.
+  - Maps are drawn inline in a shadow root so their labels can be clicked.
+  - `render()` sets `document.body.dataset.ready = "1"` when a page is complete, and `tg shot` and the tests wait for it. New async view code must finish before that.
+- **The sketch tab** (`web/sketch.js`) is the only place the browser writes: it POSTs PNGs to `/api/sketch`.
+
 ## Layout
 
-- `engine/`: Python package behind the `tg` CLI.
+- `engine/`: Python package behind the `tg` CLI. Run `uv run tg --help` for all commands; `dm/rules.md` documents the referee-facing ones.
   - `state.py`: saves (find, create, load), validation, money and clock helpers.
-  - `history.py`: each save's snapshot history, a git repo in `<save>/.history` (not `.git`, so Claude Code doesn't treat the save as its own project); undo and restore.
+  - `history.py`: each save's snapshot history, a git repo in `<save>/.history`. It isn't `.git`, so Claude Code doesn't treat the save as its own project.
   - `server.py`: the live-view server (stdlib) and Playwright screenshots.
   - `cli.py`: the commands.
   - `schema.json`: JSON Schema for every state file.
 - `web/`: the live view. Vanilla JS modules, no build step. `app.js` renders the state; `sketch.js` is the sketch canvas.
 - `dm/`: what the referee gets.
   - `rules.md`: the referee rulebook, the heart of the game.
-  - `style_guide.md` and `visual_template.svg`: how drawings look.
-  - `save_template/`: what each new save gets: `CLAUDE.md`, `hidden.md` (the referee's private notebook) and `.claude/settings.json` (schema-check hook, snapshot-on-reply hook, permissions).
+  - `style_guide.md`: how drawings look.
+  - Starting points for drawings: `visual_template.svg`, `scene_template.svg`, and `drawing_parts.svg` (a sheet of 35 reusable parts).
+  - `save_template/`: what each new save gets: `CLAUDE.md`, `hidden.md` and `.claude/settings.json`.
 - `scenarios/<id>/`:
   - `scenario.md`: player briefing.
   - `period_notes.md`: DM-facing, not secret.
   - `referee.md`: **secret**.
-  - `start/`: initial state, including starting drawings (`visuals/`), the gazetteer (`places.json`) and maps (`maps/`).
-- `saves/<name>/`: games in progress (gitignored). Each one is a world folder and a DM workspace.
+  - `start/`: initial state: `world.json`, `places.json`, `things/`, `people/`, drawings in `visuals/`, and `maps/`.
+- `.claude/skills/new-scenario/`: the skill for drafting a new scenario.
 - `tests/`: pytest.
+  - `test_state.py`: engine and schema.
+  - `test_cli.py`: the commands and both hooks.
+  - `test_view.py`: a Playwright smoke test of every page.
 
 ## Commands
 
 ```sh
-uv sync && uv run playwright install chromium   # one-time setup
+uv sync && uv run playwright install chromium   # one-time setup (git is needed too)
 uv run tg new cornwall-1705 --name mygame        # new save
 uv run tg serve mygame                           # live view at http://127.0.0.1:8765
-uv run tg --save mygame shot [target]            # screenshot the view (workshop, journal, a thing id…)
+uv run tg --save mygame status                   # --save before or after the command; not needed inside a save
 uv run tg --save scenarios/cornwall-1705/start validate   # check a scenario's start state
-uv run pytest
+uv run tg --save scenarios/cornwall-1705/start shot map   # screenshot without making a save (writes a gitignored .shots/)
+uv run pytest                                    # about 10 s, including the browser tests
 ```
 
 ## Conventions
 
-- The world is data. State is JSON under `engine/schema.json`; the only code in a save is SVG drawings and Fermi scripts. When adding a field, change the schema, the view and `dm/rules.md` together.
-- The browser never decides anything. Only the DM writes state; the one exception is the player's saved sketches.
-- Everything the player sees is in modern plain English, metric units and decimal pounds (a deliberate anachronism; see the rules' "Language and units"). Money is integer pence, 100p = £1 (`purse_p`, `cost_p`, `wage_p_week`). The clock is `YYYY-MM-DDTHH:MM`, Old Style before 1752.
-- **Don't read `scenarios/*/referee.md` or a save's `hidden.md` out to the user.** They are also the player, and it's a spoiler.
-- Don't put "secret" in the names of files the referee edits: common Claude Code deny rules (like `Edit(**/*secret*)`) block them. That's why the notebook is `hidden.md`.
-- Keep dependencies minimal: stdlib server, vanilla JS, no bundler. To check a UI change, run `tg shot` and look at the PNG.
+- **Playable over rigorous.** The player is the user. They can override anything out of character, and lasting overrides become house rules. Don't add strictness machinery, or automation that changes state behind the referee's back. Prefer tools that do one lookup or calculation and print it (see `dm/rules.md`, "The player is in charge of the game").
+- **Spoilers.** Don't show the user `scenarios/*/referee.md` or a save's `hidden.md`. That includes commands, heredocs and test fixtures they can see. Delegate edits to those files to a subagent that reports back without content. The server's refusal to serve `hidden.md` is spoiler courtesy, not security; don't harden it.
+- **The world is data.** State is JSON under `engine/schema.json`; the only code in a save is SVG drawings and Fermi scripts. A new field or state file usually touches:
+  - the schema;
+  - `state.py` (`kind_of`, `load_state`, `new_save`, `check_save`);
+  - the view (`web/app.js`);
+  - `dm/rules.md`;
+  - sometimes `cli.py` (`status`, `show`), the scenario's `start/` and the `new-scenario` skill;
+  - the tests.
+- **Edit `schema.json` one definition at a time.** A replace-all once pasted definitions inside other definitions. A test now catches that.
+- **Everything the player sees** is in modern plain English, metric units and decimal pounds (a deliberate anachronism; see the rules' "Language and units"). Money is integer pence, 100p = £1 (`purse_p`, `cost_p`, `wage_p_week`). The clock is `YYYY-MM-DDTHH:MM`, Old Style before 1752. Spec-sheet property keys carry a unit suffix that the view knows (`UNIT` in `web/app.js`): `_mm`, `_m`, `_kg`, `_l_per_min`, `_c`, `_p` and so on.
+- **The browser never decides anything.** Only the referee writes state; the one exception is the player's saved sketches.
+- **No "secret" in referee-edited file names.** Common Claude Code deny rules (like `Edit(**/*secret*)`) block them. That's why the notebook is `hidden.md`.
+- **Keep dependencies minimal:** stdlib server, vanilla JS, no bundler. To check a UI change, run `uv run pytest tests/test_view.py` and look at a `tg shot` PNG.

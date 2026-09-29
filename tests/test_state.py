@@ -121,3 +121,27 @@ def test_schema_has_no_pasted_definitions():
                 walk(value, f"{path}/{key}")
 
     walk(defs, "$defs")
+
+
+def test_stores_and_turn_visuals_are_checked(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    state.write_json(save / "stores.json", {"items": [{"name": "Scrap brass", "quantity": 20, "unit": "kg"}]})
+    turn = {"turn": 1, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T08:00", "action": "a",
+            "rulings": [], "narration": "n", "visuals": ["visuals/anvil.svg"]}
+    state.write_json(save / "log/0001.json", turn)
+    assert state.check_save(save) == [] and state.load_state(save)["stores"][0]["name"] == "Scrap brass"
+    state.write_json(save / "stores.json", {"items": [{"name": "Nails"}]})
+    state.write_json(save / "log/0001.json", {**turn, "visuals": ["visuals/scene-missing.svg"]})
+    problems = state.check_save(save)
+    assert any("stores.json" in p and "quantity" in p for p in problems)
+    assert any("missing file visuals/scene-missing.svg" in p for p in problems)
+
+
+def test_optional_files_can_be_missing(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    (save / "places.json").unlink()
+    assert not (save / "stores.json").exists()
+    loaded = state.load_state(save)
+    assert loaded["stores"] == [] and loaded["places"]["places"] == [] and state.check_save(save) == []

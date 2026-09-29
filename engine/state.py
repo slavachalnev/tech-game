@@ -58,10 +58,10 @@ def new_save(scenario, name):
 # --- Reading ---
 
 def read_json(path):
-    """Parsed JSON, or None if the file is mid-edit or broken (validation reports it)."""
+    """Parsed JSON, or None if the file doesn't exist or is mid-edit or broken (validation reports the latter)."""
     try:
         return json.loads(Path(path).read_text())
-    except json.JSONDecodeError:
+    except (FileNotFoundError, json.JSONDecodeError):
         return None
 
 
@@ -91,6 +91,8 @@ def load_state(save):
         "log": folder("log"),
         "maps": maps(save),
         "places": read_json(save / "places.json") or {"origin": None, "places": [], "routes": []},
+        "stores": (read_json(save / "stores.json") or {}).get("items", []),
+        "visuals": {f"visuals/{p.name}": p.stat().st_mtime_ns for p in (save / "visuals").glob("*.svg")},
         "sketches": [f"sketches/{p.name}" for p in sorted((save / "sketches").glob("*.png"))],
         "briefing": briefing.read_text() if briefing.is_file() else "",
         "problems": check_save(save),
@@ -132,7 +134,7 @@ def validator(kind):
 
 
 def kind_of(rel):
-    if rel in (Path("world.json"), Path("places.json")):
+    if rel in (Path("world.json"), Path("places.json"), Path("stores.json")):
         return rel.stem
     if len(rel.parts) == 2 and rel.suffix == ".json":
         return DIR_KINDS.get(rel.parts[0])
@@ -200,7 +202,7 @@ def check_save(save):
             continue
         if turn.get("turn") != i:
             problems.append(f"log: turns must be numbered 1, 2, 3… without gaps (found {turn.get('turn')} at position {i})")
-        problems += exists(f"log/{i:04d}", turn.get("fermi", []) + turn.get("sketches", []))
+        problems += exists(f"log/{i:04d}", turn.get("fermi", []) + turn.get("sketches", []) + turn.get("visuals", []))
         if turn.get("clock_end", "") < turn.get("clock_start", ""):
             problems.append(f"log/{i:04d}: clock_end is before clock_start")
     if turns and turns[-1] and world.get("clock", "") < turns[-1].get("clock_end", ""):

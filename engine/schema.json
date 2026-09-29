@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Schemas for a save's state files: world.json, places.json, things/, people/, recipes/, log/.",
+  "$comment": "Schemas for a save's state files: world.json, places.json, stores.json, things/, people/, recipes/, log/.",
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
     "clock": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$"},
@@ -180,6 +180,30 @@
       }
     },
 
+    "stores": {
+      "description": "Everyday materials and supplies (coal, scrap brass, nails, tallow, crucibles). Only materials whose properties matter get a spec sheet.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "quantity", "unit"],
+            "properties": {
+              "name": {"$ref": "#/$defs/text"},
+              "quantity": {"type": "number", "minimum": 0},
+              "unit": {"type": "string"},
+              "location": {"type": "string"},
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
     "turn": {
       "type": "object",
       "additionalProperties": false,
@@ -190,6 +214,7 @@
         "clock_end": {"$ref": "#/$defs/clock"},
         "action": {"$ref": "#/$defs/text", "description": "The player's words, verbatim or closely quoted."},
         "sketches": {"$ref": "#/$defs/paths"},
+        "visuals": {"$ref": "#/$defs/paths", "description": "Drawings that illustrate this turn: scenes the player saw, new or changed things."},
         "specified": {"$ref": "#/$defs/texts", "description": "What the player explicitly specified and was credited."},
         "assumed": {"$ref": "#/$defs/texts", "description": "Gaps filled with period-default practice."},
         "fermi": {"$ref": "#/$defs/paths"},

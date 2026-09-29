@@ -116,6 +116,8 @@ async function workshop() {
     ${S.world.threads.length ? `<section><h2>Open threads</h2><ul class="threads">${S.world.threads.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
     ${S.world.house_rules?.length ? `<section><h2>House rules</h2><ul class="threads">${S.world.house_rules.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
     ${(await Promise.all(groups.map(async ([k, ts]) => `<section><h2>${KINDS[k]}</h2>${await cards(ts)}</section>`))).join("")}
+    ${S.stores.length ? `<section class="listing"><h2>Stores</h2><table><tr><th>Item</th><th>Quantity</th><th>Where</th><th>Notes</th></tr>
+      ${S.stores.map((s) => `<tr><td>${esc(s.name)}</td><td>${s.quantity} ${esc(s.unit)}</td><td>${esc(s.location ?? "")}</td><td>${esc(s.notes ?? "")}</td></tr>`).join("")}</table></section>` : ""}
     ${others.length ? `<section><h2>Not yours</h2>${await cards(others)}</section>` : ""}`;
 }
 
@@ -159,11 +161,24 @@ async function thingPage(id, query) {
   </article>`;
 }
 
+// Everything the player has that the real world didn't have yet, furthest ahead first.
+function aheadOfHistory() {
+  const year = Number(S.world.clock.slice(0, 4));
+  return [
+    ...S.things.filter((t) => !t.owner && ["ok", "faulty"].includes(t.status)).map((t) => ({ name: t.name, kind: t.kind, href: `#/thing/${t.id}`, year: t.historical_year })),
+    ...S.recipes.map((r) => ({ name: r.name, kind: "capability", href: "#/capabilities", year: r.historical_year })),
+  ].filter((x) => x.year > year).map((x) => ({ ...x, ahead: x.year - year })).sort((a, b) => b.ahead - a.ahead);
+}
+
 function capabilities() {
-  if (!S.recipes.length) return `<p class="empty">No capabilities yet. Once you've made something that can be made again, the referee writes down how, and you can simply order more.</p>`;
+  const ahead = aheadOfHistory();
+  const table = ahead.length ? `<section class="listing"><h2>Ahead of history</h2><table>
+    <tr><th>What</th><th>Kind</th><th>First in real history</th><th>Years ahead</th></tr>
+    ${ahead.map((x) => `<tr><td><a href="${x.href}">${esc(x.name)}</a></td><td>${esc(x.kind)}</td><td>${x.year}</td><td>${x.ahead}</td></tr>`).join("")}</table></section>` : "";
+  if (!S.recipes.length) return table + `<p class="empty">No capabilities yet. Once you've made something that can be made again, the referee writes down how, and you can simply order more.</p>`;
   const year = Number(S.world.clock.slice(0, 4));
   const name = (list, id) => esc(list.find((x) => x.id === id)?.name ?? id);
-  return `<div class="cards recipes">${S.recipes.map((r) => `
+  return table + `<section><h2>Capabilities</h2><div class="cards recipes">${S.recipes.map((r) => `
     <div class="card${fresh.has("r:" + r.id) ? " fresh" : ""}"><div class="card-body">
       <h3>${esc(r.name)}</h3>
       <div class="meta">${esc(r.time)} · ${money(r.cost_p)} each${r.historical_year > year ? ` · <span class="ahead">${r.historical_year - year} years ahead of history</span>` : ""}</div>
@@ -177,7 +192,7 @@ function capabilities() {
         ${r.first_made ? `<p class="dated">First made: <a href="#/thing/${r.first_made}">${name(S.things, r.first_made)}</a>${r.turn ? `, turn ${r.turn}` : ""}.</p>` : ""}
         ${r.notes ? `<p>${esc(r.notes)}</p>` : ""}
       </div>
-    </div></div>`).join("")}</div>`;
+    </div></div>`).join("")}</div></section>`;
 }
 
 function people() {
@@ -193,21 +208,30 @@ function people() {
     </div></div>`).join("")}</div>`;
 }
 
-function journal() {
+// A drawing listed in a turn's visuals: a thing's links to its spec sheet, a scene opens full size.
+async function illustration(path) {
+  const thing = S.things.find((t) => t.visual === path);
+  const url = await drawing(thing ?? { visual: path, _v: S.visuals[path] });
+  return url ? `<a class="illus" href="${thing ? `#/thing/${thing.id}` : url}"${thing ? "" : ' target="_blank"'}><img src="${url}" alt=""></a>` : "";
+}
+
+async function journal() {
   if (!S.log.length) return `<p class="empty">Nothing has happened yet. The journal fills in as you play.</p>`;
   const workings = (title, items) => (items?.length ? `<h4>${title}</h4><ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : "");
-  return [...S.log].reverse().map((e) => `
+  const entries = [...S.log].reverse().map(async (e) => `
     <article class="entry${fresh.has("t:" + e.turn) ? " fresh" : ""}">
       <header><span class="turn-no">Turn ${e.turn}</span> <span class="when">${span(e.clock_start, e.clock_end)}</span></header>
       <blockquote>${esc(e.action)}</blockquote>
       ${e.sketches?.length ? `<div class="entry-sketches">${e.sketches.map((s) => `<a href="/save/${s}" target="_blank"><img src="/save/${s}" alt="${s}"></a>`).join("")}</div>` : ""}
+      ${e.visuals?.length ? `<div class="illustrations">${(await Promise.all(e.visuals.map(illustration))).join("")}</div>` : ""}
       <div class="narration">${e.narration.split(/\n+/).map((p) => `<p>${inline(p)}</p>`).join("")}</div>
       <details data-key="w${e.turn}"><summary>How the referee ruled</summary>
         ${workings("Credited to you", e.specified)}${workings("Filled in with standard period practice", e.assumed)}
         ${workings("Rulings", e.rulings)}${workings("Changes", e.changes)}
         ${fermi(e.fermi)}
       </details>
-    </article>`).join("");
+    </article>`);
+  return (await Promise.all(entries)).join("");
 }
 
 async function map(id) {
@@ -295,12 +319,14 @@ function gazetteer(mapId) {
   const ids = new Set(here.map((p) => p.id));
   const routes = g.routes.filter((r) => ids.has(r.from) && ids.has(r.to))
     .map((r) => `<li>${esc(byId[r.from].name)} – ${esc(byId[r.to].name)}: ${r.km} km by ${r.by}, ${esc(r.time)}${r.notes ? `. ${esc(r.notes)}` : ""}</li>`);
-  return `<section class="gazetteer"><h2>Places</h2><table><tr><th>Place</th><th>Kind</th><th>From ${esc(o.name)}</th><th>Notes</th></tr>${rows.join("")}</table>
+  return `<section class="listing"><h2>Places</h2><table><tr><th>Place</th><th>Kind</th><th>From ${esc(o.name)}</th><th>Notes</th></tr>${rows.join("")}</table>
     ${routes.length ? `<h2>Routes</h2><ul>${routes.join("")}</ul>` : ""}</section>`;
 }
 
+// One drawing alone, for screenshots: a thing's, or any other drawing in visuals/ (e.g. a scene).
 async function plate(id, query) {
-  const t = S.things.find((x) => x.id === id);
+  const path = `visuals/${id}.svg`;
+  const t = S.things.find((x) => x.id === id) ?? (S.visuals[path] && { visual: path, _v: S.visuals[path] });
   const url = t && (await drawing(t, query.get("state") ?? undefined));
   return url ? `<div class="bare-plate"><img src="${url}" alt=""></div>` : `<p class="empty">No drawing for “${esc(id)}”.</p>`;
 }
@@ -309,10 +335,7 @@ async function plate(id, query) {
 
 function masthead(route) {
   const w = S.world;
-  const year = Number(w.clock.slice(0, 4));
-  const ahead = [...S.things.filter((t) => !t.owner && ["ok", "faulty"].includes(t.status)), ...S.recipes]
-    .filter((x) => x.historical_year > year)
-    .sort((a, b) => b.historical_year - a.historical_year)[0];
+  const ahead = aheadOfHistory()[0];
   $("#title").textContent = w.title;
   $("#clock").textContent = S.clock_label;
   $("#place").textContent = w.location;
@@ -321,8 +344,8 @@ function masthead(route) {
   $("#save").textContent = `save: ${S.save}`;
   document.title = `${w.title} · ${S.save}`;
   $("#turn").textContent = `turn ${S.log.length}`;
-  $("#ahead").textContent = ahead ? ` · ${ahead.historical_year - year} years ahead of history` : "";
-  $("#ahead").title = ahead ? ahead.name : "";
+  $("#ahead").textContent = ahead ? `· ${ahead.ahead} years ahead of history` : "";
+  $("#ahead").title = ahead ? `Furthest ahead: ${ahead.name}. See all.` : "";
   const tab = route === "thing" ? "workshop" : route;
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#/${tab}`));
   $("#problems").hidden = !S.problems.length;
@@ -366,9 +389,11 @@ function markFresh(next) {
   setTimeout(() => changed.forEach((k) => fresh.delete(k)), 5000);
 }
 
-function toast(message) {
+function toast(message, href) {
   const el = $("#toast");
   el.textContent = message;
+  el.onclick = href ? () => (location.hash = href) : null;
+  el.style.cursor = href ? "pointer" : "";
   el.hidden = false;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => (el.hidden = true), 7000);
@@ -401,6 +426,7 @@ const sketch = initSketch($("#sketch"), {
     ...S.maps.map((m) => ({ key: "m:" + m.id, label: `Map: ${m.title}`, url: () => drawing(m) })),
     ...S.sketches.map((s) => ({ key: s, label: `Sketch ${s.slice(9, 13)}`, url: async () => `/save/${s}` })),
   ],
+  sketchbook: () => S.sketches.map((path) => ({ path, turns: S.log.filter((t) => t.sketches?.includes(path)).map((t) => t.turn) })),
 });
 
 const events = new EventSource("/api/events");
@@ -408,6 +434,8 @@ events.onopen = () => $("#live").classList.add("on");
 events.onerror = () => $("#live").classList.remove("on");
 events.onmessage = async () => {
   const next = await (await fetch("/api/state")).json();
+  const drawn = S && next.log.filter((e) => e.turn > S.log.length && e.visuals?.length).at(-1);
+  if (drawn) toast(`New drawings in turn ${drawn.turn}: click to see them in the Journal.`, "#/journal");
   markFresh(next);
   S = next;
   render();

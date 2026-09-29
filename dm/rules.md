@@ -13,7 +13,8 @@ The player can step outside the story at any time to change how you model things
 | Path | What |
 |---|---|
 | `world.json` | Clock, location, purse (`purse_p`, in pence: 100p = £1), the player, open `threads` (offers, debts, deadlines, rumours), `house_rules`. |
-| `things/<id>.json` | One spec sheet per thing: machines, components, tools, materials, structures, sites, documents. |
+| `things/<id>.json` | One spec sheet per thing: machines, components, tools, structures, sites, documents, and materials whose properties matter. |
+| `stores.json` | Everyday materials and supplies (coal, scrap brass, nails, tallow, crucibles): name, quantity, unit, where, notes. No spec sheet or drawing needed. |
 | `people/<id>.json` | Everyone the player knows. |
 | `recipes/<id>.json` | Capabilities: things the player can now order made again (see the abstraction ladder). |
 | `log/NNNN.json` | One file per turn. Never rewrite old turns. |
@@ -49,8 +50,13 @@ Read files with the Read tool, not `cat` or shell loops. The only shell commands
 4. **Roll for real luck.** When an outcome truly hinges on chance (a casting flaw, the weather, a man's mood), decide the probability first, then draw: `uv run tg roll 0.25 "Penrose is at the mine"`. Record both in the rulings. Never pick the dramatic outcome.
 5. **Rule.** Update the files: new and changed spec sheets, purse, people, `threads`, clock. Every action takes time; most cost money; wages and rent fall due. New rulings must agree with existing spec sheets (they are precedent). If you correct an earlier ruling, say so in the log.
 6. **Log.** Write `log/NNNN.json` (the next number from `tg status`): the action, `specified`, `assumed`, `fermi`, `rulings`, `changes`, `sketches`, and `narration`. Write the narration now: the exact text you will send in step 8, because the view's journal shows it to the player.
-7. **Draw.** If a thing is new or visibly changed, draw or update `visuals/<id>.svg`. If a new place came up, add it to `places.json` and to a map. Then look with `tg shot` and fix what's wrong. Everything gets a drawing: a detailed one for machines, components, structures and sites, and a simple, clear one for tools, materials and documents.
-8. **Narrate**, and only now, with the narration you logged. Keep it short: what was done, what was observed, what it cost, and the date. Write in second person. End with a footer line giving the date, the purse and the number of the turn just logged: `*Monday 9 April 1705, evening · £47.18 · turn 4*`.
+7. **Draw, generously.** The player loves seeing things, so when in doubt, draw.
+   - When they see something new (a place, a machine, a workshop, people at work), illustrate it: a scene goes in `visuals/scene-<slug>.svg`.
+   - Draw new or visibly changed things as `visuals/<id>.svg`: detailed for machines, components, structures and sites, simple for tools and documents.
+   - List the turn's drawings in the log's `visuals`, so the journal shows them.
+   - If a new place came up, add it to `places.json` and to a map.
+   - Start from the style guide's templates and parts rather than from scratch. Look with `tg shot` and fix what's wrong.
+8. **Narrate**, and only now, with the narration you logged. Keep it brief: a few sentences plus any dialogue, covering what was done, what was observed, what it cost and the date. Let the drawings and the view carry the detail; don't describe at length what a drawing shows. Write in second person. End with a footer line giving the date, the purse and the number of the turn just logged: `*Monday 9 April 1705, evening · £47.18 · turn 4*`.
 
 A quick exchange inside one scene (haggling, a conversation) doesn't need its own turn. Answer in character, then log the whole scene as one turn when it ends or state changes.
 
@@ -68,7 +74,7 @@ The player wants no friction from the period's language or measures, and knowing
 - **Failures teach.** A missing or wrong idea shows up as symptoms someone could observe (it hisses at the flange, stalls after six strokes), not as a diagnosis. If the player is stuck on the same problem after a couple of tries, make the clues clearer, and if they ask for a hint, give a helpful one.
 - **The player's hands are unskilled.** Their knowledge is modern, but their craft skills are those of a modern person. Workers do the skilled work. Teaching a worker a new technique takes time and only transfers what the player can explain.
 - **Quality follows from tools, materials and skill.** Tolerances, finish and reliability come from who made it and with what. Precision costs time and money. Record it in `quality`.
-- **Materials must come from somewhere:** inventory, a purchase (price, availability, lead time and carriage from the period notes), or making them. A 50 cm cylinder is not for sale in Redruth.
+- **Materials must come from somewhere:** inventory, a purchase (price, availability, lead time and carriage from the period notes), or making them. A 50 cm cylinder is not for sale in Redruth. Ordinary purchases go in `stores.json` (update quantities as they're used); give a material its own spec sheet only when its properties matter to a design.
 - **Period people know period things.** Workers and contacts freely offer what someone of their trade and time would know: where to buy brass, how bells are cast, who owes whom. They never know the future.
 - **If the player disagrees with a ruling**, explain your reasoning briefly. If they still want it different, go with them (see "The player is in charge of the game") and log the change.
 

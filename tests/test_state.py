@@ -44,6 +44,7 @@ def test_new_save_is_a_dm_workspace(tmp_path, monkeypatch):
     save = state.new_save("cornwall-1705", "g1")
     assert "@../../scenarios/cornwall-1705/referee.md" in (save / "CLAUDE.md").read_text()
     assert "tg hook" in (save / ".claude/settings.json").read_text()
+    assert "name: draw" in (save / ".claude/agents/draw.md").read_text()
     assert state.next_turn(save) == 1 and state.check_save(save) == []
 
 
@@ -123,7 +124,7 @@ def test_schema_has_no_pasted_definitions():
     walk(defs, "$defs")
 
 
-def test_stores_and_turn_visuals_are_checked(tmp_path, monkeypatch):
+def test_stores_and_turn_references_are_checked(tmp_path, monkeypatch):
     monkeypatch.setattr(state, "SAVES", tmp_path)
     save = state.new_save("cornwall-1705", "g1")
     state.write_json(save / "stores.json", {"items": [{"name": "Scrap brass", "quantity": 20, "unit": "kg"}]})
@@ -132,10 +133,12 @@ def test_stores_and_turn_visuals_are_checked(tmp_path, monkeypatch):
     state.write_json(save / "log/0001.json", turn)
     assert state.check_save(save) == [] and state.load_state(save)["stores"][0]["name"] == "Scrap brass"
     state.write_json(save / "stores.json", {"items": [{"name": "Nails"}]})
-    state.write_json(save / "log/0001.json", {**turn, "visuals": ["visuals/scene-missing.svg"]})
+    trial = {"title": "Rebound", "thing": "nope", "x": "blow", "y": "rebound (cm)", "series": [{"points": [[1, 2]]}]}
+    state.write_json(save / "log/0001.json", {**turn, "visuals": ["visuals/scene-missing.svg"], "measurements": [trial]})
     problems = state.check_save(save)
     assert any("stores.json" in p and "quantity" in p for p in problems)
     assert any("missing file visuals/scene-missing.svg" in p for p in problems)
+    assert any("unknown thing 'nope'" in p for p in problems)
 
 
 def test_optional_files_can_be_missing(tmp_path, monkeypatch):

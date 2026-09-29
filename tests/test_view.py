@@ -8,7 +8,7 @@ from engine import state
 from engine.server import make_server
 
 ROUTES = ["workshop", "capabilities", "people", "map", "map/region", "journal", "sketch",
-          "thing/wheal-fortune", "thing/smithy?state=fire-lit", "visual/scene-yard"]
+          "thing/wheal-fortune", "thing/smithy?state=fire-lit", "thing/anvil", "visual/scene-yard"]
 
 
 @pytest.fixture(scope="module")
@@ -45,7 +45,9 @@ def full_save(tmp_path_factory):
         "people": ["jacca-pascoe"], "time": "1 day", "cost_p": 30, "quality": {"roundness_mm": 5}, "historical_year": 1800})
     state.write_json(save / "log/0001.json", {
         "turn": 1, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T08:00", "action": "Walk to Wheal Fortune.",
-        "rulings": ["ok"], "narration": "You reach Wheal Fortune.", "visuals": ["visuals/scene-yard.svg", "visuals/anvil.svg"]})
+        "rulings": ["ok"], "narration": "You reach Wheal Fortune.", "visuals": ["visuals/scene-yard.svg", "visuals/anvil.svg"],
+        "measurements": [{"title": "Hammer rebound", "thing": "anvil", "x": "blow", "y": "rebound (cm)", "series": [
+            {"name": "cold", "points": [[1, 12], [2, 11.5], [3, 11]]}, {"name": "warm", "points": [[1, 9], [2, 9], [3, 8.5]]}]}]})
     assert state.check_save(save) == []
     return save
 
@@ -55,6 +57,13 @@ def test_page_renders_without_errors(browser, full_save, route):
     page, errors = open_page(browser, full_save, route)
     assert errors == []
     assert "No drawing for" not in page.inner_text("body")
+
+
+def test_trials_are_plotted_in_the_journal_and_on_the_sheet(browser, full_save):
+    for route in ("journal", "thing/anvil"):
+        page, errors = open_page(browser, full_save, route)
+        assert page.locator(".chart polyline").count() == 2 and errors == []
+        assert "Hammer rebound" in page.inner_text(".chart figcaption")
 
 
 def test_map_labels_open_place_cards(browser, full_save):

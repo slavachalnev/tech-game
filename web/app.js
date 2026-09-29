@@ -91,6 +91,45 @@ async function drawing(thing, state = thing.state ?? thing.states?.[0] ?? "") {
   return drawings.get(key);
 }
 
+// ---------- plots of trials ----------
+
+// Round tick values spanning lo..hi, about five of them.
+function ticks(lo, hi) {
+  if (lo === hi) [lo, hi] = [lo - 1, hi + 1];
+  const rough = (hi - lo) / 5, mag = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((k) => k >= rough);
+  const first = Math.floor(lo / step) * step, n = Math.round((Math.ceil(hi / step) * step - first) / step);
+  return Array.from({ length: n + 1 }, (_, i) => +(first + i * step).toPrecision(12));
+}
+
+// A turn's measurements as a line chart: one line per run.
+function chart(m, prefix = "") {
+  const pts = m.series.flatMap((s) => s.points), xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  let ylo = Math.min(...ys);
+  const yhi = Math.max(...ys);
+  if (ylo >= 0 && yhi - ylo > 0.2 * yhi) ylo = 0; // magnitudes start at zero, unless that would flatten them
+  const X = ticks(Math.min(...xs), Math.max(...xs)), Y = ticks(ylo, yhi);
+  const W = 480, H = 210, L = 44, R = 12, T = 24, B = 38;
+  const sx = (x) => (L + ((x - X[0]) / (X.at(-1) - X[0])) * (W - L - R)).toFixed(1);
+  const sy = (y) => (H - B - ((y - Y[0]) / (Y.at(-1) - Y[0])) * (H - T - B)).toFixed(1);
+  const lines = m.series.map((s, i) => {
+    const p = [...s.points].sort((a, b) => a[0] - b[0]).map(([x, y]) => [sx(x), sy(y)]);
+    return `<g class="s${i % 5}"><polyline points="${p.join(" ")}"/>${p.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6"/>`).join("")}</g>`;
+  });
+  return `<figure class="chart">
+    <figcaption>${esc(prefix + m.title)}</figcaption>
+    ${m.series.length > 1 ? `<div class="legend">${m.series.map((s, i) => `<span class="s${i % 5}"><i></i>${esc(s.name ?? `run ${i + 1}`)}</span>`).join("")}</div>` : ""}
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.title)}">
+      ${Y.map((v) => `<line class="grid" x1="${L}" x2="${W - R}" y1="${sy(v)}" y2="${sy(v)}"/><text x="${L - 6}" y="${+sy(v) + 4}" text-anchor="end">${v}</text>`).join("")}
+      <line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>
+      ${X.map((v) => `<line class="axis" x1="${sx(v)}" x2="${sx(v)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${sx(v)}" y="${H - B + 17}" text-anchor="middle">${v}</text>`).join("")}
+      <text class="label" x="${L}" y="${T - 10}">${esc(m.y)}</text>
+      <text class="label" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${esc(m.x)}</text>
+      ${lines.join("")}
+    </svg>
+  </figure>`;
+}
+
 // ---------- views ----------
 
 async function card(t) {
@@ -130,6 +169,7 @@ async function thingPage(id, query) {
   const link = (x) => `<a href="#/thing/${x.id}">${esc(x.name)}</a>`;
   const flawCount = (x) => (x?.flaws?.length ? ` <span class="flag">${x.flaws.length} flaw${x.flaws.length > 1 ? "s" : ""}</span>` : "");
   const m = t.made;
+  const trials = S.log.flatMap((e) => (e.measurements ?? []).filter((x) => x.thing === t.id).map((x) => chart(x, `Turn ${e.turn}: `))).reverse();
   const madeRows = m && [["by", m.by?.join(", ")], ["took", m.took], ["cost", m.cost_p !== undefined && money(m.cost_p)], ["turn", m.turn]].filter(([, v]) => v || v === 0);
   return `<article class="sheet">
     <a class="back" href="#/workshop">← Workshop</a>
@@ -145,6 +185,7 @@ async function thingPage(id, query) {
       </figure>
       <div class="spec">
         ${bullets("Known flaws", t.flaws?.map(esc), "flaws")}
+        ${trials.length ? `<h3>Trials</h3>${trials.join("")}` : ""}
         ${bullets("Materials", t.materials?.map(esc))}
         ${facts("Dimensions", t.dimensions)}
         ${facts("Performance", t.performance)}
@@ -233,6 +274,7 @@ async function journal() {
       <blockquote>${esc(e.action)}</blockquote>
       ${e.sketches?.length ? `<div class="entry-sketches">${e.sketches.map((s) => `<a href="/save/${s}" target="_blank"><img src="/save/${s}" alt="${s}"></a>`).join("")}</div>` : ""}
       ${e.visuals?.length ? `<div class="illustrations">${(await Promise.all(e.visuals.map(illustration))).join("")}</div>` : ""}
+      ${(e.measurements ?? []).map((x) => chart(x)).join("")}
       <div class="narration">${e.narration.split(/\n+/).map((p) => `<p>${inline(p)}</p>`).join("")}</div>
       <details data-key="w${e.turn}"><summary>How the referee ruled</summary>
         ${workings("Credited to you", e.specified)}${workings("Filled in with standard period practice", e.assumed)}

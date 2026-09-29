@@ -9,6 +9,7 @@
   --red: #9c3b25;
   --blue: #4f7390;
   --green: #5b7f4a;
+  --brass: #b08d3c;
   --grid: rgba(122, 106, 85, 0.13);
   --shadow: 0 1px 2px rgba(60, 40, 20, 0.12), 0 4px 14px rgba(60, 40, 20, 0.08);
   --fell: "IM Fell English", Georgia, serif;
@@ -188,6 +189,24 @@ dd { margin: 0; }
 .entry summary { cursor: pointer; font: 15px var(--fell-sc); color: var(--faded); }
 .entry h3, .entry h4 { margin: 10px 0 2px; font: 15px var(--fell-sc); color: var(--faded); }
 .entry details ul { margin: 0; padding-left: 20px; }
+
+/* ---------- plots of trials ---------- */
+.chart { max-width: 560px; margin: 12px 0 14px; }
+.chart figcaption { font: 16px var(--fell-sc); color: var(--faded); }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font: italic 13px var(--fell); fill: var(--faded); }
+.chart .label { fill: var(--ink-soft); }
+.chart .grid { stroke: var(--rule); stroke-dasharray: 2 3; }
+.chart .axis { stroke: var(--faded); }
+.chart polyline { fill: none; stroke: var(--c); stroke-width: 1.8; stroke-linejoin: round; }
+.chart circle { fill: var(--c); }
+.chart .s0 { --c: var(--ink); }
+.chart .s1 { --c: var(--red); }
+.chart .s2 { --c: var(--blue); }
+.chart .s3 { --c: var(--brass); }
+.chart .s4 { --c: var(--green); }
+.legend { display: flex; flex-wrap: wrap; gap: 0 16px; font: italic 15px var(--fell); color: var(--ink-soft); }
+.legend i { display: inline-block; width: 18px; margin: 0 6px 3px 0; vertical-align: middle; border-top: 2px solid var(--c); }
 
 /* ---------- sketch ---------- */
 .sketch-tools { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 4px 0 14px; }

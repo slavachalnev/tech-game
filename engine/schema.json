@@ -220,6 +220,34 @@
         "fermi": {"$ref": "#/$defs/paths"},
         "rulings": {"$ref": "#/$defs/texts"},
         "changes": {"$ref": "#/$defs/texts"},
+        "measurements": {
+          "type": "array",
+          "description": "Numbers from a trial, plotted in the journal and on the tested thing's sheet: one chart each, one line per run.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "x", "y", "series"],
+            "properties": {
+              "title": {"$ref": "#/$defs/text"},
+              "thing": {"$ref": "#/$defs/id", "description": "The thing tested; its spec sheet shows the chart too."},
+              "x": {"$ref": "#/$defs/text", "description": "Axis label with its unit, e.g. 'stroke number' or 'load (kg)'."},
+              "y": {"$ref": "#/$defs/text", "description": "Axis label with its unit, e.g. 'stroke (cm)'."},
+              "series": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["points"],
+                  "properties": {
+                    "name": {"$ref": "#/$defs/text", "description": "What set this run apart, e.g. 'purged first' or '10 kg'."},
+                    "points": {"type": "array", "minItems": 1, "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}}
+                  }
+                }
+              }
+            }
+          }
+        },
         "narration": {"$ref": "#/$defs/text"}
       }
     }

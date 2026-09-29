@@ -216,6 +216,8 @@ def check_save(save):
     for turn in turns:
         name = f"log/{turn['turn']:04d}"
         problems += exists(name, turn.get("fermi", []) + turn.get("sketches", []) + turn.get("visuals", []))
+        problems += [f"{name}: measurements name unknown thing {m['thing']!r}"
+                     for m in turn.get("measurements", []) if "thing" in m and m["thing"] not in things]
         if turn["clock_end"] < turn["clock_start"]:
             problems.append(f"{name}: clock_end is before clock_start")
     if turns and world and world["clock"] < turns[-1]["clock_end"]:

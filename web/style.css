@@ -66,8 +66,8 @@ main, #sketch { max-width: 1240px; margin: 0 auto; padding: 18px 28px 80px; }
 .empty { margin: 60px auto; text-align: center; font: italic 20px var(--fell); color: var(--faded); }
 
 /* ---------- workshop ---------- */
-section h2 { display: flex; align-items: center; gap: 14px; margin: 26px 0 12px; font: 22px var(--fell-sc); }
-section h2::after { content: ""; flex: 1; border-top: 1px solid var(--rule); }
+section h2, .fold h2 { display: flex; align-items: center; gap: 14px; margin: 26px 0 12px; font: 22px var(--fell-sc); }
+section h2::after, .fold h2::after { content: ""; flex: 1; border-top: 1px solid var(--rule); }
 .threads { margin: 0; padding: 0; list-style: none; max-width: 860px; }
 .threads li { position: relative; padding: 2px 0 2px 30px; font-style: italic; }
 .threads li::before { content: "☞"; position: absolute; left: 0; font-style: normal; color: var(--red); }
@@ -84,7 +84,9 @@ a.card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(60, 40, 2
   display: grid; place-items: center; aspect-ratio: 4 / 3; border-bottom: 1px solid var(--rule);
 }
 .thumb img { width: 100%; height: 100%; padding: 6px; object-fit: contain; }
-.initial { font: 64px var(--fell); color: var(--faded); opacity: 0.45; }
+.glyph { width: 30%; fill: none; stroke: var(--faded); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; opacity: 0.55; }
+.card[data-status="planned"] .thumb, .card[data-status="building"] .thumb { background-image: none; background-color: rgba(79, 115, 144, 0.07); }
+.card[data-status="consumed"] { opacity: 0.6; }
 .card-body { padding: 10px 14px 14px; }
 .card h3 { margin: 0 0 3px; font: 20px/1.2 var(--fell); }
 .card p { margin: 6px 0 0; font-size: 15.5px; line-height: 1.4; color: var(--ink-soft); }
@@ -181,7 +183,21 @@ dd { margin: 0; }
 .listing ul { padding-left: 20px; font-size: 15.5px; }
 
 /* ---------- people ---------- */
-.people { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 22px; }
+.people { columns: 290px 4; column-gap: 18px; margin-top: 22px; }
+.people .card { display: flex; break-inside: avoid; margin-bottom: 18px; }
+.who { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
+.who h3 { margin: 0; }
+.who .meta { line-height: 1.3; }
+.cameo {  /* an oval portrait frame, with initials for want of a likeness */
+  flex: none; display: grid; place-items: center; width: 46px; height: 56px; border-radius: 50%;
+  font: 19px var(--fell-sc); color: var(--ink-soft);
+  background: radial-gradient(ellipse at 40% 35%, var(--paper-light), #e8dbbf);
+  border: 1.5px solid var(--ink-soft); outline: 1px solid var(--rule); outline-offset: 2px;
+}
+.you .cameo { color: var(--red); border-color: var(--red); }
+.yours .cameo { border-color: var(--brass); }
+.person details { margin-top: 8px; font-size: 15.5px; }
+.person summary { cursor: pointer; font: 15px var(--fell-sc); color: var(--faded); }
 .attitude { font-style: italic; }
 .skills { font-size: 15px !important; }
 .where { font: italic 15px var(--fell) !important; color: var(--faded) !important; }
@@ -279,3 +295,112 @@ body.bare main { max-width: none; padding: 0; }
   .plate { position: static; }
 }
 .person.you { border-color: var(--faded); }
+
+/* ---------- the sky: sun or moon in the masthead, candlelight after dark ---------- */
+#sky { display: inline-block; margin-right: 7px; vertical-align: -3px; }
+#sky svg, .sky-line svg { vertical-align: -3px; }
+.moon .dark { fill: rgba(43, 33, 24, 0.4); }
+.moon .lit { fill: #fbf3dc; }
+.moon .rim { fill: none; stroke: var(--ink-soft); stroke-width: 1; }
+.sun { fill: none; stroke: var(--brass); stroke-width: 1.6; stroke-linecap: round; }
+.sun circle { fill: rgba(176, 141, 60, 0.3); }
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse 80% 75% at 50% 42%, transparent 45%, rgba(58, 32, 8, 0.26) 100%);
+  transition: opacity 3s ease;
+}
+body[data-sky="dusk"]::after, body[data-sky="dawn"]::after { opacity: 0.5; }
+body[data-sky="night"]::after { opacity: 1; animation: candle 7s ease-in-out infinite alternate; }
+body.bare::after { display: none; }
+@keyframes candle { 0%, 100% { opacity: 1; } 40% { opacity: 0.86; } 55% { opacity: 0.97; } 80% { opacity: 0.9; } }
+
+/* ---------- the desk: where you left off, and the almanac ---------- */
+.desk { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; margin-top: 6px; }
+.last-turn { padding: 14px 28px 16px; background: var(--paper-light); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+.kicker { font: 14px var(--fell-sc); letter-spacing: 0.08em; color: var(--faded); }
+.last-turn header { display: flex; gap: 14px; align-items: baseline; }
+.last-turn .turn-no { font-size: 24px; }
+.last-turn .narration { font-size: 18px; }
+.more { font: italic 16px var(--fell); color: var(--red); text-decoration: none; }
+.more:hover { text-decoration: underline; }
+.almanac { padding: 12px 20px 14px; background: var(--paper-light); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+.leaf { text-align: center; padding-bottom: 8px; border-bottom: 3px double var(--rule); }
+.leaf .dow, .leaf .month { font: 17px var(--fell-sc); letter-spacing: 0.06em; color: var(--faded); }
+.leaf .dom { font: 64px/1 var(--fell); color: var(--red); }
+.sky-line { margin: 10px 0 4px; font: italic 15.5px/1.4 var(--fell); color: var(--ink-soft); }
+.purse-line { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0 0; padding: 6px 0; font: italic 15.5px var(--fell); color: var(--faded); border-top: 1px dotted var(--rule); border-bottom: 1px dotted var(--rule); }
+.purse-line b { font: 22px var(--fell); color: var(--ink); }
+.purse-line b.debt { color: var(--red); }
+.almanac h3 { margin: 12px 0 4px; font: 15px var(--fell-sc); letter-spacing: 0.04em; color: var(--faded); }
+.days { margin: 0; padding: 0; list-style: none; font-size: 15.5px; line-height: 1.35; }
+.days li { padding: 4px 0 5px; border-bottom: 1px dotted var(--rule); }
+.days li:last-child { border-bottom: 0; }
+.days .date { font: 16px var(--fell); }
+.days .away { float: right; font: italic 14.5px var(--fell); color: var(--red); }
+.fold summary { list-style: none; cursor: pointer; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary h2::before { content: "▸"; margin-right: -6px; font-size: 16px; color: var(--faded); transition: transform 0.2s; }
+.fold[open] summary h2::before { transform: rotate(90deg); }
+.fold .count { font: italic 16px var(--fell); color: var(--faded); }
+.fold .threads { columns: 420px 2; column-gap: 40px; max-width: none; }
+.fold .threads li { break-inside: avoid; font-size: 16px; }
+
+/* ---------- the ahead-of-history time line ---------- */
+.timeline { max-width: 1000px; margin: 0; }
+.timeline svg { display: block; width: 100%; height: auto; }
+.timeline text { font: italic 15px var(--fell); fill: var(--faded); }
+.timeline .name { font-style: normal; fill: var(--ink); }
+.timeline .tick { font-size: 14px; }
+.timeline .grid { stroke: var(--rule); stroke-dasharray: 2 4; }
+.timeline .now { stroke: var(--red); stroke-width: 1.5; }
+.timeline .now-label { fill: var(--red); }
+.timeline .span { stroke: var(--ink-soft); stroke-width: 1.2; }
+.timeline .pin { fill: var(--red); }
+.timeline .real { fill: var(--paper-light); stroke: var(--ink); stroke-width: 1.5; }
+.timeline .hit { fill: transparent; }
+.timeline a:hover .hit { fill: rgba(156, 59, 37, 0.06); }
+.timeline a:hover .name { fill: var(--red); }
+
+/* ---------- the journal as a chronicle ---------- */
+.journal { display: grid; grid-template-columns: 170px minmax(0, 780px); gap: 36px; justify-content: center; }
+.chapters { position: sticky; top: 110px; align-self: start; max-height: calc(100vh - 130px); overflow: auto; padding-top: 20px; }
+.chapters a { display: block; padding: 3px 0 4px 12px; font: 17px var(--fell); color: var(--ink-soft); cursor: pointer; border-left: 2px solid var(--rule); }
+.chapters a:hover { color: var(--red); border-left-color: var(--red); }
+.chapters span { display: block; font: italic 13.5px var(--fell); color: var(--faded); }
+.journal .journal-head { margin: 0; }
+.chapter { display: flex; align-items: center; gap: 18px; margin: 40px 0 6px; font: 26px var(--fell-sc); color: var(--ink-soft); scroll-margin-top: 110px; }
+.chapter::before, .chapter::after { content: ""; flex: 1; height: 5px; border-top: 1px solid var(--faded); border-bottom: 1px solid var(--rule); }
+.journal .entry { margin: 18px 0; }
+.narration > p:first-child::first-letter { float: left; margin: 5px 7px 0 0; font: 3.3em/0.8 var(--fell); color: var(--red); }
+blockquote.order {
+  margin: 10px 0 12px; padding: 8px 14px 9px 38px; position: relative;
+  font: italic 17px/1.45 var(--fell); color: var(--ink-soft); white-space: pre-line;
+  background: rgba(255, 255, 255, 0.35); border: 1px solid var(--rule); border-left: 0;
+}
+blockquote.order::before { content: "✎"; position: absolute; left: 11px; top: 6px; font-style: normal; color: var(--red); }
+.illus .caption { display: block; padding: 4px 4px 0; text-align: right; font: italic 14.5px var(--fell); color: var(--faded); }
+.illus { color: inherit; text-decoration: none; }
+
+/* A new drawing inks itself in, left to right. */
+.fresh .thumb img, .fresh .illus img { animation: ink-in 1.8s ease-out; }
+@keyframes ink-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+.leaf.turned { transform-origin: top; animation: leaf-drop 0.9s cubic-bezier(0.3, 1.4, 0.5, 1); }
+@keyframes leaf-drop { from { transform: perspective(500px) rotateX(-95deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.delta { margin-left: auto; margin-right: 10px; font: italic 16px var(--fell); animation: delta 8s ease-out forwards; }
+.delta.down { color: var(--red); }
+.delta.up { color: var(--green); }
+@keyframes delta { 0% { opacity: 0; transform: translateY(6px); } 8%, 70% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+@media (max-width: 900px) {
+  .desk, .journal { grid-template-columns: 1fr; }
+  .chapters { display: none; }
+  #title { font-size: 22px; }
+  .tabs { flex-wrap: wrap; gap: 0 20px; }
+  .last-turn { padding: 12px 16px; }
+  .last-turn header { flex-wrap: wrap; gap: 0 12px; }
+  .timeline { overflow-x: auto; }
+  .timeline svg { min-width: 720px; }
+}
+.desk .recent-row { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.desk section h2 { margin-top: 22px; }

@@ -17,6 +17,7 @@ const opened = JSON.parse(localStorage.getItem("opened") ?? "{}"); // details op
 const scrolls = {}; // scroll position per page, restored when you come back
 let shownHash = null;
 let lastMap = null;
+let spent = null; // the purse's last change, shown for a while: { p }
 let mapToMount = null; // the map to draw into the page once the Map view's HTML is in place
 const COMPASS = "N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW".split(" ");
 
@@ -59,7 +60,55 @@ const fermi = (paths) =>
   paths?.length
     ? `<h3>Fermi estimates</h3>${paths.map((p) => `<details class="fermi" data-key="${esc(p)}" data-src="${esc(p)}"><summary>${esc(p)}</summary><pre>…</pre></details>`).join("")}`
     : "";
+const initials = (name) => name.split(/\s+/).filter((w) => /^[A-Z]/.test(w) && !/^(Mr|Mrs|Miss|Dr|Sir|Lady|Lord|Captain|Rev)\.?$/.test(w)).map((w) => w[0]).slice(0, 2).join("") || name[0];
 const historyNotes = (items) => bullets("History", items?.map((h) => `<span class="turn-ref">Turn ${h.turn}.</span> ${esc(h.note)}`), "history");
+
+// ---------- the sky at the clock's time ----------
+
+const LATITUDE = 50.2; // degrees north: the scenarios so far are set in southern Britain
+const MOON = ["new moon", "waxing crescent moon", "first-quarter moon", "waxing gibbous moon", "full moon", "waning gibbous moon", "last-quarter moon", "waning crescent moon"];
+
+// Julian Day of a clock time (local solar time, as clocks then were set by the sun). Old Style before Britain's 1752 switch.
+function julianDay(clock) {
+  const [y, m, d, hh, mm] = clock.split(/[-T:]/).map(Number);
+  const a = Math.floor((14 - m) / 12), Y = y + 4800 - a, M = m + 12 * a - 3;
+  const calendar = clock >= "1752-09-14" ? Math.floor(Y / 400) - Math.floor(Y / 100) - 32045 : -32083;
+  return d + Math.floor((153 * M + 2) / 5) + 365 * Y + Math.floor(Y / 4) + calendar - 0.5 + (hh + mm / 60) / 24;
+}
+
+// Sunrise and sunset (hours of solar time), the time of day, and the moon's age (0 new, 0.5 full).
+function sky(clock) {
+  const rad = Math.PI / 180, jd = julianDay(clock), n = jd - 2451545;
+  const g = (357.528 + 0.9856003 * n) * rad;
+  const decl = Math.asin(Math.sin(23.44 * rad) * Math.sin((280.46 + 0.9856474 * n + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * rad));
+  const half = Math.acos((Math.sin(-0.833 * rad) - Math.sin(LATITUDE * rad) * Math.sin(decl)) / (Math.cos(LATITUDE * rad) * Math.cos(decl))) / rad / 15;
+  const [rise, set] = [12 - half, 12 + half], h = +clock.slice(11, 13) + clock.slice(14, 16) / 60;
+  const phase = h < rise - 0.75 || h > set + 0.75 ? "night" : h < rise + 0.75 ? "dawn" : h > set - 0.75 ? "dusk" : "day";
+  return { rise, set, phase, moon: ((((jd - 2451550.1) / 29.530588853) % 1) + 1) % 1 };
+}
+const hm = (h) => `${String(Math.floor(Math.round(h * 60) / 60)).padStart(2, "0")}:${String(Math.round(h * 60) % 60).padStart(2, "0")}`;
+const moonName = (f) => MOON[Math.round(f * 8) % 8];
+
+// The moon as it looks: the lit part is a half disc plus or minus half an ellipse.
+function moonIcon(f, r = 9) {
+  const c = r + 1, k = Math.cos(2 * Math.PI * f), waxing = f < 0.5;
+  const lit = `M${c} ${c - r}A${r} ${r} 0 0 ${waxing ? 1 : 0} ${c} ${c + r}A${(r * Math.abs(k)).toFixed(2)} ${r} 0 0 ${k > 0 === waxing ? 0 : 1} ${c} ${c - r}Z`;
+  return `<svg class="moon" viewBox="0 0 ${2 * c} ${2 * c}" width="${2 * c}" height="${2 * c}"><title>${moonName(f)}</title><circle class="dark" cx="${c}" cy="${c}" r="${r}"/><path class="lit" d="${lit}"/><circle class="rim" cx="${c}" cy="${c}" r="${r}"/></svg>`;
+}
+const SUN = `<svg class="sun" viewBox="0 0 20 20" width="20" height="20"><circle cx="10" cy="10" r="4"/>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="10" y1="1.5" x2="10" y2="4" transform="rotate(${a} 10 10)"/>`).join("")}</svg>`;
+
+// Small ink glyphs for things that have no drawing yet, by kind.
+const GLYPH = {
+  machine: `<polygon points="${Array.from({ length: 40 }, (_, i) => { const a = (i / 40) * 2 * Math.PI, r = [15, 15, 19, 19][i % 4]; return `${(24 + r * Math.cos(a)).toFixed(1)},${(24 + r * Math.sin(a)).toFixed(1)}`; }).join(" ")}"/><circle cx="24" cy="24" r="5"/>`,
+  component: `<polygon points="40,24 32,37.9 16,37.9 8,24 16,10.1 32,10.1"/><circle cx="24" cy="24" r="7"/>`,
+  tool: `<rect x="11" y="9" width="24" height="9" rx="1.5"/><path d="M21 18v22h5V18"/>`,
+  material: `<path d="M8 38h14l-2-7H10zM26 38h14l-2-7H28zM17 30h14l-2-7H19z"/>`,
+  document: `<path d="M13 7h16l7 7v27H13zM29 7v7h7M17 20h14M17 25h14M17 30h9"/>`,
+  structure: `<path d="M9 40V22l15-12 15 12v18zM20 40v-9h8v9"/>`,
+  site: `<path d="M5 40q19-11 38 0M24 34V9l12 4.5L24 18"/>`,
+  other: `<path d="M24 11v26M12.7 17.5l22.6 13M35.3 17.5l-22.6 13"/>`,
+};
+const glyph = (kind) => `<svg class="glyph" viewBox="0 0 48 48">${GLYPH[kind] ?? GLYPH.other}</svg>`;
 
 // ---------- drawings ----------
 
@@ -72,6 +121,11 @@ function fetchText(url) {
 }
 // A drawing's SVG: the current file, or the file in an earlier snapshot of the save (`_rev`).
 const svgText = (item) => fetchText(item._rev ? `/api/rev/${item._rev}/${item.visual}` : `/save/${item.visual}?v=${item._v}`);
+// A drawing's caption: its thing's name, or the file's name for a scene.
+function caption(path, thing) {
+  const name = thing?.name ?? path.slice(8, -4).replace(/^scene-/, "").replace(/-/g, " ");
+  return name[0].toUpperCase() + name.slice(1);
+}
 // Link attributes for a drawing: a thing's opens its spec sheet, a scene opens full size.
 const opens = (thing, url) => (thing ? `href="#/thing/${thing.id}"` : `href="${url}" target="_blank"`);
 
@@ -138,8 +192,8 @@ function chart(m, prefix = "") {
 async function card(t) {
   const url = await drawing(t);
   const qty = t.quantity !== undefined ? `<span class="qty">${t.quantity} ${esc(t.unit ?? "")}</span>` : "";
-  return `<a class="card${fresh.has(t.id) ? " fresh" : ""}" href="#/thing/${t.id}">
-    <div class="thumb">${url ? `<img src="${url}" alt="">` : `<span class="initial">${esc(t.name[0])}</span>`}</div>
+  return `<a class="card${fresh.has(t.id) ? " fresh" : ""}" data-status="${t.status}" href="#/thing/${t.id}">
+    <div class="thumb">${url ? `<img src="${url}" alt="">` : glyph(t.kind)}</div>
     <div class="card-body">
       <h3>${esc(t.name)}</h3>
       <div class="meta">${stamp(t.status)} ${qty} ${t.owner ? `<span class="owner">${esc(t.owner)}</span>` : ""}</div>
@@ -162,23 +216,58 @@ async function recentDrawings() {
   const items = await Promise.all(recent.map(async ([path, v]) => {
     const thing = S.things.find((t) => t.visual === path);
     const url = await drawing(thing ?? { visual: path, _v: v });
-    const name = thing?.name ?? path.slice(8, -4).replace(/^scene-/, "").replace(/-/g, " ");
-    return `<a class="recent" ${opens(thing, url)}><span class="thumb"><img src="${url}" alt=""></span><span class="caption">${esc(name[0].toUpperCase() + name.slice(1))}</span></a>`;
+    return `<a class="recent" ${opens(thing, url)}><span class="thumb"><img src="${url}" alt=""></span><span class="caption">${esc(caption(path, thing))}</span></a>`;
   }));
   return `<section><h2>Recent drawings</h2><div class="recent-row">${items.join("")}</div></section>`;
 }
+
+// The top of the Workshop: the last turn, to pick up from.
+function lastTurn() {
+  const e = S.log.at(-1);
+  if (!e) return "";
+  let chars = 0;
+  const paras = e.narration.split(/\n+/), shown = paras.filter((p) => (chars += p.length) < 700 || chars === p.length);
+  return `<article class="last-turn${fresh.has("t:" + e.turn) ? " fresh" : ""}">
+    <div class="kicker">Where you left off</div>
+    <header><span class="turn-no">Turn ${e.turn}</span> <span class="when">${span(e.clock_start, e.clock_end)}</span></header>
+    <blockquote class="order">${esc(e.action)}</blockquote>
+    <div class="narration">${shown.map((p) => `<p>${inline(p)}</p>`).join("")}</div>
+    <a class="more" href="#/journal">${shown.length < paras.length ? "Read on in the journal" : "The journal"} →</a>
+  </article>`;
+}
+
+// Today's leaf of the almanac: the date, the sky, the purse and what's coming.
+function almanac() {
+  const w = S.world, s = sky(w.clock), [y, m, d] = w.clock.slice(0, 10).split("-").map(Number);
+  const when = { night: "after dark", dusk: "dusk", dawn: "dawn", day: "daylight" }[s.phase];
+  const items = (S.coming_up ?? []).slice(0, 5);
+  return `<aside class="almanac">
+    <div class="leaf${fresh.has("clock") ? " turned" : ""}">
+      <div class="dow">${esc(S.clock_label.split(" ")[0])}</div>
+      <div class="dom">${d}</div>
+      <div class="month">${MONTHS[m - 1]} ${y}</div>
+    </div>
+    <p class="sky-line">${s.phase === "day" ? SUN : moonIcon(s.moon)} ${w.clock.slice(11)}, ${when}. Sun up ${hm(s.rise)}, down ${hm(s.set)}; a ${moonName(s.moon)}.</p>
+    <p class="purse-line">In your purse ${spent ? `<span class="delta ${spent.p < 0 ? "down" : "up"}">${spent.p > 0 ? "+" : ""}${money(spent.p)}</span>` : ""}<b class="${w.purse_p < 0 ? "debt" : ""}">${money(w.purse_p)}</b></p>
+    ${items.length ? `<h3>Coming up</h3><ul class="days">${items.map((c) => `<li><span class="date">${esc(c.label)}</span> <span class="away">${esc(c.in)}</span><div>${inline(c.what)}</div></li>`).join("")}</ul>` : ""}
+  </aside>`;
+}
+
+// A list that can be folded away; long ones start folded.
+const foldable = (key, title, items) => (items?.length ? `<details class="fold" data-key="${key}" ${items.length > 6 ? "" : "open"}>
+  <summary><h2>${title} <span class="count">${items.length}</span></h2></summary><ul class="threads">${items.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></details>` : "");
 
 async function workshop() {
   const cards = async (things) => `<div class="cards">${(await Promise.all(things.map(card))).join("")}</div>`;
   const mine = S.things.filter((t) => !t.owner);
   const groups = Object.keys(KINDS).map((k) => [k, mine.filter((t) => t.kind === k)]).filter(([, ts]) => ts.length);
   const others = S.things.filter((t) => t.owner);
+  const briefing = `<details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>`;
   return `
-    ${comingUp()}
-    ${await recentDrawings()}
-    <details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>
-    ${S.world.threads.length ? `<section><h2>Open threads</h2><ul class="threads">${S.world.threads.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
-    ${S.world.house_rules?.length ? `<section><h2>House rules</h2><ul class="threads">${S.world.house_rules.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
+    <div class="desk"><div>${S.log.length ? lastTurn() + (await recentDrawings()) : briefing}</div>${almanac()}</div>
+    ${S.log.length ? briefing : ""}
+    ${foldable("threads", "Open threads", S.world.threads)}
+    ${foldable("house-rules", "House rules", S.world.house_rules)}
     ${(await Promise.all(groups.map(async ([k, ts]) => `<section><h2>${KINDS[k]}</h2>${await cards(ts)}</section>`))).join("")}
     ${S.stores.length ? `<section class="listing"><h2>Stores</h2><table><tr><th>Item</th><th>Quantity</th><th>Where</th><th>Notes</th></tr>
       ${S.stores.map((s) => `<tr><td>${esc(s.name)}</td><td>${s.quantity} ${esc(s.unit)}</td><td>${esc(s.location ?? "")}</td><td>${esc(s.notes ?? "")}</td></tr>`).join("")}</table></section>` : ""}
@@ -236,11 +325,31 @@ function aheadOfHistory() {
   ].filter((x) => x.year > year).map((x) => ({ ...x, ahead: x.year - year })).sort((a, b) => b.ahead - a.ahead);
 }
 
+// Everything ahead of history on one time line: each row runs from now to the year the real world caught up.
+function aheadChart(ahead) {
+  const now = Number(S.world.clock.slice(0, 4)), Y = ticks(now, Math.max(...ahead.map((x) => x.year)));
+  const W = 1000, L = 290, R = 150, row = 30, T = 44, H = T + ahead.length * row + 8;
+  const sx = (y) => (L + ((y - now) / (Y.at(-1) - now)) * (W - L - R)).toFixed(1);
+  return `<figure class="timeline"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Ahead of history">
+    ${Y.filter((y) => y - now > (Y.at(-1) - now) / 12).map((y) => `<line class="grid" x1="${sx(y)}" x2="${sx(y)}" y1="${T - 10}" y2="${H}"/><text class="tick" x="${sx(y)}" y="${T - 16}" text-anchor="middle">${y}</text>`).join("")}
+    <line class="now" x1="${sx(now)}" x2="${sx(now)}" y1="${T - 26}" y2="${H}"/>
+    <text class="now-label" x="${+sx(now) - 7}" y="${T - 16}" text-anchor="end">now, ${now}</text>
+    ${ahead.map((x, i) => {
+      const y = T + i * row + row / 2;
+      return `<a href="${x.href}"><title>${esc(x.name)}: first made in ${x.year}</title>
+        <rect class="hit" x="0" y="${y - row / 2}" width="${W}" height="${row}"/>
+        <text class="name" x="${L - 16}" y="${y + 5}" text-anchor="end">${esc(x.name)}</text>
+        <line class="span" x1="${sx(now)}" x2="${sx(x.year)}" y1="${y}" y2="${y}"/>
+        <circle class="pin" cx="${sx(now)}" cy="${y}" r="3"/><circle class="real" cx="${sx(x.year)}" cy="${y}" r="4.5"/>
+        <text class="ahead-by" x="${W - R + 14}" y="${y + 5}">${x.year} · ${x.ahead} year${x.ahead === 1 ? "" : "s"} early</text></a>`;
+    }).join("")}
+  </svg></figure>`;
+}
+
 function capabilities() {
   const ahead = aheadOfHistory();
-  const aheadTable = ahead.length ? `<section class="listing"><h2>Ahead of history</h2><table>
-    <tr><th>What</th><th>Kind</th><th>First in real history</th><th>Years ahead</th></tr>
-    ${ahead.map((x) => `<tr><td><a href="${x.href}">${esc(x.name)}</a></td><td>${esc(x.kind)}</td><td>${x.year}</td><td>${x.ahead}</td></tr>`).join("")}</table></section>` : "";
+  const aheadTable = ahead.length ? `<section><h2>Ahead of history</h2>
+    <p class="hint">What you have that the real world didn't yet: a dot marks the year history made it.</p>${aheadChart(ahead)}</section>` : "";
   if (!S.recipes.length) return aheadTable + `<p class="empty">No capabilities yet. Once you've made something that can be made again, the referee writes down how, and you can simply order more.</p>`;
   const year = Number(S.world.clock.slice(0, 4));
   const name = (records, id) => esc(records.find((x) => x.id === id)?.name ?? id);
@@ -264,22 +373,25 @@ function capabilities() {
 function people() {
   const me = S.world.player;
   const you = `<div class="card person you"><div class="card-body">
-    <h3>${esc(me.name || "You")}</h3><div class="meta">you</div>
+    <header class="who"><span class="cameo">${esc(initials(me.name || "You"))}</span><div><h3>${esc(me.name || "You")}</h3><div class="meta">you</div></div></header>
     <p class="attitude">${esc(me.status)}</p>
     ${me.skills?.length ? `<p class="skills">${me.skills.map(esc).join(" · ")}</p>` : ""}
     ${me.reputation ? `<p><b>Reputation:</b> ${esc(me.reputation)}</p>` : ""}
     ${me.health ? `<p><b>Health:</b> ${esc(me.health)}</p>` : ""}
     ${me.notes ? `<p>${esc(me.notes)}</p>` : ""}
   </div></div>`;
-  return `<div class="cards people">${you}${S.people.map((p) => `
-    <div class="card person${fresh.has("p:" + p.id) ? " fresh" : ""}"><div class="card-body">
-      <h3>${esc(p.name)}</h3>
-      <div class="meta">${esc(p.role)}${p.employed ? ` · <b>employed by you</b>${p.wage_p_week ? `, ${money(p.wage_p_week)} a week` : ""}` : ""}</div>
+  const last = (p) => Math.max(0, ...(p.history ?? []).map((h) => h.turn));
+  const cast = [...S.people].sort((a, b) => !!b.employed - !!a.employed || last(b) - last(a)); // your people, then the most recently met
+  return `<div class="people">${you}${cast.map((p) => `
+    <div class="card person${p.employed ? " yours" : ""}${fresh.has("p:" + p.id) ? " fresh" : ""}"><div class="card-body">
+      <header class="who"><span class="cameo">${esc(initials(p.name))}</span><div>
+        <h3>${esc(p.name)}</h3>
+        <div class="meta">${esc(p.role)}${p.employed ? ` · <b>works for you</b>${p.wage_p_week ? `, ${money(p.wage_p_week)} a week` : ""}` : ""}</div>
+      </div></header>
       ${p.attitude ? `<p class="attitude">${esc(p.attitude)}</p>` : ""}
       ${p.skills?.length ? `<p class="skills">${p.skills.map(esc).join(" · ")}</p>` : ""}
-      ${p.location ? `<p class="where">${esc(p.location)}</p>` : ""}
-      ${p.notes ? `<p>${esc(p.notes)}</p>` : ""}
-      ${historyNotes(p.history)}
+      <p class="where">${esc(p.location ?? "")}${last(p) ? `${p.location ? " · " : ""}last dealt with in turn ${last(p)}` : ""}</p>
+      ${p.notes || p.history?.length ? `<details data-key="p:${esc(p.id)}"><summary>Notes and history</summary>${p.notes ? `<p>${esc(p.notes)}</p>` : ""}${historyNotes(p.history)}</details>` : ""}
     </div></div>`).join("")}</div>`;
 }
 
@@ -294,16 +406,16 @@ async function illustration(path, turn) {
     item = { visual: path, _v: rev, _rev: rev, state: (then ?? thing)?.state, states: (then ?? thing)?.states };
   }
   const url = await drawing(item);
-  return url ? `<a class="illus" ${opens(thing, url)}><img src="${url}" alt=""></a>` : "";
+  return url ? `<a class="illus" ${opens(thing, url)}><img src="${url}" alt=""><span class="caption">${esc(caption(path, thing))}</span></a>` : "";
 }
 
 async function journal() {
   if (!S.log.length) return `<p class="empty">Nothing has happened yet. The journal fills in as you play.</p>`;
   const workings = (title, items) => (items?.length ? `<h4>${title}</h4><ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : "");
-  const entries = [...S.log].reverse().map(async (e) => `
+  const entry = async (e) => `
     <article class="entry${fresh.has("t:" + e.turn) ? " fresh" : ""}">
       <header><span class="turn-no">Turn ${e.turn}</span> <span class="when">${span(e.clock_start, e.clock_end)}</span></header>
-      <blockquote>${esc(e.action)}</blockquote>
+      <blockquote class="order">${esc(e.action)}</blockquote>
       ${e.sketches?.length ? `<div class="entry-sketches">${e.sketches.map((s) => `<a href="/save/${s}" target="_blank"><img src="/save/${s}" alt="${s}"></a>`).join("")}</div>` : ""}
       ${e.visuals?.length ? `<div class="illustrations">${(await Promise.all(e.visuals.map((v) => illustration(v, e.turn)))).join("")}</div>` : ""}
       ${(e.measurements ?? []).map((x) => chart(x)).join("")}
@@ -313,8 +425,19 @@ async function journal() {
         ${workings("Rulings", e.rulings)}${workings("Changes", e.changes)}
         ${fermi(e.fermi)}
       </details>
-    </article>`);
-  return `<div class="journal-head">${comingUp()}</div>${(await Promise.all(entries)).join("")}`;
+    </article>`;
+  const months = []; // [yyyy-mm, entries], newest first
+  for (const e of [...S.log].reverse()) {
+    if (months.at(-1)?.[0] !== e.clock_start.slice(0, 7)) months.push([e.clock_start.slice(0, 7), []]);
+    months.at(-1)[1].push(e);
+  }
+  const title = (ym) => `${MONTHS[+ym.slice(5) - 1]} ${ym.slice(0, 4)}`;
+  const chapters = await Promise.all(months.map(async ([ym, es]) =>
+    `<h2 class="chapter" id="ch-${ym}"><span>${title(ym)}</span></h2>${(await Promise.all(es.map(entry))).join("")}`));
+  return `<div class="journal">
+    <nav class="chapters">${months.map(([ym, es]) => `<a data-jump="ch-${ym}">${title(ym)}<span>turn${es.length > 1 ? `s ${es.at(-1).turn}–${es[0].turn}` : ` ${es[0].turn}`}</span></a>`).join("")}</nav>
+    <div class="pages"><div class="journal-head">${comingUp()}</div>${chapters.join("")}</div>
+  </div>`;
 }
 
 async function map(id) {
@@ -424,6 +547,10 @@ function masthead(route) {
   const ahead = aheadOfHistory()[0];
   $("#title").textContent = w.title;
   $("#clock").textContent = S.clock_label;
+  const s = sky(w.clock);
+  $("#sky").innerHTML = s.phase === "day" ? SUN : moonIcon(s.moon);
+  $("#sky").title = `Sunrise ${hm(s.rise)}, sunset ${hm(s.set)}; ${moonName(s.moon)}`;
+  document.body.dataset.sky = s.phase;
   $("#place").textContent = w.location;
   $("#purse").textContent = money(w.purse_p);
   $("#purse").classList.toggle("debt", w.purse_p < 0);
@@ -470,6 +597,11 @@ function markFresh(next) {
   const keyed = [...next.things.map((t) => [t.id, t]), ...next.people.map((p) => ["p:" + p.id, p]), ...next.recipes.map((r) => ["r:" + r.id, r]), ...next.maps.map((m) => ["m:" + m.id, m]), ...next.log.map((e) => ["t:" + e.turn, e])];
   const changed = seen.size ? keyed.filter(([k, v]) => seen.get(k) !== JSON.stringify(v)).map(([k]) => k) : [];
   seen = new Map(keyed.map(([k, v]) => [k, JSON.stringify(v)]));
+  if (S?.world.clock && next.world.clock !== S.world.clock) changed.push("clock");
+  if (S?.world.purse_p !== undefined && next.world.purse_p !== S.world.purse_p) {
+    const now = (spent = { p: next.world.purse_p - S.world.purse_p });
+    setTimeout(() => spent === now && (spent = null), 8000);
+  }
   changed.forEach((k) => fresh.add(k));
   setTimeout(() => changed.forEach((k) => fresh.delete(k)), 5000);
 }
@@ -484,8 +616,10 @@ function toast(message, href) {
   toast.timer = setTimeout(() => (el.hidden = true), 7000);
 }
 
-// Clicking a row of the places table shows that place on the map.
+// Clicking a row of the places table shows that place on the map; the journal's index jumps to a month.
 document.addEventListener("click", (e) => {
+  const jump = e.target.closest?.("[data-jump]");
+  if (jump) return document.getElementById(jump.dataset.jump)?.scrollIntoView({ behavior: "smooth" });
   const row = e.target.closest?.("tr[data-place]");
   const place = row && byPlaceId()[row.dataset.place];
   const label = place && [...(document.querySelector(".map-host")?.shadowRoot?.querySelectorAll("text.place") ?? [])].find((t) => mentions(t.textContent, place.name));

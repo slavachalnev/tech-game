@@ -68,7 +68,7 @@ def test_trials_are_plotted_in_the_journal_and_on_the_sheet(browser, full_save):
 
 def test_workshop_shows_what_is_coming_up_and_recent_drawings(browser, full_save):
     page, errors = open_page(browser, full_save, "workshop")
-    assert "24 June" in page.inner_text(".coming-up") and page.locator(".recent img").count() == 4 and errors == []
+    assert "24 June" in page.inner_text(".almanac") and page.locator(".recent img").count() == 4 and errors == []
 
 
 def test_old_journal_entries_show_drawings_as_they_were(browser, tmp_path, monkeypatch):

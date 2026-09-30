@@ -4,7 +4,7 @@ import threading
 import pytest
 from playwright.sync_api import sync_playwright
 
-from engine import state
+from engine import history, state
 from engine.server import make_server
 
 ROUTES = ["workshop", "capabilities", "people", "map", "map/region", "journal", "sketch",
@@ -64,6 +64,25 @@ def test_trials_are_plotted_in_the_journal_and_on_the_sheet(browser, full_save):
         page, errors = open_page(browser, full_save, route)
         assert page.locator(".chart polyline").count() == 2 and errors == []
         assert "Hammer rebound" in page.inner_text(".chart figcaption")
+
+
+def test_workshop_shows_what_is_coming_up_and_recent_drawings(browser, full_save):
+    page, errors = open_page(browser, full_save, "workshop")
+    assert "24 June" in page.inner_text(".coming-up") and page.locator(".recent img").count() == 4 and errors == []
+
+
+def test_old_journal_entries_show_drawings_as_they_were(browser, tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "old")
+    history.snapshot(save)
+    for n in (1, 2):
+        (save / "visuals/scene-yard.svg").write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 60"><text y="20">version {n}</text></svg>')
+        state.write_json(save / f"log/{n:04d}.json", {"turn": n, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T08:00",
+                                                     "action": "a", "rulings": [], "narration": "n", "visuals": ["visuals/scene-yard.svg"]})
+        history.snapshot(save)
+    page, errors = open_page(browser, save, "journal")
+    shown = page.evaluate("Promise.all([...document.querySelectorAll('.entry .illus img')].map(async (i) => (await fetch(i.src)).text()))")
+    assert ["version 2" in shown[0], "version 1" in shown[1]] == [True, True] and errors == []
 
 
 def test_map_labels_open_place_cards(browser, full_save):

@@ -46,7 +46,20 @@
           }
         },
         "threads": {"$ref": "#/$defs/texts", "description": "Open matters the player knows about: offers, debts, deadlines, rumours."},
-        "house_rules": {"$ref": "#/$defs/texts", "description": "Lasting changes the player asked for in how the game is modelled."}
+        "house_rules": {"$ref": "#/$defs/texts", "description": "Lasting changes the player asked for in how the game is modelled."},
+        "coming_up": {
+          "type": "array",
+          "description": "Dated things ahead that the player knows of: appointments, deadlines, expected deliveries. The view shows those still ahead as a note.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["when", "what"],
+            "properties": {
+              "when": {"$ref": "#/$defs/clock", "description": "Midnight (T00:00) means the day, with no set time."},
+              "what": {"$ref": "#/$defs/text", "description": "A short line, e.g. 'Captain Tregonning comes to see the engine run'."}
+            }
+          }
+        }
       }
     },
 

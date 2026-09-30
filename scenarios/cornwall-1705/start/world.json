@@ -20,5 +20,8 @@
     "You have a letter of introduction to Nicholas Penrose, the mine's treasurer.",
     "Jacca Pascoe's wages, 45p, are due every Saturday.",
     "The smithy's rent is paid until 24 June; the next quarter costs £1.50."
+  ],
+  "coming_up": [
+    {"when": "1705-06-24T00:00", "what": "Midsummer quarter day: the smithy's rent for the next quarter, £1.50, falls due."}
   ]
 }

@@ -106,6 +106,7 @@ def load_state(save):
         "visuals": {f"visuals/{p.name}": p.stat().st_mtime_ns for p in (save / "visuals").glob("*.svg")},
         "sketches": [f"sketches/{p.name}" for p in sorted((save / "sketches").glob("*.png"))],
         "briefing": briefing.read_text() if briefing.is_file() else "",
+        "coming_up": upcoming(world) if world else [],
         "problems": check_save(save),
     }
 
@@ -298,6 +299,22 @@ def fmt_clock(clock):
     """'1705-04-02T08:00' -> 'Monday 2 April 1705, 08:00'."""
     t = datetime.strptime(clock, CLOCK_FMT)
     return f"{weekday(t)} {t.day} {t:%B} {t.year}, {t:%H:%M}"
+
+
+def upcoming(world):
+    """world.json's `coming_up` items not yet past, soonest first, each with a date `label` and how far off (`in`)."""
+    now = datetime.strptime(world["clock"], CLOCK_FMT)
+    items = []
+    for c in sorted(world.get("coming_up", []), key=lambda c: c["when"]):
+        t = datetime.strptime(c["when"], CLOCK_FMT)
+        if t < now:
+            continue
+        days = (t.date() - now.date()).days
+        label = f"{weekday(t)} {t.day} {t:%B}{f' {t.year}' if t.year != now.year else ''}{f', {t:%H:%M}' if t.time() != time(0) else ''}"
+        away = ("today" if days == 0 else "tomorrow" if days == 1 else f"in {days} days" if days < 14
+                else f"in {round(days / 7)} weeks" if days < 60 else f"in {round(days / 30.4)} months")
+        items.append({**c, "label": label, "in": away})
+    return items
 
 
 def paydays(start, end):

@@ -63,14 +63,17 @@ const historyNotes = (items) => bullets("History", items?.map((h) => `<span clas
 
 // ---------- drawings ----------
 
-const sources = new Map(); // "path@version" -> SVG text
+const sources = new Map(); // URL -> promise of its text (null if missing)
 const drawings = new Map(); // "path@version@state" -> object URL
 
-async function svgText(item) {
-  const key = `${item.visual}@${item._v}`;
-  if (!sources.has(key)) sources.set(key, await (await fetch(`/save/${item.visual}`)).text());
-  return sources.get(key);
+function fetchText(url) {
+  if (!sources.has(url)) sources.set(url, fetch(url).then((r) => (r.ok ? r.text() : null)));
+  return sources.get(url);
 }
+// A drawing's SVG: the current file, or the file in an earlier snapshot of the save (`_rev`).
+const svgText = (item) => fetchText(item._rev ? `/api/rev/${item._rev}/${item.visual}` : `/save/${item.visual}?v=${item._v}`);
+// Link attributes for a drawing: a thing's opens its spec sheet, a scene opens full size.
+const opens = (thing, url) => (thing ? `href="#/thing/${thing.id}"` : `href="${url}" target="_blank"`);
 
 // A thing's SVG, with only the groups for `state` kept, as an <img>-ready URL (isolates each drawing's ids and styles).
 async function drawing(thing, state = thing.state ?? thing.states?.[0] ?? "") {
@@ -145,12 +148,34 @@ async function card(t) {
   </a>`;
 }
 
+// What's ahead, from world.json's coming_up: a note, not a calendar.
+function comingUp() {
+  const items = (S.coming_up ?? []).slice(0, 5);
+  return items.length ? `<aside class="coming-up"><h2>Coming up</h2><table>${items.map((c) =>
+    `<tr><td class="date">${esc(c.label)}</td><td class="away">${esc(c.in)}</td><td>${inline(c.what)}</td></tr>`).join("")}</table></aside>` : "";
+}
+
+// The drawings changed most recently, newest first.
+async function recentDrawings() {
+  if (!S.log.length) return ""; // a new save's drawings all date from the scenario
+  const recent = Object.entries(S.visuals).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const items = await Promise.all(recent.map(async ([path, v]) => {
+    const thing = S.things.find((t) => t.visual === path);
+    const url = await drawing(thing ?? { visual: path, _v: v });
+    const name = thing?.name ?? path.slice(8, -4).replace(/^scene-/, "").replace(/-/g, " ");
+    return `<a class="recent" ${opens(thing, url)}><span class="thumb"><img src="${url}" alt=""></span><span class="caption">${esc(name[0].toUpperCase() + name.slice(1))}</span></a>`;
+  }));
+  return `<section><h2>Recent drawings</h2><div class="recent-row">${items.join("")}</div></section>`;
+}
+
 async function workshop() {
   const cards = async (things) => `<div class="cards">${(await Promise.all(things.map(card))).join("")}</div>`;
   const mine = S.things.filter((t) => !t.owner);
   const groups = Object.keys(KINDS).map((k) => [k, mine.filter((t) => t.kind === k)]).filter(([, ts]) => ts.length);
   const others = S.things.filter((t) => t.owner);
   return `
+    ${comingUp()}
+    ${await recentDrawings()}
     <details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>
     ${S.world.threads.length ? `<section><h2>Open threads</h2><ul class="threads">${S.world.threads.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
     ${S.world.house_rules?.length ? `<section><h2>House rules</h2><ul class="threads">${S.world.house_rules.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></section>` : ""}
@@ -258,11 +283,18 @@ function people() {
     </div></div>`).join("")}</div>`;
 }
 
-// A drawing listed in a turn's visuals: a thing's links to its spec sheet, a scene opens full size.
-async function illustration(path) {
+// A drawing listed in a turn's visuals, as it was when that turn ended: read from the save's history once a
+// later turn has been snapshotted, else the current file. Nothing is redrawn.
+async function illustration(path, turn) {
   const thing = S.things.find((t) => t.visual === path);
-  const url = await drawing(thing ?? { visual: path, _v: S.visuals[path] });
-  return url ? `<a class="illus" href="${thing ? `#/thing/${thing.id}` : url}"${thing ? "" : ' target="_blank"'}><img src="${url}" alt=""></a>` : "";
+  const rev = S.snapshots?.[turn];
+  let item = thing ?? { visual: path, _v: S.visuals[path] };
+  if (rev && (await fetchText(`/api/rev/${rev}/${path}`)) !== null) {
+    const then = thing && JSON.parse((await fetchText(`/api/rev/${rev}/things/${thing.id}.json`)) ?? "null");
+    item = { visual: path, _v: rev, _rev: rev, state: (then ?? thing)?.state, states: (then ?? thing)?.states };
+  }
+  const url = await drawing(item);
+  return url ? `<a class="illus" ${opens(thing, url)}><img src="${url}" alt=""></a>` : "";
 }
 
 async function journal() {
@@ -273,7 +305,7 @@ async function journal() {
       <header><span class="turn-no">Turn ${e.turn}</span> <span class="when">${span(e.clock_start, e.clock_end)}</span></header>
       <blockquote>${esc(e.action)}</blockquote>
       ${e.sketches?.length ? `<div class="entry-sketches">${e.sketches.map((s) => `<a href="/save/${s}" target="_blank"><img src="/save/${s}" alt="${s}"></a>`).join("")}</div>` : ""}
-      ${e.visuals?.length ? `<div class="illustrations">${(await Promise.all(e.visuals.map(illustration))).join("")}</div>` : ""}
+      ${e.visuals?.length ? `<div class="illustrations">${(await Promise.all(e.visuals.map((v) => illustration(v, e.turn)))).join("")}</div>` : ""}
       ${(e.measurements ?? []).map((x) => chart(x)).join("")}
       <div class="narration">${e.narration.split(/\n+/).map((p) => `<p>${inline(p)}</p>`).join("")}</div>
       <details data-key="w${e.turn}"><summary>How the referee ruled</summary>
@@ -282,7 +314,7 @@ async function journal() {
         ${fermi(e.fermi)}
       </details>
     </article>`);
-  return (await Promise.all(entries)).join("");
+  return `<div class="journal-head">${comingUp()}</div>${(await Promise.all(entries)).join("")}`;
 }
 
 async function map(id) {

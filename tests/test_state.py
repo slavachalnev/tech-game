@@ -98,6 +98,32 @@ def test_undo_and_restore_turns(tmp_path, monkeypatch):
     assert state.next_turn(save) == 2
 
 
+def test_journal_drawings_come_from_the_snapshot_where_their_turn_ended(tmp_path, monkeypatch):
+    from engine import history
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    history.snapshot(save)
+    scene = save / "visuals/scene-yard.svg"
+    for n in (1, 2):
+        state.write_json(save / f"log/{n:04d}.json", {"turn": n, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T09:00",
+                                                     "action": "a", "rulings": [], "narration": "n", "visuals": ["visuals/scene-yard.svg"]})
+        history.snapshot(save)
+        scene.write_text(f"<svg>version {n}</svg>")  # the drawing agent finishes after the turn's snapshot
+        history.snapshot(save)
+    ends = history.turn_ends(save)
+    assert list(ends) == [1]  # turn 2 is the latest, so it uses the current files
+    assert history.show(save, ends[1], "visuals/scene-yard.svg") == "<svg>version 1</svg>"
+    assert history.show(save, ends[1], "visuals/nothing.svg") is None
+
+
+def test_coming_up_lists_what_is_still_ahead():
+    world = {"clock": "1705-05-04T11:00", "coming_up": [
+        {"when": "1705-06-01T00:00", "what": "Count day"}, {"when": "1705-05-03T09:00", "what": "past"},
+        {"when": "1705-05-08T10:00", "what": "Demonstration"}, {"when": "1705-05-04T11:00", "what": "now"}]}
+    assert [(c["what"], c["label"], c["in"]) for c in state.upcoming(world)] == [
+        ("now", "Friday 4 May, 11:00", "today"), ("Demonstration", "Tuesday 8 May, 10:00", "in 4 days"), ("Count day", "Friday 1 June", "in 4 weeks")]
+
+
 def test_recipes_link_to_real_tools_people_and_things(tmp_path, monkeypatch):
     monkeypatch.setattr(state, "SAVES", tmp_path)
     save = state.new_save("cornwall-1705", "g1")

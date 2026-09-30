@@ -107,6 +107,19 @@ a.card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(60, 40, 2
 .briefing h2 { margin: 12px 0 4px; font: 24px var(--fell-sc); }
 .briefing ul { padding-left: 22px; }
 
+.coming-up { max-width: 860px; margin: 6px 0 4px; padding: 8px 18px 10px; background: var(--paper-light); border: 1px solid var(--rule); border-left: 3px solid var(--red); box-shadow: var(--shadow); }
+.coming-up h2 { margin: 0 0 2px; font: 19px var(--fell-sc); color: var(--faded); }
+.coming-up h2::after { display: none; }
+.coming-up table { border-collapse: collapse; }
+.coming-up td { padding: 1px 14px 1px 0; vertical-align: baseline; }
+.coming-up .date { font: 16.5px var(--fell); white-space: nowrap; }
+.coming-up .away { font: italic 15.5px var(--fell); color: var(--red); white-space: nowrap; }
+.journal-head { max-width: 780px; margin: 0 auto; }
+.journal-head .coming-up { margin-bottom: 0; }
+.recent-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.recent { color: inherit; text-decoration: none; background: var(--paper-light); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+.recent .caption { display: block; padding: 5px 12px 7px; font: 17px/1.25 var(--fell); }
+
 /* ---------- spec sheet ---------- */
 .back { font: italic 16px var(--fell); color: var(--faded); text-decoration: none; }
 .sheet header h1 { margin: 6px 0 2px; font: 36px/1.15 var(--fell-sc); }

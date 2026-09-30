@@ -16,7 +16,7 @@ A time-travel invention game. A Claude Code session is the referee (DM), a local
 - **Hooks**, in the save's `.claude/settings.json`, active once the folder is trusted in Claude Code:
   - `tg hook` (PostToolUse on Write/Edit) validates each file the referee writes. Exit 2 feeds the errors back to it, so `state.check_file` must report bad content and never raise.
   - `tg snapshot` (Stop) commits the save into `.history/` after every reply. That's what `tg undo`, `tg history` and `tg restore` use.
-- **The `draw` subagent** (`.claude/agents/draw.md` in each save) makes every drawing in the background while the referee narrates. When it's done it adds the drawing to the turn's `visuals` and sets the thing's `visual`, so nothing points at a missing file meanwhile.
+- **The `draw` subagent** (`.claude/agents/draw.md` in each save) makes every drawing in the background while the referee narrates. Running in the save, it loads the secret notes like the referee does; its instructions only keep them out of what the player sees. When it's done it adds the drawing to the turn's `visuals` and sets the thing's `visual`, so nothing points at a missing file meanwhile.
 - **Validation** (`engine/state.py`) works in two layers:
   - `check_file`: one file's schema, `id` matching the file name, well-formed SVG.
   - `check_save`: adds cross-references between files (missing drawings, unknown components, tools or recipes, places not labelled on their maps). It feeds `tg validate`, `tg status` and the view's "State problems" banner.
@@ -25,6 +25,8 @@ A time-travel invention game. A Claude Code session is the referee (DM), a local
 - **The view** (`web/`): `tg serve` streams a change event whenever a visible file in the save changes. The page refetches `/api/state` (`state.load_state`) and re-renders.
   - Routes: `#/workshop`, `#/thing/<id>[?state=…]`, `#/capabilities`, `#/people`, `#/map[/<id>]`, `#/journal`, `#/sketch`, and `#/visual/<name>` (one drawing alone, for `tg shot`).
   - A turn's `measurements` are plotted as inline SVG line charts (`chart()` in `app.js`), in the journal and on the tested thing's sheet.
+  - Journal illustrations show each drawing as it was when that turn ended. `/api/state` includes `snapshots` (`history.turn_ends`: the last snapshot before the next turn was logged), and `/api/rev/<sha>/<path>` serves a drawing or spec sheet from it. The latest turn uses the current files.
+  - `world.json`'s `coming_up` is shown as a note at the top of the Workshop and the Journal (`state.upcoming` labels it); the Workshop also shows the four most recently changed drawings.
   - Drawings are shown as `<img>` blob URLs, with any `data-state` groups for other states removed. That keeps each drawing's ids and styles separate.
   - Maps are drawn inline in a shadow root so their labels can be clicked.
   - `render()` sets `document.body.dataset.ready = "1"` when a page is complete, and `tg shot` and the tests wait for it. New async view code must finish before that.

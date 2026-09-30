@@ -52,12 +52,17 @@ def test_snapshot_hook_reads_the_save_from_stdin(save, monkeypatch, capsys):
 def test_money_clock_and_paydays(save, monkeypatch, capsys):
     assert "Purse: £47.65" in tg(monkeypatch, capsys, "--save", str(save), "pay", "£2.35")[1]
     assert "Purse: £48.10" in tg(monkeypatch, capsys, "receive", "45p", "--save", str(save))[1]  # --save after the command
+    world = state.read_json(save / "world.json")
+    world["coming_up"].append({"when": "1705-04-03T10:00", "what": "See Penrose"})
+    state.write_json(save / "world.json", world)
     out = tg(monkeypatch, capsys, "--save", str(save), "advance", "1w")[1]
     assert "Monday 9 April 1705" in out and "Payday passed: Saturday 7 April" in out and "Jacca Pascoe 45p" in out
+    assert "Passed (from coming_up):\n  Tuesday 3 April 1705, 10:00: See Penrose" in out and "rent" not in out
 
 
 def test_status_show_and_places(save, monkeypatch, capsys):
-    assert "Player:  (no name yet)" in tg(monkeypatch, capsys, "--save", str(save), "status")[1]
+    out = tg(monkeypatch, capsys, "--save", str(save), "status")[1]
+    assert "Player:  (no name yet)" in out and "Coming up:\n  Sunday 24 June (in 3 months): Midsummer quarter day" in out
     code, out, _ = tg(monkeypatch, capsys, "--save", str(save), "show", "anvil", "carnkie", "nothing")
     assert code == 1 and "== things/anvil" in out and "== place carnkie" in out
     assert "carn-brea" in tg(monkeypatch, capsys, "--save", str(save), "places", "carnkie")[1]

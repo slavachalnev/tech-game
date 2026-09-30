@@ -2,6 +2,7 @@
 
 It lives in .history rather than .git so Claude Code doesn't treat each save as a separate project.
 """
+import re
 import subprocess
 
 from . import state
@@ -34,6 +35,28 @@ def snapshot(save):
         message = f"after turn {n}" if n else "start"
     git(save, "commit", "-q", "-m", message)
     return message
+
+
+def turn_ends(save):
+    """{turn: snapshot} for every turn that another turn has been logged after: the last snapshot before the next
+    turn's, so the journal can show a turn's drawings as they were when it ended."""
+    if not (save / ".history").exists():
+        return {}
+    ends, parent = {}, None
+    for line in git(save, "log", "--diff-filter=A", "--format=>%P", "--name-only", "--", "log/").splitlines():
+        if line.startswith(">"):
+            parent = line[1:].split(" ")[0] or None
+        elif (m := re.fullmatch(r"log/(\d{4})\.json", line)) and parent and int(m[1]) > 1:
+            ends[int(m[1]) - 1] = parent
+    return ends
+
+
+def show(save, rev, path):
+    """A file's text in a snapshot, or None if it wasn't there."""
+    try:
+        return git(save, "show", f"{rev}:{path}")
+    except RuntimeError:
+        return None
 
 
 def log(save):

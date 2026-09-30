@@ -1,15 +1,17 @@
 """Live view server: the web UI, the save's state as JSON, change events, sketch uploads, screenshots."""
 import base64
 import json
+import re
 import sys
 import threading
 import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-from . import state
+from . import history, state
 
 WEB = state.ROOT / "web"
+REV = re.compile(r"/api/rev/([0-9a-f]{7,40})/(visuals/[a-z0-9-]+\.svg|things/[a-z0-9-]+\.json)")
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -20,7 +22,10 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         route = self.path.split("?")[0]
         if route == "/api/state":
-            return self.send_json(state.load_state(self.save))
+            return self.send_json({**state.load_state(self.save), "snapshots": history.turn_ends(self.save)})
+        if m := REV.fullmatch(route):  # a drawing or spec sheet as it was in an earlier snapshot
+            text = history.show(self.save, m[1], m[2])  # None if it wasn't there yet: an expected, quiet 404
+            return self.send_text(text or "", "image/svg+xml" if m[2].endswith(".svg") else "application/json", 200 if text is not None else 404)
         if route == "/api/events":
             return self.stream_changes()
         if route.startswith("/save/"):  # files inside the save: visuals, maps, sketches, fermi scripts
@@ -58,9 +63,12 @@ class Handler(SimpleHTTPRequestHandler):
             pass  # browser tab closed or reloaded
 
     def send_json(self, data):
-        body = json.dumps(data, ensure_ascii=False).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
+        self.send_text(json.dumps(data, ensure_ascii=False), "application/json")
+
+    def send_text(self, text, content_type, status=200):
+        body = text.encode()
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

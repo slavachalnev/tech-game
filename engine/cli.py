@@ -34,6 +34,7 @@ def cmd_status(args):
     print(f"Player:  {world['player']['name'] or '(no name yet)'}")
     print(f"Clock:   {state.fmt_clock(world['clock'])}")
     print(f"Purse:   {state.fmt_money(world['purse_p'])}")
+    print("Coming up:" + ("".join(f"\n  {c['label']} ({c['in']}): {c['what']}" for c in state.upcoming(world)) or " nothing noted"))
     print(f"Next turn: {state.next_turn(save)}")
     print("Things:" + "".join(f"\n  {t['id']}: {t['name']} ({t['status']}{', ' + t['owner'] if 'owner' in t else ''})" for t in state.records(save, "things")))
     print("People:" + "".join(f"\n  {p['id']}: {p['name']}, {p['role']}" for p in state.records(save, "people")))
@@ -63,6 +64,9 @@ def cmd_advance(args):
     before, world["clock"] = world["clock"], state.advance_clock(world["clock"], args.span)
     state.write_json(save / "world.json", world)
     print(f"{state.fmt_clock(before)}  ->  {state.fmt_clock(world['clock'])}")
+    passed = sorted((c for c in world.get("coming_up", []) if before <= c["when"] <= world["clock"]), key=lambda c: c["when"])
+    if passed:
+        print("Passed (from coming_up):" + "".join(f"\n  {state.fmt_clock(c['when'])}: {c['what']}" for c in passed))
     due = state.paydays(before, world["clock"])
     staff = [p for p in state.records(save, "people") if p.get("employed") and p.get("wage_p_week")]
     if due and staff:

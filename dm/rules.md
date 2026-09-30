@@ -12,7 +12,7 @@ The player can step outside the story at any time to change how you model things
 
 | Path | What |
 |---|---|
-| `world.json` | Clock, location, purse (`purse_p`, in pence: 100p = £1), the player, open `threads` (offers, debts, deadlines, rumours), `house_rules`. |
+| `world.json` | Clock, location, purse (`purse_p`, in pence: 100p = £1), the player, open `threads` (offers, debts, deadlines, rumours), `coming_up` (dated appointments, deadlines and expected deliveries the player knows of), `house_rules`. |
 | `things/<id>.json` | One spec sheet per thing: machines, components, tools, structures, sites, documents, and materials whose properties matter. Things that belong to someone else (the mine, a rival's engine) have an `owner` and show under "Not yours". |
 | `stores.json` | Everyday materials and supplies (coal, scrap brass, nails, tallow, crucibles): name, quantity, unit, where, notes. No spec sheet or drawing needed. |
 | `people/<id>.json` | Everyone the player knows. |
@@ -31,7 +31,7 @@ Commands (run from this folder):
 
 - `uv run tg status`: player, clock with weekday, purse, next turn number, every thing, person and recipe, the maps, unseen sketches, problems.
 - `uv run tg show <id> <id> …`: several spec sheets, people, recipes or places at once, compactly; also paths like `log/0003`. Cheaper than reading the files one by one.
-- `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock. It also tells you if a Saturday payday passed and what wages are due; it pays nothing itself.
+- `uv run tg advance 3d4h`: move the clock (w, d, h, m). Use this for all time; don't hand-edit the clock. It also tells you if a Saturday payday passed and what wages are due, and which `coming_up` items the clock passed; it pays and changes nothing else.
 - `uv run tg pay "£2.35"` and `uv run tg receive "45p"`: change the purse. Use these rather than doing the arithmetic yourself.
 - `uv run tg roll 0.25 "what"`: a random draw against a probability.
 - `uv run tg places [place-id]`: every place by straight-line distance and direction from that place, plus all known routes.
@@ -48,7 +48,7 @@ Read files with the Read tool, not `cat` or shell loops. The only shell commands
 2. **Judge.** Credit what the player specified, and fill ordinary gaps sensibly, the way a competent craftsman of the period would. Don't hand over the key insights that make an invention interesting (the scenario's referee notes list them) unless the player supplies them or asks for a hint.
 3. **Fermi.** When an outcome isn't obvious (forces, heat, flow, fuel, labour, cost), write a quick `fermi/NNNN_slug.py` with its assumptions, run it, and let the numbers guide you. Use period materials and workmanship.
 4. **Roll for real luck.** When an outcome truly hinges on chance (a casting flaw, the weather, a man's mood), decide the probability first, then draw: `uv run tg roll 0.25 "Penrose is at the mine"`. Record both in the rulings. Never pick the dramatic outcome.
-5. **Rule.** Update the files: new and changed spec sheets, purse, people, `threads`, clock. Every action takes time; most cost money; wages and rent fall due. New rulings must agree with existing spec sheets (they are precedent). If you correct an earlier ruling, say so in the log.
+5. **Rule.** Update the files: new and changed spec sheets, purse, people, `threads`, `coming_up`, clock. Every action takes time; most cost money; wages and rent fall due. New rulings must agree with existing spec sheets (they are precedent). If you correct an earlier ruling, say so in the log.
 6. **Log.** Write `log/NNNN.json` (the next number from `tg status`): the action, `specified`, `assumed`, `fermi`, `rulings`, `changes`, `sketches`, `measurements` and `narration`. Write the narration now: the exact text you will send in step 8, because the view's journal shows it to the player.
    - **Measurements.** When a trial gives numbers worth seeing side by side (stroke lengths over a run, speed against load, flow against bore), put them in `measurements`, and the view plots them in the journal and on the tested thing's spec sheet. Give a title, axis labels with units, the `thing` tested, and one series per run, named for what differed ("purged first", "10 kg"). Reuse the same axes in later turns so runs compare. Skip it when there's nothing to compare.
 7. **Draw, generously, in the background.** The player loves seeing things, so when in doubt, draw.
@@ -102,13 +102,14 @@ The player wants no friction from the period's language or measures, and knowing
 
 - The clock only moves forward. The player may skip time ("I spend two weeks at the forge"); summarise those weeks in one turn.
 - Pay wages when `tg advance` says a payday passed (or handle it in the story: debt, an unhappy worker), pay rent on its due date, and keep `threads` current as matters open and close.
+- **Coming up.** When a date is set (an appointment, a delivery promised for a day, a deadline), add it to `coming_up` in `world.json`: `when` (midnight if there's no set time) and a short `what`. The view shows the ones still ahead as a note. When `tg advance` says the clock passed one, play it out (it happened, or someone waited in vain) and remove it. Weekly paydays don't need listing.
 - The world moves on its own: seasons and weather, the mine's water, people's patience and gossip, prices. Use the scenario's referee notes for pressures and events.
 - People have their own lives and opinions. Update `attitude` and `history` when those change.
 - Keep `world.json`'s `player` current too (status, reputation, health, skills learned); the view shows it on the People tab.
 
 ## Hidden notes
 
-The scenario's `referee.md` is secret. It describes what realistically matters, so use it for realism, not as a gate; house rules and the player's wishes override it. Don't quote or reveal it unprompted: not in narration, not in NPC dialogue, not in Fermi scripts. If the player asks for a hint, give one in your own words.
+The scenario's `referee.md` is secret. It describes what realistically matters, so use it for realism, not as a gate; house rules and the player's wishes override it. Don't quote or reveal it unprompted: not in narration, not in NPC dialogue, not in Fermi scripts, not in drawings. Drawing agents load these notes too, as you do; that's expected, and the same rule holds for them. If the player asks for a hint, give one in your own words.
 
 `hidden.md` is your private notebook for this game, and it's secret in the same way. Keep it current:
 - **Fixed facts:** once you use a hidden number or detail, from the referee notes or one you had to invent, write it down so it never drifts.

@@ -412,7 +412,8 @@ async function illustration(path, turn) {
     const then = thing && JSON.parse((await fetchText(`/api/rev/${rev}/things/${thing.id}.json`)) ?? "null");
     item = { visual: path, _v: rev, _rev: rev, state: (then ?? thing)?.state, states: (then ?? thing)?.states };
     const now = S.visuals[path] ? await fetchText(`/save/${path}?v=${S.visuals[path]}`) : null;
-    since = now === null ? " (no longer drawn)" : now !== old ? ", as it was then" : "";
+    const restyled = !old.includes("Made with the drawing kit") && now?.includes("Made with the drawing kit"); // redrawn as a set, not redesigned
+    since = now === null ? " (no longer drawn)" : now !== old && !restyled ? ", as it was then" : "";
   }
   const url = await drawing(item);
   const title = thing ? (since ? "As it was after this turn. Click to see it as it is now." : "Click to see it on the drawing board.") : "Open full size";

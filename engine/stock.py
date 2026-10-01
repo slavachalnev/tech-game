@@ -6,7 +6,7 @@ says where its origin is. The catalogue, dm/stock.png, shows them all (made by d
 """
 import math
 
-from .draw import FADED, INK, PAPER, num
+from .draw import FADED, INK, PAPER, Later, num
 
 # ---------- people and animals
 
@@ -315,14 +315,15 @@ def chain(p, points, link=40):
     """A chain along a polyline of points."""
     p._reach(*points)
     d = "M" + " L".join(f"{num(x)},{num(y)}" for x, y in points)
-    p.out.append(f'<path d="{d}" fill="none" stroke="{INK}" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-dasharray="7 3"/>')
+    p.out.append(Later(lambda: f'<path d="{d}" fill="none"{p.stroke(INK, 2.2, "7 3")}/>'))
 
 
 def rope(p, points):
     """A rope along a polyline of points."""
     p.poly(points, closed=False, line="detail")
     with p.fine(30):
-        p.out.append(f'<polyline points="{" ".join(f"{num(x)},{num(y)}" for x, y in points)}" fill="none" stroke="{FADED}" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray="2 3"/>')
+        pts = " ".join(f"{num(x)},{num(y)}" for x, y in points)
+        p.out.append(Later(lambda: f'<polyline points="{pts}" fill="none"{p.stroke(FADED, 1, "2 3")}/>'))
 
 
 def cylinder(p, bore, length, wall, cut=False, material="brass"):

@@ -403,11 +403,29 @@ body.staged:not(.front) :is(main, #sketch) {
 }
 body.staged main.arrive { animation-name: paper-in; }  /* a page is laid over the board */
 @keyframes paper-in { from { opacity: 0; transform: translateY(30px) rotate(0.4deg); } }
-body.front main { max-width: none; margin-top: calc(100vh - 150px); padding: 0 0 60px; pointer-events: none; }
-.papers { pointer-events: auto; max-width: 1240px; margin: 0 auto; padding: 0 36px 30px; background: var(--paper-light); box-shadow: 0 -4px 30px rgba(40, 25, 10, 0.3); }
-.papers .handle { display: block; margin: 0 auto 6px; padding: 8px 30px 6px; font: 17px var(--fell-sc); color: var(--faded); background: none; border: 0; border-bottom: 1px solid var(--rule); }
-.papers .handle::after { content: " ▴"; }
-body.papers-open .papers .handle::after { content: " ▾"; }
+body.front { overflow: hidden; }  /* the board fills the window; nothing scrolls but the drawers */
+body.front main { max-width: none; margin: 0; padding: 0; }
+.papers {  /* your papers: a drawer on the board's left */
+  position: fixed; z-index: 3; left: 16px; top: calc(var(--top, 88px) + 12px); bottom: 16px; width: min(380px, calc(100vw - 32px));
+  overflow: auto; overscroll-behavior: contain; padding: 0 18px 18px; font-size: 15.5px;
+  background: rgba(248, 241, 225, 0.97); border: 1px solid var(--rule); box-shadow: var(--shadow);
+  transform: translateX(-420px); transition: transform 0.35s ease;
+}
+body.desk-open .papers { transform: none; }
+.papers > header { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; margin: 0 -18px 4px; padding: 8px 12px 6px 18px; background: var(--paper-light); border-bottom: 1px solid var(--rule); }
+.papers > header b { font: 20px var(--fell-sc); font-weight: normal; }
+.papers .handle { padding: 0 10px; font-size: 22px; color: var(--faded); background: none; border: 0; }
+.papers-tab {
+  position: fixed; z-index: 3; left: 0; top: calc(var(--top, 88px) + 60px); padding: 10px 8px; writing-mode: vertical-rl; transform: rotate(180deg);
+  font: 16px var(--fell-sc); color: var(--ink-soft); background: var(--paper-light); border: 1px solid var(--rule); border-left: 0; border-radius: 0 4px 4px 0; box-shadow: var(--shadow);
+}
+body.desk-open .papers-tab { display: none; }
+.papers .desk { grid-template-columns: 1fr; gap: 12px; }
+.papers .last-turn { padding: 10px 14px; }
+.papers .last-turn .narration { font-size: 16px; }
+.papers .fold .threads { columns: 1; }
+.papers section h2, .papers .fold h2 { font-size: 19px; margin: 16px 0 8px; }
+.papers .listing table { font-size: 14px; }
 .tag {  /* a paper label on a string, naming what the pointer is over */
   position: absolute; z-index: 4; max-width: 300px; padding: 7px 12px 8px 22px; pointer-events: none;
   font: 14.5px/1.35 var(--fell); color: var(--ink-soft); background: var(--paper-light);
@@ -460,7 +478,7 @@ main.arrive { animation: arrive 0.45s ease-out; }
 .board-trail { position: absolute; left: 20px; top: 12px; padding: 2px 10px; font: italic 16px var(--fell); color: var(--faded); background: rgba(248, 241, 225, 0.85); }
 .board-trail a { color: var(--ink-soft); cursor: pointer; }
 .board-trail a:hover { color: var(--red); }
-.board-panel { position: absolute; right: 16px; top: 12px; width: 380px; max-height: calc(100% - 170px); overflow: auto; padding: 10px 18px 12px; font-size: 15.5px; line-height: 1.4;
+.board-panel { position: absolute; right: 16px; top: 12px; width: 380px; overscroll-behavior: contain; max-height: calc(100% - 170px); overflow: auto; padding: 10px 18px 12px; font-size: 15.5px; line-height: 1.4;
   background: rgba(248, 241, 225, 0.95); border: 1px solid var(--rule); box-shadow: var(--shadow); }
 .board-panel .sheet-name { margin: 2px 0; font: 22px var(--fell-sc); display: block; }
 .board-panel .sheet-name::after { display: none; }
@@ -500,13 +518,15 @@ main.arrive { animation: arrive 0.45s ease-out; }
 .board-progress :is(.coming, .planned) { color: var(--blue); }
 .board-progress .faulty { color: var(--red); }
 .board-progress .of { color: var(--faded); font-style: italic; }
-.board-keys { position: absolute; left: 20px; bottom: 76px; display: flex; flex-direction: column; gap: 4px; }
+.board-keys { position: absolute; left: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 4px; transition: left 0.35s ease; }
+.board-trail { transition: left 0.35s ease; }
+@media (min-width: 901px) { body.desk-open :is(.board-keys, .board-trail) { left: 420px; } }
 .board-keys button { width: 34px; height: 34px; padding: 0; font-size: 18px; }
 @media (max-width: 900px) {
   #board { position: relative; top: 0; height: 70vh; }
   body.staged:not(.front) #board { display: none; }
   .board-panel { top: auto; bottom: 8px; right: 8px; left: 8px; width: auto; max-height: 34%; }
-  .board-keys { bottom: auto; top: 50px; }
+  .board-keys { bottom: auto; top: 50px; left: auto; right: 12px; }
 }
 .board-states { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
 .board-states button { padding: 1px 10px; font: 14px var(--fell-sc); color: var(--faded); background: none; border: 1px solid var(--rule); }

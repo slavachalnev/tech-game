@@ -68,13 +68,15 @@ def test_trials_are_plotted_in_the_journal_and_on_the_sheet(browser, full_save):
 
 
 def test_your_papers_show_what_is_coming_up_and_open_and_close(browser, full_save):
-    page, errors = open_page(browser, full_save, "workshop")
-    assert "24 June" in page.inner_text(".almanac")
-    page.click(".papers .handle")
-    page.wait_for_function("document.body.classList.contains('papers-open')")
-    page.mouse.click(300, 140)  # on the board, above the papers: they close
-    page.wait_for_function("!document.body.classList.contains('papers-open')")
-    assert errors == []
+    page, errors = open_page(browser, full_save, "workshop")  # home: the whole sheet, your papers open beside it
+    assert "24 June" in page.inner_text(".almanac") and page.evaluate("document.body.classList.contains('desk-open')")
+    page.keyboard.press("Escape")
+    page.wait_for_function("!document.body.classList.contains('desk-open')")
+    page.click(".papers-tab")
+    page.wait_for_function("document.body.classList.contains('desk-open')")
+    page.mouse.move(700, 500)
+    page.mouse.wheel(0, 3000)  # scrolling never moves the page under the board
+    assert page.evaluate("scrollY") == 0 and errors == []
 
 
 def test_the_workshop_is_a_drawing_board_of_machines_and_their_parts(browser, full_save):

@@ -84,6 +84,16 @@ class Fine:
         return "".join(map(str, self.out)) if (self.mm * self.sheet.k >= 4) != self.coarse else ""
 
 
+class Later:
+    """Markup that depends on the sheet's scale, known only when the sheet is written: line widths, say."""
+
+    def __init__(self, make):
+        self.make = make
+
+    def __str__(self):
+        return self.make()
+
+
 class Placed:
     """A part where it was put: its named points, in the sheet's millimetres."""
 
@@ -126,13 +136,20 @@ class Pen:
         colour, width, dash = LINES[line]
         wash, opacity = WASH[material] if isinstance(material, str) else material or (None, None)
         paint = f'fill="{wash}" fill-opacity="{num(opacity)}"' if material else f'fill="{fill or "none"}"'
-        stroke = f' stroke="{colour}" stroke-width="{num(width)}" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"' if colour else ' stroke="none"'
-        dashes = f' stroke-dasharray="{dash}"' if dash else ""
         if material and material not in SEE_THROUGH and opacity < 1:  # paper under the wash: what's in front hides what's behind
             self.out.append(f'<{tag} {attrs} fill="{PAPER}" stroke="none"/>')
-        self.out.append(f"<{tag} {attrs} {paint}{stroke}{dashes}/>")
+        self.out.append(Later(lambda: f"<{tag} {attrs} {paint}{self.stroke(colour, width, dash)}/>"))
         if cut and material in CUT:
             self.out.append(f'<{tag} {attrs} fill="url(#{CUT[material]})" stroke="none"/>')
+
+    def stroke(self, colour, px, dash=None):
+        """Stroke attributes for a line `px` wide on the finished sheet, whatever this pen's scale: written as a
+        length in the drawing, so the line scales with it wherever the drawing is shown. Use inside Later()."""
+        if not colour:
+            return ' stroke="none"'
+        mm = 1 / (self.sheet.k * math.hypot(self.T[0], self.T[1]))  # one px, in this pen's units
+        dashes = f' stroke-dasharray="{" ".join(num(float(d) * mm) for d in dash.split())}"' if dash else ""
+        return f' stroke="{colour}" stroke-width="{num(px * mm)}" stroke-linejoin="round" stroke-linecap="round"{dashes}'
 
     def rect(self, x, y, w, h, material=None, *, cut=False, line="outline", fill=None):
         """A rectangle from its lower-left corner (x, y), w wide and h tall. `material` washes it; `cut` hatches

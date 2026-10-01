@@ -123,7 +123,8 @@ function fetchText(url) {
 const svgText = (item) => fetchText(item._rev ? `/api/rev/${item._rev}/${item.visual}` : `/save/${item.visual}?v=${item._v}`);
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
 // A drawing's caption: its thing's name, or the file's name for a scene.
-const caption = (path, thing) => cap(thing?.name ?? path.slice(8, -4).replace(/^scene-/, "").replace(/-/g, " "));
+const caption = (path, thing) => cap(thing?.name ?? path.slice(8, -4).replace(/^scene-/, "").replace(/-/g, " "))
+  + (thing && path.includes("--") ? `: ${path.slice(path.indexOf("--") + 2, -4).replace(/-/g, " ")}` : ""); // another sheet of it
 // Link attributes for a drawing: a thing's opens its spec sheet, a scene opens full size.
 const opens = (thing, url) => (thing ? `href="#/thing/${thing.id}"` : `href="${url}" target="_blank"`);
 
@@ -178,6 +179,8 @@ async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock)
 
 const board = ($("#board").api = createBoard($("#board"), {
   prepare, svgText, stateOf, esc, stamp, details, sounds: ambience,
+  desk: (open) => desk(open, false), // the board is about to frame things itself
+  cover: () => (deskOpen() && wide() ? 404 : 0), // px of the board's left the papers cover: 16 + 380 + 8
   glyph: (kind) => GLYPH[kind] ?? GLYPH.other,
   located: (id) => { // the address follows what you're looking at on the board, without a new render
     const hash = id ? `#/thing/${id}` : "#/workshop";
@@ -192,8 +195,9 @@ function lineage(id) {
   for (let p; (p = S.things.find((t) => t.components?.includes(chain[0]))) && !chain.includes(p.id); ) chain.unshift(p.id);
   return chain;
 }
-// The Workshop is the drawing board, with your papers under it.
-const workshop = () => `<div class="papers"><button class="handle">Your papers</button>${papers()}</div>`;
+// The Workshop is the drawing board, with your papers in a drawer on its left.
+const workshop = () => `<aside class="papers"><header><b>Your papers</b><button class="handle" title="Put your papers away (Esc)">‹</button></header>${papers()}</aside>
+  <button class="papers-tab" title="Your papers: where you left off, what's coming up">Your papers ›</button>`;
 
 // ---------- plots of trials ----------
 
@@ -280,7 +284,7 @@ const foldable = (key, title, items) => (items?.length ? `<details class="fold" 
   <summary><h2>${title} <span class="count">${items.length}</span></h2></summary><ul class="threads">${items.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></details>` : "");
 
 // Everything you have, as cards, under the last turn and the almanac.
-// Your papers, under the drawing board: where you left off, what's coming, threads, house rules, stores.
+// Your papers, in the drawer beside the board: where you left off, what's coming, threads, house rules, stores.
 function papers() {
   const briefing = `<details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>`;
   return `
@@ -398,16 +402,21 @@ function people() {
 
 // A drawing listed in a turn's visuals, as it was when that turn ended: read from the save's history once a
 // later turn has been snapshotted, else the current file. Nothing is redrawn.
+// A drawing listed in a turn: as it was when that turn ended, read from the save's history, so old designs stay old.
+// Clicking it goes to the thing as it is now, on the board; the caption says when the two differ.
 async function illustration(path, turn) {
-  const thing = S.things.find((t) => t.visual === path);
-  const rev = S.snapshots?.[turn];
-  let item = thing ?? { visual: path, _v: S.visuals[path] };
-  if (rev && (await fetchText(`/api/rev/${rev}/${path}`)) !== null) {
+  const thing = S.things.find((t) => t.id === path.slice(8, -4).split("--")[0]); // a thing's drawing, or another sheet of it
+  const rev = S.snapshots?.[turn], old = rev ? await fetchText(`/api/rev/${rev}/${path}`) : null;
+  let item = thing && thing.visual === path ? thing : { visual: path, _v: S.visuals[path] }, since = "";
+  if (old !== null) {
     const then = thing && JSON.parse((await fetchText(`/api/rev/${rev}/things/${thing.id}.json`)) ?? "null");
     item = { visual: path, _v: rev, _rev: rev, state: (then ?? thing)?.state, states: (then ?? thing)?.states };
+    const now = S.visuals[path] ? await fetchText(`/save/${path}?v=${S.visuals[path]}`) : null;
+    since = now === null ? " (no longer drawn)" : now !== old ? ", as it was then" : "";
   }
   const url = await drawing(item);
-  return url ? `<a class="illus" ${opens(thing, url)}><img src="${url}" alt=""><span class="caption">${esc(caption(path, thing))}</span></a>` : "";
+  const title = thing ? (since ? "As it was after this turn. Click to see it as it is now." : "Click to see it on the drawing board.") : "Open full size";
+  return url ? `<a class="illus" ${opens(thing, url)} title="${title}"><img src="${url}" alt=""><span class="caption">${esc(caption(path, thing))}${since}</span></a>` : "";
 }
 
 async function journal() {
@@ -577,7 +586,6 @@ function masthead(route, arg) {
   $("#ahead").title = ahead ? `Furthest ahead: ${ahead.name}. See all.` : "";
   document.documentElement.style.setProperty("--top", `${$(".masthead").offsetHeight}px`); // where the stage starts
   const tab = route === "thing" || route === "board" ? "workshop" : route;
-  document.body.classList.remove("papers-open");
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#/${tab}`));
 }
 
@@ -611,6 +619,7 @@ async function render() {
   board.setBehind(!front);
   if (onBoard && (route === "thing" || route === "board") && arg && location.hash !== shownHash) // #/thing/<id>: the board, at that thing
     await board.show(lineage(arg), { half: query.has("half"), now: shownHash === null });
+  if (onBoard && route === "workshop" && /^#\/(thing|board|workshop)/.test(shownHash ?? "") && location.hash !== shownHash) board.home(); // Workshop, from the board: home
   document.body.classList.toggle("staged", onBoard);
   document.body.classList.toggle("front", onBoard && front);
   const navigated = location.hash !== shownHash;
@@ -655,7 +664,7 @@ function toast(message, href) {
 
 // Clicking a row of the places table shows that place on the map; the journal's index jumps to a month.
 document.addEventListener("click", (e) => {
-  if (e.target.closest?.(".papers .handle")) return togglePapers();
+  if (e.target.closest?.(".papers .handle, .papers-tab")) return desk();
   const jump = e.target.closest?.("[data-jump]");
   if (jump) return document.getElementById(jump.dataset.jump)?.scrollIntoView({ behavior: "smooth" });
   const row = e.target.closest?.("tr[data-place]");
@@ -665,17 +674,18 @@ document.addEventListener("click", (e) => {
   label.scrollIntoView({ block: "center" });
   showPlaces([place], label);
 });
-// Your papers slide up over the board and back down: the handle toggles them, and a click on the board closes them.
-const papersOpen = () => document.body.classList.contains("papers-open");
-function togglePapers(open = !papersOpen()) {
-  const top = document.querySelector(".papers")?.getBoundingClientRect().top + scrollY - $(".masthead").offsetHeight - 24;
-  scrollTo({ top: open ? top : 0, behavior: "smooth" });
+// Your papers: a drawer on the board's left, open on the whole sheet and put away when you go into a drawing (the
+// board asks); the handle, the tab and Escape open and close it too. The board frames drawings beside it.
+const deskOpen = () => document.body.classList.contains("desk-open");
+const wide = () => innerWidth > 900;
+function desk(open = !deskOpen(), reframe = true) {
+  if (open === deskOpen()) return;
+  document.body.classList.toggle("desk-open", open);
+  if (reframe && wide()) board.reframe();
 }
-addEventListener("scroll", () => document.body.classList.toggle("papers-open", document.body.classList.contains("front") && scrollY > 40), { passive: true });
-$("#board").addEventListener("pointerdown", (e) => papersOpen() && (e.stopPropagation(), togglePapers(false)), true);
 
 // Clicking the board around a page, or Escape, puts the page down; on the board, Escape steps back out.
-const putDown = () => (papersOpen() ? togglePapers(false) : document.body.classList.contains("front") ? board.up() : document.body.classList.contains("staged") && (location.hash = "#/workshop"));
+const putDown = () => (deskOpen() && document.body.classList.contains("front") ? desk(false) : document.body.classList.contains("front") ? board.up() : document.body.classList.contains("staged") && (location.hash = "#/workshop"));
 $("#board").addEventListener("click", (e) => $("#board").classList.contains("behind") && (e.stopPropagation(), putDown()), true);
 addEventListener("keydown", (e) => e.key === "Escape" && (document.querySelector(".place-card:not([hidden])") ? closePlaces() : putDown()));
 

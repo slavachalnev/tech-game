@@ -153,21 +153,21 @@ export function createBoard(host, h) {
     const tops = S.things.filter((t) => !fitted.has(t.id));
     const datas = new Map(await Promise.all(tops.map(async (t) => [t, await measure(t)])));
     // Each section is a block of rows; blocks go into three columns, each into the shortest so far.
-    const COL = 3600, GAP = 220, cols = [0, 0, 0], heads = [];
+    const COL = 3600, GAP = 140, cols = [0, 0, 0], heads = [];
     roots = SECTIONS.flatMap(([title, w], sec) => {
       const mine = tops.filter((t) => section(t) === sec);
       if (!mine.length) return [];
-      const c = cols.indexOf(Math.min(...cols)), x0 = c * (COL + 500), y0 = cols[c];
+      const c = cols.indexOf(Math.min(...cols)), x0 = c * (COL + 260), y0 = cols[c];
       heads.push(`<text class="section-title" x="${x0}" y="${y0 + 100}" font-size="110">${h.esc(title)}</text>`);
       let x = 0, y = 170, rowH = 0;
       const nodes = mine.map((t) => {
         const data = datas.get(t), vb = data.vb, hgt = (w * vb[3]) / vb[2];
-        if (x > 0 && x + w > COL) (x = 0), (y += rowH + GAP + 140), (rowH = 0);
+        if (x > 0 && x + w > COL) (x = 0), (y += rowH + GAP + 90), (rowH = 0);
         const rect = { x: x0 + x, y: y0 + y, w, h: hgt }, k = w / vb[2];
         (x += w + GAP), (rowH = Math.max(rowH, hgt));
         return { key: t.id, id: t.id, thing: t, data, section: title, T: { k, tx: rect.x - vb[0] * k, ty: rect.y - vb[1] * k }, rect };
       });
-      cols[c] = y0 + y + rowH + 420;
+      cols[c] = y0 + y + rowH + 260;
       return nodes;
     });
     platesG.innerHTML = roots.map((n) => `<g class="plate" data-id="${h.esc(n.id)}">
@@ -187,9 +187,9 @@ export function createBoard(host, h) {
   const size = () => [host.clientWidth || 1, host.clientHeight || 1];
   // The part of the screen the panel doesn't cover: left of it on a wide screen, above it on a phone.
   function clear() {
-    const [W, H] = size(), p = panel.getBoundingClientRect(), b = host.getBoundingClientRect();
-    if (!panel.offsetWidth) return { x: 0, y: 0, w: W, h: H };
-    return p.left - b.left > W / 3 ? { x: 0, y: 0, w: p.left - b.left - 16, h: H } : { x: 0, y: 0, w: W, h: p.top - b.top - 8 };
+    const [W, H] = size(), p = panel.getBoundingClientRect(), b = host.getBoundingClientRect(), L = h.cover();
+    if (!panel.offsetWidth) return { x: L, y: 0, w: W - L, h: H };
+    return p.left - b.left > W / 3 ? { x: L, y: 0, w: p.left - b.left - 16 - L, h: H } : { x: 0, y: 0, w: W, h: p.top - b.top - 8 };
   }
   function framed(r, fill = 0.92) { // a camera showing rect r in the clear part of the screen, filling `fill` of it
     const [W, H] = size(), a = clear(), u = Math.max(r.w / (fill * a.w), r.h / (fill * a.h)); // board units per pixel
@@ -417,7 +417,7 @@ export function createBoard(host, h) {
   }
   // Go to a part or drawing: open its drawing in place, or its sheet if it has none.
   async function open(id) {
-    if (!focus) { const n = roots.find((r) => r.id === id); return n && fly(framed(n.rect)); }
+    if (!focus) { const n = roots.find((r) => r.id === id); return n && (h.desk(false), fly(framed(n.rect))); }
     const part = candidates(focus).filter((p) => p.id === id).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h)[0], t = things()[id];
     if (!part || !(t.visual && t._v)) return (selected = id), (panelKey = "?"), draw(); // nothing to open: show it in the panel
     const get = () => child(part.owner, { id, box: part.local });
@@ -430,6 +430,7 @@ export function createBoard(host, h) {
   function up() { // back out to the drawing you came through, closing the one you were in, or to the whole sheet
     const open = path.filter((e) => e.p >= 1), back = open.at(-2)?.node;
     closing = back && { key: open.at(-1).node.key, parentKey: back.key };
+    if (!back) h.desk(true); // out to the whole sheet: your papers beside it
     fly(back ? framed(back.rect) : framed(sheet(), 0.96));
   }
 
@@ -485,14 +486,14 @@ export function createBoard(host, h) {
     if (t && e.target.closest(".play")) (playing = playing ? clearInterval(playing) : setInterval(() => (focus?.thing === t ? turn(1) : (clearInterval(playing), (playing = null))), 3200)), (panelKey = "?"), draw();
     const row = e.target.closest("tr[data-id]"), go = e.target.closest("[data-go]");
     if (row) open(row.dataset.id);
-    if (go) { const n = nodeByKey(go.dataset.go); fly(n ? framed(n.rect) : framed(sheet(), 0.96)); }
+    if (go) { const n = nodeByKey(go.dataset.go); h.desk(!n); fly(n ? framed(n.rect) : framed(sheet(), 0.96)); }
   });
-  trailEl.addEventListener("click", (e) => { const go = e.target.closest("[data-go]"); if (!go) return; const n = nodeByKey(go.dataset.go); fly(n ? framed(n.rect) : framed(sheet(), 0.96)); });
+  trailEl.addEventListener("click", (e) => { const go = e.target.closest("[data-go]"); if (!go) return; const n = nodeByKey(go.dataset.go); h.desk(!n); fly(n ? framed(n.rect) : framed(sheet(), 0.96)); });
   host.querySelector(".board-keys").addEventListener("click", (e) => {
     const k = e.target.closest("button")?.dataset.k, [W, H] = size();
     if (k === "in") zoom(0.6, W / 2, H / 2);
     if (k === "out") up();
-    if (k === "all") fly(framed(sheet(), 0.96));
+    if (k === "all") h.desk(true), fly(framed(sheet(), 0.96));
   });
   addEventListener("resize", () => cam && ((cam = framed({ x: cam[0], y: cam[1], w: cam[2], h: cam[3] }, 1)), ask()));
 
@@ -504,16 +505,14 @@ export function createBoard(host, h) {
       S = state;
       children.forEach((c) => (c.stale = true));
       await layout();
-      if (!cam) {
-        const project = roots.find((n) => n.thing.kind === "machine" && n.thing.status === "building") ?? roots[0];
-        cam = project ? framed(project.rect) : [0, 0, 1000, 600];
-      }
+      if (!cam) h.desk(true), (cam = roots.length ? framed(sheet(), 0.96) : [0, 0, 1000, 600]); // first: the whole sheet, your papers open
       draw();
     },
     // Fly to a thing: through the drawings that show it, from the sheet down. Halfway: stop with its drawing half
     // grown over the drawing it's part of (to check they line up); now: jump there.
     async show(chain, { half = false, now = false } = {}) {
       let node = roots.find((n) => n.id === chain[0]);
+      h.desk(false);
       let pick = null;
       for (const id of chain.slice(1)) {
         const part = node && candidates(node).filter((p) => p.id === id).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h)[0];
@@ -530,6 +529,10 @@ export function createBoard(host, h) {
       (selected = pick), draw();
     },
     up,
+    // Home: the whole sheet, your papers open beside it.
+    home() { h.desk(true); fly(framed(sheet(), 0.96)); },
+    // Frame what's in view again, after your papers open or close.
+    reframe() { fly(focus ? framed(focus.rect) : framed(sheet(), 0.96), 350); },
     // The parts of the drawing in focus and their boxes on the screen (for tests and checks).
     parts() {
       const [W, H] = size();

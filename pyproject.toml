@@ -17,3 +17,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["engine"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]  # never the saves: a Fermi script can be named like a test

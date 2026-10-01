@@ -124,3 +124,16 @@ def test_fine_detail_is_judged_at_the_scale_it_is_drawn():
     big = Sheet("ribs", "Ribs", px_per_mm=0.3)
     big.inset(ribs, at=(500, 0), scale=2)  # drawn twice the size: 6 px, shown
     assert small.svg().count("<polyline") == 0 and big.svg().count("<polyline") == 1
+
+
+def test_hatching_and_lettering_keep_their_size_on_the_sheet_at_any_scale():
+    def plate(p):
+        p.rect(0, 0, 100, 50, "iron", cut=True)
+        p.text("STAMPED", 10, 20, size_mm=8)
+    s = Sheet("plate", "Plate", px_per_mm=1)
+    s.place(plate)
+    s.inset(plate, at=(300, 0), scale=4)
+    svg = s.svg()
+    ids = re.findall(r'fill="url\(#(metal-[\d_]+)\)"', svg)
+    assert len(set(ids)) == 2  # a pattern per scale: the enlarged view's hatching isn't four times as coarse
+    assert re.findall(r'font-size="(\d+)"[^>]*>STAMPED', svg) == ["8", "32"]  # 8 mm lettering, and 4x in the inset

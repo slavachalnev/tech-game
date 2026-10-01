@@ -140,7 +140,7 @@ class Pen:
             self.out.append(f'<{tag} {attrs} fill="{PAPER}" stroke="none"/>')
         self.out.append(Later(lambda: f"<{tag} {attrs} {paint}{self.stroke(colour, width, dash)}/>"))
         if cut and material in CUT:
-            self.out.append(f'<{tag} {attrs} fill="url(#{CUT[material]})" stroke="none"/>')
+            self.out.append(Later(lambda: f'<{tag} {attrs} fill="url(#{self.sheet.hatch(CUT[material], self)})" stroke="none"/>'))
 
     def stroke(self, colour, px, dash=None):
         """Stroke attributes for a line `px` wide on the finished sheet, whatever this pen's scale: written as a
@@ -179,9 +179,13 @@ class Pen:
         self._reach(*reach)
         self._shape("path", f'd="{d}"', material, cut, line, fill)
 
-    def text(self, s, x, y, size=13, anchor="start", italic=True, colour=INK):
-        """Words at a point of the part, set upright on the sheet. The point counts toward the drawing's extent."""
+    def text(self, s, x, y, size=13, anchor="start", italic=True, colour=INK, size_mm=None):
+        """Words at a point of the part, set upright on the sheet; `size` in px on the sheet, or `size_mm` for
+        lettering that's part of the object (the words on a document), which scales with it. The point counts
+        toward the drawing's extent."""
         self._reach((x, y))
+        if size_mm:
+            size = Later(lambda: num(size_mm * self.sheet.k * math.hypot(self.T[0], self.T[1])))
         self.sheet.texts.append((s, self.mm(x, y), size, anchor, italic, colour, list(self.sheet.conditions)))
 
     def anchor(self, name, x, y):
@@ -327,8 +331,21 @@ class Sheet:
         self.id, self.title, self.subtitle, (self.W, self.H), self.fixed = id, title, subtitle, size, px_per_mm
         self.file = f"{id}--{sheet}" if sheet else id
         self.texts, self.labels, self.flaws, self.dims, self.notes, self.conditions, self.box = [], [], [], [], [], [], None
-        self.ids, self.k, self.extra, self.titles = 0, None, [], []
+        self.ids, self.k, self.extra, self.titles, self.hatches = 0, None, [], [], {}
         self.draw = Pen(self, (1, 0, 0, 1, 0, 0), [])  # the sheet's own pen; everything drawn is the object
+
+    def hatch(self, kind, pen):
+        """The id of a hatching pattern of `kind` for shapes drawn with `pen`: the same spacing on the sheet at any
+        scale, insets included."""
+        s = 1 / (self.k * math.hypot(pen.T[0], pen.T[1]))  # one px, in the pen's units
+        pid = f"{kind}-{num(round(s, 4)).replace('.', '_')}"
+        if pid not in self.hatches:
+            self.hatches[pid] = {
+                "metal": f'<pattern id="{pid}" width="{num(6 * s)}" height="{num(6 * s)}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="{num(6 * s)}" stroke="{FADED}" stroke-width="{num(0.7 * s)}"/></pattern>',
+                "grain": f'<pattern id="{pid}" width="{num(8 * s)}" height="{num(5 * s)}" patternUnits="userSpaceOnUse"><path d="M0,{num(4 * s)} Q{num(2 * s)},0 {num(4 * s)},{num(2.5 * s)} T{num(8 * s)},{num(s)}" fill="none" stroke="{FADED}" stroke-width="{num(0.6 * s)}"/></pattern>',
+                "stipple": f'<pattern id="{pid}" width="{num(9 * s)}" height="{num(9 * s)}" patternUnits="userSpaceOnUse"><circle cx="{num(2 * s)}" cy="{num(3 * s)}" r="{num(0.7 * s)}" fill="{FADED}"/><circle cx="{num(6.5 * s)}" cy="{num(7 * s)}" r="{num(0.6 * s)}" fill="{FADED}"/></pattern>',
+            }[kind]
+        return pid
 
     def reach(self, x, y):
         b = self.box or [x, y, x, y]
@@ -379,8 +396,8 @@ class Sheet:
         self.dims.append((a, b, text or f"{math.hypot(b[0] - a[0], b[1] - a[1]):.0f} mm", offset, side, list(self.conditions)))
 
     def note(self, title, text):
-        """A block of notes (How it works, say), set at the bottom left."""
-        self.notes.append((title, text))
+        """A block of notes (How it works, say), set at the bottom left; inside `with s.state(...)` it shows only then."""
+        self.notes.append((title, text, list(self.conditions)))
 
     # ---- fitting and writing
     def _fit(self):
@@ -388,7 +405,7 @@ class Sheet:
         x0, y0, x1, y1 = self.box or (0, 0, 100, 100)
         mid = (x0 + x1) / 2
         sides = {s or ("left" if at[0] < mid else "right") for _, at, _, s, *_ in self.labels}
-        note_h = sum(36 + 16 * len(wrap(t, 60)) for _, t in self.notes)
+        note_h = sum(36 + 16 * len(wrap(t, 60)) for _, t, _ in self.notes)
         L, R = (300 if "left" in sides else 70), (300 if "right" in sides else 70)
         T, B = 60 + 70 * ("above" in sides), 120 + note_h + 70 * ("below" in sides) + 30 * bool(self.titles)
         w, h = max(x1 - x0, 1), max(y1 - y0, 1)
@@ -403,19 +420,21 @@ class Sheet:
         px = lambda p: (ox + p[0] * k, oy - p[1] * k)  # noqa: E731
         within = lambda el, conds: "".join(f"<g {c}>" for c in conds if c) + el + "</g>" * sum(1 for c in conds if c)  # noqa: E731
         s = 1 / k  # one px, in millimetres
+        obj, extra = "".join(map(str, self.draw.out)), "".join(map(str, self.extra))  # first: they ask for their hatches
         defs = (f'<filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="{self.W}" height="{self.H}"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2"/></filter>'
                 f'<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9" fill="none" stroke="{FADED}" stroke-width="1.2"/></marker>'
                 f'<pattern id="metal" width="{num(6 * s)}" height="{num(6 * s)}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="{num(6 * s)}" stroke="{FADED}" stroke-width="{num(0.7 * s)}"/></pattern>'
                 f'<pattern id="grain" width="{num(8 * s)}" height="{num(5 * s)}" patternUnits="userSpaceOnUse"><path d="M0,{num(4 * s)} Q{num(2 * s)},0 {num(4 * s)},{num(2.5 * s)} T{num(8 * s)},{num(s)}" fill="none" stroke="{FADED}" stroke-width="{num(0.6 * s)}"/></pattern>'
-                f'<pattern id="stipple" width="{num(9 * s)}" height="{num(9 * s)}" patternUnits="userSpaceOnUse"><circle cx="{num(2 * s)}" cy="{num(3 * s)}" r="{num(0.7 * s)}" fill="{FADED}"/><circle cx="{num(6.5 * s)}" cy="{num(7 * s)}" r="{num(0.6 * s)}" fill="{FADED}"/></pattern>')
+                f'<pattern id="stipple" width="{num(9 * s)}" height="{num(9 * s)}" patternUnits="userSpaceOnUse"><circle cx="{num(2 * s)}" cy="{num(3 * s)}" r="{num(0.7 * s)}" fill="{FADED}"/><circle cx="{num(6.5 * s)}" cy="{num(7 * s)}" r="{num(0.6 * s)}" fill="{FADED}"/></pattern>'
+                + "".join(self.hatches.values()))
         texts = "".join(within(f'<text x="{num(px(at)[0])}" y="{num(px(at)[1])}" font-size="{size}" text-anchor="{anchor}"{" font-style=\"italic\"" if italic else ""} fill="{colour}">{esc(t)}</text>', conds)
                         for t, at, size, anchor, italic, colour, conds in self.texts)
         texts += "".join(f'<text x="{num(px(at)[0])}" y="{num(px(at)[1] + 22)}" font-size="14" font-variant="small-caps" text-anchor="middle" fill="{FADED}">{esc(t)}</text>' for t, at in self.titles)
         rings = "".join(within(f'<circle cx="{num(px(at)[0])}" cy="{num(px(at)[1])}" r="11" fill="none" stroke="{RED}" stroke-width="1.2" stroke-dasharray="3 2"/>', conds) for at, conds in self.flaws)
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {self.W} {self.H}" font-family="Georgia, \'Times New Roman\', serif">\n<title>{esc(self.title)}</title>\n'
                 f'<!-- Made with the drawing kit from drawings/{self.id}.py: edit that and run uv run tg draw {self.id}. -->\n<defs>{defs}</defs>\n'
-                f'<g data-object="" filter="url(#ink)"><g transform="matrix({num(k)} 0 0 {num(-k)} {num(ox)} {num(oy)})">{"".join(map(str, self.draw.out))}</g></g>\n'
-                f'<g filter="url(#ink)"><g transform="matrix({num(k)} 0 0 {num(-k)} {num(ox)} {num(oy)})">{"".join(map(str, self.extra))}</g></g>\n'
+                f'<g data-object="" filter="url(#ink)"><g transform="matrix({num(k)} 0 0 {num(-k)} {num(ox)} {num(oy)})">{obj}</g></g>\n'
+                f'<g filter="url(#ink)"><g transform="matrix({num(k)} 0 0 {num(-k)} {num(ox)} {num(oy)})">{extra}</g></g>\n'
                 f'<g>{texts}{rings}</g>\n<g>{self._dims(px, within)}</g>\n<g>{self._labels(px, within)}</g>\n<g>{self._notes()}{self._furniture(k)}</g>\n</svg>\n')
 
     def _dims(self, px, within):
@@ -485,12 +504,13 @@ class Sheet:
 
     def _notes(self):
         out, y = [], self.H - 110
-        for title, text in reversed(self.notes):
+        for title, text, conds in reversed(self.notes):
             lines = wrap(text, 60)
             y -= 16 * len(lines) + 36
             body = "".join(f'<tspan x="60" dy="{0 if i == 0 else 16}">{esc(s)}</tspan>' for i, s in enumerate(lines))
-            out.append(f'<text x="60" y="{y}" font-size="16" font-variant="small-caps" fill="{FADED}">{esc(title)}</text>'
-                       f'<text x="60" y="{y + 20}" font-size="13" font-style="italic" fill="{INK}">{body}</text>')
+            el = (f'<text x="60" y="{y}" font-size="16" font-variant="small-caps" fill="{FADED}">{esc(title)}</text>'
+                  f'<text x="60" y="{y + 20}" font-size="13" font-style="italic" fill="{INK}">{body}</text>')
+            out.append("".join(f"<g {c}>" for c in conds if c) + el + "</g>" * sum(1 for c in conds if c))
         return "".join(out)
 
     def _furniture(self, k):

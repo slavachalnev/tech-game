@@ -136,7 +136,7 @@ def cmd_places(args):
 def cmd_draw(args):
     save = state.find_save(args.save)
     folder = save / "drawings"
-    scripts = [folder / f"{i}.py" for i in args.ids] or sorted(p for p in folder.glob("*.py") if p.stem != "parts" and not p.stem.startswith("_"))
+    scripts = [folder / f"{i}.py" for i in args.ids] or sorted(p for p in folder.glob("*.py") if not p.stem.startswith(("parts", "_")))
     env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(folder), str(state.ROOT)]), "PYTHONDONTWRITEBYTECODE": "1"}  # no __pycache__ in the save
     failed = False
     for script in scripts:
@@ -243,7 +243,7 @@ def main():
     p.add_argument("origin", nargs="?", help="measure from this place id (default: the gazetteer's origin)")
     p.set_defaults(run=cmd_places)
 
-    p = command("draw", help="run drawing scripts (drawings/<id>.py) to write their drawings; all of them by default")
+    p = command("draw", help="run drawing scripts (drawings/<id>.py; parts*.py are parts, not drawings) to write their drawings; all of them by default")
     p.add_argument("ids", nargs="*", help="drawing ids, e.g. cylinder-10cm")
     p.set_defaults(run=cmd_draw)
     p = command("roll", help='draw against a probability: roll 0.25 "Penrose is at the mine"')

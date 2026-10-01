@@ -31,6 +31,7 @@ export function createBoard(host, h) {
   let closing = null; // the detail being closed as the camera backs out of it: { key, parentKey }
   let quiet = false; // after a flight nothing opens by itself, until you zoom or drag
   let aim = null; // where on the screen you're zooming at with the wheel; else the middle of the clear part
+  let zoomedOut = null, sheetW = 1; // whether the camera takes in most of the sheet; the sheet's width
   const view = {}; // thing id -> { state, step } the player chose to look at, else its current state and step 1
   const measured = new Map(); // drawing key -> promise of { url, vb, object, parts }
   const children = new Map(), measuring = new Set(); // node key -> child node; keys being measured
@@ -170,6 +171,7 @@ export function createBoard(host, h) {
       cols[c] = y0 + y + rowH + 260;
       return nodes;
     });
+    sheetW = sheet().w;
     platesG.innerHTML = roots.map((n) => `<g class="plate" data-id="${h.esc(n.id)}">
         <rect class="plate-shadow" x="${n.rect.x + 8}" y="${n.rect.y + 10}" width="${n.rect.w}" height="${n.rect.h}"/>
         <image href="${n.data.url}" x="${n.rect.x}" y="${n.rect.y}" width="${n.rect.w}" height="${n.rect.h}" preserveAspectRatio="none"/>
@@ -248,7 +250,9 @@ export function createBoard(host, h) {
   // drawing is opening, and so on down.
   function walk() {
     const a = clear(), [cx, cy] = aim ? atScreen(...aim) : atScreen(a.x + a.w / 2, a.y + a.h / 2);
-    const root = roots.find((n) => inside(n.rect, cx, cy) && fill(n.rect) >= FOCUS);
+    const was = path[0]?.node, margin = (n) => Math.max(n.rect.w, n.rect.h) * 0.08; // the drawing in focus holds on a little
+    const root = was && roots.includes(was) && inside(was.rect, cx, cy, margin(was)) && fill(was.rect) >= FOCUS * 0.8 ? was
+      : roots.find((n) => inside(n.rect, cx, cy) && fill(n.rect) >= FOCUS);
     const out = root ? [{ node: root, p: 1 }] : [];
     for (let node = root; node; ) {
       // The child already open stays open while you're inside its drawing. Else the smallest part you're zooming at
@@ -305,7 +309,10 @@ export function createBoard(host, h) {
     });
     detailsG.querySelectorAll(":scope > g").forEach((g) => keep.has(g.id) || g.remove());
     if (was !== focus) (hover = null), (selected = null), h.sounds(focus?.data.sounds ?? []); // what you'd hear there
-    if (!was !== !focus) h.desk(!focus); // your papers are out at the whole sheet, away in a drawing
+    // Your papers are out when you've zoomed out to most of the sheet and away when you're in close: by zoom, with
+    // some slack, never by focus (opening them moves the middle of the view, and so the focus).
+    const far = cam[2] > sheetW * (zoomedOut ? 0.4 : 0.55);
+    if (far !== zoomedOut) (zoomedOut = far), h.desk(far);
     drawOverlay();
     if (focus !== was || panelKey !== `${focus?.key ?? ""}|${selected ?? ""}`) showPanel();
   }

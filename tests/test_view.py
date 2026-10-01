@@ -142,3 +142,19 @@ def test_a_part_without_a_drawing_is_shown_in_its_machine_and_a_lone_one_on_a_bl
     page.goto(page.url.replace("thing/anvil", "thing/lathe"))
     page.wait_for_function("document.querySelector('.board-panel .sheet-name')?.textContent === 'Lathe'")
     assert errors == []
+
+
+def test_dragging_the_board_does_not_flicker_the_sidebars(browser, full_save):
+    page, errors = open_page(browser, full_save, "thing/smithy")
+    page.mouse.move(500, 450)
+    page.mouse.wheel(0, 300)  # out to where the smithy fills about half the view: the edge of focus
+    page.wait_for_timeout(400)
+    page.evaluate("""window.flips = 0; let open = document.body.classList.contains('desk-open');
+      new MutationObserver(() => { const now = document.body.classList.contains('desk-open'); if (now !== open) (open = now), flips++; })
+        .observe(document.body, { attributes: true, attributeFilter: ['class'] });""")
+    page.mouse.down()
+    for i in range(80):
+        page.mouse.move(200 + (i % 40) * 20 if (i // 40) % 2 == 0 else 980 - (i % 40) * 20, 450)
+        page.wait_for_timeout(16)
+    page.mouse.up()
+    assert page.evaluate("flips") == 0 and errors == []

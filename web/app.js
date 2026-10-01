@@ -179,7 +179,7 @@ async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock)
 
 const board = ($("#board").api = createBoard($("#board"), {
   prepare, svgText, stateOf, esc, stamp, details, sounds: ambience,
-  desk: (open) => desk(open, false), // the board is about to frame things itself
+  desk: (open) => wide() && desk(open, false), // the board is about to frame things itself; on a phone, only by hand
   cover: () => (deskOpen() && wide() ? 404 : 0), // px of the board's left the papers cover: 16 + 380 + 8
   glyph: (kind) => GLYPH[kind] ?? GLYPH.other,
   located: (id) => { // the address follows what you're looking at on the board, without a new render

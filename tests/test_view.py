@@ -159,3 +159,17 @@ def test_dragging_the_board_does_not_flicker_the_sidebars(browser, full_save):
     page.mouse.up()
     assert page.evaluate("flips") == 0 and errors == []
     assert page.locator(".details > g").count() == 0  # looking around opens nothing; only zooming in does
+
+
+def test_after_zooming_in_a_little_dragging_still_opens_nothing(browser, full_save):
+    page, errors = open_page(browser, full_save, "thing/smithy")
+    page.mouse.move(500, 450)
+    page.mouse.wheel(0, -200)  # a tick in: not far enough into the smithy for anything to open
+    page.wait_for_timeout(300)
+    page.evaluate("window.seen = 0; setInterval(() => (window.seen = Math.max(window.seen, document.querySelectorAll('.details > g').length)), 20)")
+    page.mouse.down()
+    for i in range(60):
+        page.mouse.move(200 + (i % 30) * 25 if (i // 30) % 2 == 0 else 925 - (i % 30) * 25, 450)
+        page.wait_for_timeout(16)
+    page.mouse.up()
+    assert page.evaluate("seen") == 0 and errors == []

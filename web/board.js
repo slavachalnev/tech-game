@@ -29,6 +29,7 @@ export function createBoard(host, h) {
   let S = null, roots = [], cam = null, path = [], focus = null, hover = null, frameAsked = false, panelKey = "", playing = null;
   let selected = null; // a part without a drawing of its own: its sheet is shown in the panel
   let closing = null; // the detail being closed as the camera backs out of it: { key, parentKey }
+  let growing = null; // the detail being opened with a click, as the camera flies into it
   let quiet = false; // after a flight or jump nothing opens by itself, until you zoom in (dragging is only looking around)
   let aim = null; // where on the screen you're zooming at with the wheel; else the middle of the clear part
   let zoomedOut = null, sheetW = 1; // whether the camera takes in most of the sheet; the sheet's width
@@ -214,7 +215,7 @@ export function createBoard(host, h) {
       (cam = [cx - w / 2, cy - hh / 2, w, hh]), (id.e = e);
       if (k >= 1) { // landed: a detail being closed is now shut
         if (closing?.parentKey) opened.delete(closing.parentKey);
-        (closing = null), (flight = null);
+        (closing = null), (growing = null), (flight = null);
       }
       draw();
       k < 1 ? requestAnimationFrame(step) : landed();
@@ -248,6 +249,16 @@ export function createBoard(host, h) {
 
   // What the camera is looking into: a drawing on the sheet, then the part under the middle of the screen whose
   // drawing is opening, and so on down.
+  // How far a part's drawing has opened, 0 to 1, by how far you've zoomed into the drawing it's in: nothing at that
+  // drawing's own framing, starting a quarter past it, fully open just before the part's drawing fills the view. A
+  // part whose drawing is about as big as the one it's in can't grow by zooming: it's open only when framed (click).
+  function opening(node, c) {
+    const F = fill(node.rect), size = fill(c.rect) / F; // the part's sheet against the drawing it's in, at any zoom
+    const start = 0.92 * 1.25, end = OPEN[1] / size; // fills of the drawing it's in
+    if (end <= start * 1.1) return fill(c.rect) >= OPEN[1] ? 1 : 0;
+    return clamp(Math.log(F / start) / Math.log(end / start));
+  }
+
   function walk() {
     const a = clear(), [cx, cy] = aim ? atScreen(...aim) : atScreen(a.x + a.w / 2, a.y + a.h / 2);
     const was = path[0]?.node, margin = (n) => Math.max(n.rect.w, n.rect.h) * 0.08; // the drawing in focus holds on a little
@@ -268,7 +279,8 @@ export function createBoard(host, h) {
         c = part && child(part.owner, { id: part.id, box: part.local });
       }
       if (!c) break;
-      let p = clamp((fill(c.rect) - OPEN[0]) / (OPEN[1] - OPEN[0]));
+      let p = opening(node, c);
+      if (c.key === growing?.key) p = Math.max(p, flight?.e ?? 1); // opened with a click: growing as the camera flies in
       if (c.key === closing?.key) p = Math.min(p, 1 - (flight?.e ?? 1)); // shrinking away as the camera backs out
       if (p <= 0) { if (!flight) opened.delete(node.key); break; } // zoomed back out of it (not on the way in)
       opened.set(node.key, c);
@@ -431,7 +443,7 @@ export function createBoard(host, h) {
     const get = () => child(part.owner, { id, box: part.local });
     let c = get();
     while (!c) (await new Promise((r) => setTimeout(r, 40))), (c = get());
-    opened.set(focus.key, c);
+    opened.set(focus.key, c), (growing = c);
     fly(framed(c.rect));
   }
   const nodeByKey = (key) => roots.find((n) => n.key === key) ?? children.get(key);
@@ -449,7 +461,7 @@ export function createBoard(host, h) {
     if (drag) {
       const [W] = size(), dx = ((e.clientX - drag.x) / W) * drag.cam[2], dy = ((e.clientY - drag.y) / W) * drag.cam[2];
       if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
-      if (drag.moved) (flight = null), (aim = null), (cam = [drag.cam[0] - dx, drag.cam[1] - dy, cam[2], cam[3]]), ask();
+      if (drag.moved) (flight = null), (quiet = true), (aim = null), (cam = [drag.cam[0] - dx, drag.cam[1] - dy, cam[2], cam[3]]), ask();
       return;
     }
     const id = pick(sx, sy);
@@ -532,8 +544,12 @@ export function createBoard(host, h) {
         node = c;
       }
       if (!node) return;
-      const P = node.part, f = OPEN[0] + (OPEN[1] - OPEN[0]) / 2;
-      const to = half && P ? framed({ x: P.x + P.w / 2 - (node.rect.w * 0.5) / 2, y: P.y + P.h / 2 - (node.rect.h * 0.5) / 2, w: node.rect.w * 0.5, h: node.rect.h * 0.5 }, f / 2) : framed(node.rect);
+      let to = framed(node.rect);
+      if (half && node.parent) { // zoomed into the drawing it's in to where it's half open, centred on the part
+        const par = node.parent, P = node.part, size = fill(node.rect) / fill(par.rect), start = 0.92 * 1.25, end = OPEN[1] / size;
+        const F = end <= start * 1.1 ? end : Math.sqrt(start * end);
+        to = framed({ x: P.x + P.w / 2 - par.rect.w / 2, y: P.y + P.h / 2 - par.rect.h / 2, w: par.rect.w, h: par.rect.h }, F);
+      }
       await fly(to, now ? 0 : 750);
       (selected = pick), draw();
     },

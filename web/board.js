@@ -199,7 +199,7 @@ export function createBoard(host, h) {
   }
   let flight = null;
   function fly(to, ms = 750) {
-    if (!ms) return (cam = to), draw(), Promise.resolve();
+    if (!ms) return (quiet = true), (aim = null), (cam = to), draw(), Promise.resolve(); // a jump, like a flight: nothing opens by itself
     let landed;
     (quiet = true), (aim = null);
     const done = new Promise((r) => (landed = r)), from = cam.slice(), t0 = performance.now(), id = (flight = { e: 0 });

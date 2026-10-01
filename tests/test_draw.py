@@ -78,3 +78,30 @@ def test_tg_draw_runs_the_save_drawing_scripts_and_checks_them(save, monkeypatch
     assert code == 0 and out.strip() == "visuals/anvil.svg" and state.check_file(save, save / "visuals/anvil.svg") == []
     code, out, _ = tg(monkeypatch, capsys, "--save", "g1", "draw")  # all of them: one fails
     assert code == 1 and "drawings/broken.py failed" in out and "no such part" in out
+
+
+def test_an_inset_sits_beside_the_object_and_is_not_part_of_it():
+    s = Sheet("box", "Box")
+    s.place(box)
+    s.inset(box, at=(1000, 0), scale=2, title="Enlarged")
+    obj = re.search(r'<g data-object="".*?</g></g>', s.svg(), re.S).group(0)
+    assert obj.count("<rect") == s.svg().count("<rect") // 2 - 2  # the main view's shapes only (inset and scale bar aside)
+    assert "scale(2 2)" not in obj and "scale(2 2)" in s.svg() and "Enlarged" in s.svg()
+    assert s.box[2] >= 1000 + 200 * 2  # the inset counts when fitting the sheet
+
+
+def test_labels_can_go_in_rows_above_and_below():
+    s = Sheet("box", "Box")
+    b = s.place(box)
+    s.label("the lid", b["lid"], side="above")
+    s.label("the base", b.at(0, 0), side="below")
+    (lid, base) = [float(y) for y in re.findall(r'<text x="[\d.]+" y="([\d.]+)" font-size="13" font-style="italic" text-anchor="middle"', s.svg())]
+    k, ox, oy = s._fit()
+    assert lid < oy - 300 * k and base > oy  # above the top of the box, below its base
+
+
+def test_during_shows_something_for_part_of_a_cycle():
+    s = Sheet("box", "Box")
+    with s.draw.during(0.25, 0.5, 4):
+        s.place(box)
+    assert 'values="0;1;0" keyTimes="0;0.25;0.5" calcMode="discrete" dur="4s"' in s.svg()

@@ -98,15 +98,24 @@ class Pen:
     """Draws in millimetres, y up, in the house style, into the current group. A part function gets one."""
 
     def __init__(self, sheet, T, out):
-        self.sheet, self.T, self.out, self.anchors = sheet, T, out, {}  # T: this pen's mm -> the sheet's mm
+        self.sheet, self.T, self.out, self.anchors, self.box = sheet, T, out, {}, None  # T: this pen's mm -> the sheet's mm
 
     def mm(self, x, y):
         a, b, c, d, e, f = self.T
         return a * x + c * y + e, b * x + d * y + f
 
+    def _local(self, X, Y):
+        """A point in the sheet's mm, in this pen's."""
+        a, b, c, d, e, f = self.T
+        det = a * d - b * c
+        return (d * (X - e) - c * (Y - f)) / det, (a * (Y - f) - b * (X - e)) / det
+
     def _reach(self, *pts):
         for p in pts:
-            self.sheet.reach(*self.mm(*p))
+            x, y = self.mm(*p)
+            self.sheet.reach(x, y)
+            b = self.box or [x, y, x, y]
+            self.box = [min(b[0], x), min(b[1], y), max(b[2], x), max(b[3], y)]
 
     # ---- shapes
     def _shape(self, tag, attrs, material, cut, line, fill):
@@ -150,7 +159,8 @@ class Pen:
         self._shape("path", f'd="{d}"', material, cut, line, fill)
 
     def text(self, s, x, y, size=13, anchor="start", italic=True, colour=INK):
-        """Words at a point of the part, set upright on the sheet."""
+        """Words at a point of the part, set upright on the sheet. The point counts toward the drawing's extent."""
+        self._reach((x, y))
         self.sheet.texts.append((s, self.mm(x, y), size, anchor, italic, colour, list(self.sheet.conditions)))
 
     def anchor(self, name, x, y):
@@ -168,18 +178,22 @@ class Pen:
         self.out.append(svg)
 
     # ---- parts inside parts
-    def part(self, draw, at=(0, 0), *, thing=None, flip=False, rotate=0, **kwargs):
+    def part(self, draw, at=(0, 0), *, thing=None, flip=False, rotate=0, scale=1, **kwargs):
         """Draw another part inside this one with its origin at `at`, mirrored left to right if `flip`, turned
-        `rotate` degrees anticlockwise about its origin; `thing` marks it, for the board. (A part with its own
-        drawing should be drawn the same way round in both, for the board to open it in place.)"""
+        `rotate` degrees anticlockwise about its origin, enlarged `scale` times (for a detail view; real parts
+        stay at 1); `thing` marks it, for the board. (A part with its own drawing should be drawn the same way round
+        in both, for the board to open it in place.)"""
         a, b, c, d, e, f = self.T
-        co, si, sx = math.cos(math.radians(rotate)), math.sin(math.radians(rotate)), -1 if flip else 1
-        la, lb, lc, ld = co * sx, si * sx, -si, co  # translate(at) rotate(rotate) scale(sx, 1)
+        co, si, sx = math.cos(math.radians(rotate)) * scale, math.sin(math.radians(rotate)) * scale, -1 if flip else 1
+        la, lb, lc, ld = co * sx, si * sx, -si, co  # translate(at) rotate(rotate) scale(sx * scale, scale)
         inner = Pen(self.sheet, (a * la + c * lb, b * la + d * lb, a * lc + c * ld, b * lc + d * ld, a * at[0] + c * at[1] + e, b * at[0] + d * at[1] + f), [])
         draw(inner, **kwargs)
+        if inner.box:  # what it covers counts toward this pen's extent too
+            self._reach(*[self._local(x, y) for x, y in ((inner.box[0], inner.box[1]), (inner.box[2], inner.box[3]))])
         mark = f' data-thing="{thing}"' if thing else ""
         turn = f" rotate({num(float(rotate))})" if rotate else ""
-        self.out += [f'<g{mark} transform="translate({num(at[0])} {num(at[1])}){turn}{" scale(-1 1)" if flip else ""}">', *inner.out, "</g>"]
+        size = f" scale({num((-1 if flip else 1) * float(scale))} {num(float(scale))})" if flip or scale != 1 else ""
+        self.out += [f'<g{mark} transform="translate({num(at[0])} {num(at[1])}){turn}{size}">', *inner.out, "</g>"]
         return Placed(inner)
 
     # ---- what shows when, and how it moves
@@ -228,9 +242,17 @@ class Pen:
         """Heard while this shows: fire, engine, water, hammer or wind."""
         return self._group(f'data-sound="{kind}"')
 
-    def spin(self, cx, cy, seconds):
+    def spin(self, cx, cy, seconds, clockwise=True):
         """Turns steadily about (cx, cy)."""
-        return self._group("", f'<animateTransform attributeName="transform" type="rotate" from="0 {num(cx)} {num(cy)}" to="-360 {num(cx)} {num(cy)}" dur="{seconds}s" repeatCount="indefinite"/>')
+        return self._group("", f'<animateTransform attributeName="transform" type="rotate" from="0 {num(cx)} {num(cy)}" to="{-360 if clockwise else 360} {num(cx)} {num(cy)}" dur="{seconds}s" repeatCount="indefinite"/>')
+
+    def during(self, start, end, seconds):
+        """Shows only from `start` to `end`, as fractions of a cycle `seconds` long: a valve open for part of a
+        stroke, a puff at the top of it. Use the same `seconds` as the motion it goes with."""
+        keys, values = ([0, end], "1;0") if start <= 0 else ([0, start, end], "0;1;0")
+        if end >= 1:
+            keys, values = keys[:-1], values.rsplit(";", 1)[0]
+        return self._group("", f'<animate attributeName="opacity" values="{values}" keyTimes="{";".join(num(float(k)) for k in keys)}" calcMode="discrete" dur="{seconds}s" repeatCount="indefinite"/>')
 
     def rock(self, cx, cy, degrees, seconds):
         """Rocks by ±degrees about (cx, cy), like a beam."""
@@ -263,7 +285,7 @@ class Sheet:
     def __init__(self, id, title, subtitle="", *, size=(1600, 1200), px_per_mm=None):
         self.id, self.title, self.subtitle, (self.W, self.H), self.fixed = id, title, subtitle, size, px_per_mm
         self.texts, self.labels, self.flaws, self.dims, self.notes, self.conditions, self.box = [], [], [], [], [], [], None
-        self.ids, self.k = 0, None
+        self.ids, self.k, self.extra, self.titles = 0, None, [], []
         self.draw = Pen(self, (1, 0, 0, 1, 0, 0), [])  # the sheet's own pen; everything drawn is the object
 
     def reach(self, x, y):
@@ -273,6 +295,16 @@ class Sheet:
     def place(self, draw, at=(0, 0), *, thing=None, flip=False, rotate=0, **kwargs):
         """Draw a part (a function taking a Pen) with its origin at `at`; `thing` marks it, for the board."""
         return self.draw.part(draw, at, thing=thing, flip=flip, rotate=rotate, **kwargs)
+
+    def inset(self, draw, at, *, scale=1, title=None, **kwargs):
+        """A second view beside the object (from above, a cross-section, an enlarged detail), drawn `scale` times
+        bigger with its origin at `at`, and a title under it. It isn't part of the object, so the drawing board
+        lines the part up by its main view alone."""
+        placed = Pen(self, (1, 0, 0, 1, 0, 0), self.extra).part(draw, at, scale=scale, **kwargs)
+        if title and placed.pen.box:
+            x0, y0, x1, _ = placed.pen.box
+            self.titles.append((title, ((x0 + x1) / 2, y0)))
+        return placed
 
     # What shows when, around parts placed on the sheet: with s.state("running"): s.place(...).
     def state(self, *names):
@@ -289,7 +321,9 @@ class Sheet:
 
     # ---- round the object, in millimetres
     def label(self, text, at, *, colour=INK, side=None, width=28):
-        """A label in the margin, with a leader to `at` (e.g. placed["boss"] or placed.at(x, y))."""
+        """A label in the margin, with a leader to `at` (e.g. placed["boss"] or placed.at(x, y)). It goes in the
+        column on the nearer side, or `side`: "left", "right", or "above" or "below" the object, in a row (better
+        for a wide drawing, like a site)."""
         self.labels.append((text, at, colour, side, width, list(self.conditions)))
 
     def flaw(self, text, at, **kw):
@@ -311,10 +345,10 @@ class Sheet:
         """px per mm and where the sheet's mm (0, 0) falls, so the object fills the space the labels leave."""
         x0, y0, x1, y1 = self.box or (0, 0, 100, 100)
         mid = (x0 + x1) / 2
-        left = any((s or ("left" if at[0] < mid else "right")) == "left" for _, at, _, s, *_ in self.labels)
-        right = any((s or ("left" if at[0] < mid else "right")) == "right" for _, at, _, s, *_ in self.labels)
+        sides = {s or ("left" if at[0] < mid else "right") for _, at, _, s, *_ in self.labels}
         note_h = sum(36 + 16 * len(wrap(t, 60)) for _, t in self.notes)
-        L, R, T, B = (300 if left else 70), (300 if right else 70), 60, 120 + note_h
+        L, R = (300 if "left" in sides else 70), (300 if "right" in sides else 70)
+        T, B = 60 + 70 * ("above" in sides), 120 + note_h + 70 * ("below" in sides) + 30 * bool(self.titles)
         w, h = max(x1 - x0, 1), max(y1 - y0, 1)
         k = self.fixed or min((self.W - L - R) / w, (self.H - T - B) / h)
         ox = L + (self.W - L - R - w * k) / 2 - x0 * k
@@ -334,10 +368,12 @@ class Sheet:
                 f'<pattern id="stipple" width="{num(9 * s)}" height="{num(9 * s)}" patternUnits="userSpaceOnUse"><circle cx="{num(2 * s)}" cy="{num(3 * s)}" r="{num(0.7 * s)}" fill="{FADED}"/><circle cx="{num(6.5 * s)}" cy="{num(7 * s)}" r="{num(0.6 * s)}" fill="{FADED}"/></pattern>')
         texts = "".join(within(f'<text x="{num(px(at)[0])}" y="{num(px(at)[1])}" font-size="{size}" text-anchor="{anchor}"{" font-style=\"italic\"" if italic else ""} fill="{colour}">{esc(t)}</text>', conds)
                         for t, at, size, anchor, italic, colour, conds in self.texts)
+        texts += "".join(f'<text x="{num(px(at)[0])}" y="{num(px(at)[1] + 22)}" font-size="14" font-variant="small-caps" text-anchor="middle" fill="{FADED}">{esc(t)}</text>' for t, at in self.titles)
         rings = "".join(within(f'<circle cx="{num(px(at)[0])}" cy="{num(px(at)[1])}" r="11" fill="none" stroke="{RED}" stroke-width="1.2" stroke-dasharray="3 2"/>', conds) for at, conds in self.flaws)
         return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {self.W} {self.H}" font-family="Georgia, \'Times New Roman\', serif">\n<title>{esc(self.title)}</title>\n'
                 f'<!-- Made with the drawing kit from drawings/{self.id}.py: edit that and run uv run tg draw {self.id}. -->\n<defs>{defs}</defs>\n'
                 f'<g data-object="" filter="url(#ink)"><g transform="matrix({num(k)} 0 0 {num(-k)} {num(ox)} {num(oy)})">{"".join(map(str, self.draw.out))}</g></g>\n'
+                f'<g filter="url(#ink)"><g transform="matrix({num(k)} 0 0 {num(-k)} {num(ox)} {num(oy)})">{"".join(map(str, self.extra))}</g></g>\n'
                 f'<g>{texts}{rings}</g>\n<g>{self._dims(px, within)}</g>\n<g>{self._labels(px, within)}</g>\n<g>{self._notes()}{self._furniture(k)}</g>\n</svg>\n')
 
     def _dims(self, px, within):
@@ -365,10 +401,24 @@ class Sheet:
         if not self.labels:
             return ""
         (x0, y0), (x1, y1) = px((self.box[0], self.box[3])), px((self.box[2], self.box[1]))
-        mid, sides, out = (x0 + x1) / 2, {"left": [], "right": []}, []
+        mid, sides, out = (x0 + x1) / 2, {"left": [], "right": [], "above": [], "below": []}, []
         for text, at, colour, side, width, conds in self.labels:
             X, Y = px(at)
             sides[side or ("left" if X < mid else "right")].append((text, X, Y, colour, width, conds))
+        for side in ("above", "below"):  # rows, each label over (or under) what it names, nudged apart
+            right_edge = 0
+            for text, X, Y, colour, width, conds in sorted(sides.pop(side), key=lambda l: l[1]):
+                lines = wrap(text, min(width, 22))
+                w = 6.6 * max(map(len, lines))
+                x = min(max(X, right_edge + w / 2 + 10, w / 2 + 16), self.W - w / 2 - 16)
+                right_edge = x + w / 2
+                top = y0 - 26 - 15 * (len(lines) - 1) if side == "above" else y1 + 34
+                end = top + 15 * (len(lines) - 1) + 6 if side == "above" else top - 14
+                body = "".join(f'<tspan x="{num(x)}" dy="{0 if i == 0 else 15}">{esc(s)}</tspan>' for i, s in enumerate(lines))
+                out.append(within(
+                    f'<text x="{num(x)}" y="{num(top)}" font-size="13" font-style="italic" text-anchor="middle" fill="{colour}">{body}</text>'
+                    f'<polyline points="{num(x)},{num(end)} {num(X)},{num(Y)}" fill="none" stroke="{colour}" stroke-width="0.7" opacity="0.85"/>'
+                    f'<circle cx="{num(X)}" cy="{num(Y)}" r="1.8" fill="{colour}"/>', conds))
         for side, labs in sides.items():
             col = max(16, x0 - 28) if side == "left" else min(self.W - 16, x1 + 28)
             placed = []

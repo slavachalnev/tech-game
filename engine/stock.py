@@ -342,10 +342,12 @@ def piston(p, diameter, thickness, rod=0, material="brass"):
         p.anchor("rod", 0, thickness + rod)
 
 
-def break_line(p, x0, x1, y):
-    """The standard break symbol across from x0 to x1 at height y: something drawn shortened."""
-    w = x1 - x0
-    p.poly([(x0, y), (x0 + w * 0.42, y), (x0 + w * 0.47, y + w * 0.05), (x0 + w * 0.53, y - w * 0.05), (x0 + w * 0.58, y), (x1, y)], closed=False, line="detail")
+def break_line(p, x0, x1, y, size=None):
+    """The standard break symbol across from x0 to x1 at height y: something drawn shortened. `size` is the
+    zigzag's height (by default a twentieth of the width, at most 150 mm)."""
+    w, z = x1 - x0, size or min((x1 - x0) * 0.05, 150)
+    m = (x0 + x1) / 2
+    p.poly([(x0, y), (m - z, y), (m - z / 2, y + z), (m + z / 2, y - z), (m + z, y), (x1, y)], closed=False, line="detail")
 
 
 # ---------- fire, steam, weather and light
@@ -374,7 +376,8 @@ def sky(p, x0, x1, horizon, top):
     stars at night."""
     h = top - horizon
     with p.sky("day"):
-        p.rect(x0, horizon, x1 - x0, h, ("#c9cfd0", 0.35), line="none")
+        p.rect(x0, horizon, x1 - x0, h, ("#dde3e2", 0.22), line="none")
+        p.rect(x0, horizon, x1 - x0, h * 0.3, ("#f3ead2", 0.35), line="none")  # lighter toward the horizon
     with p.sky("dawn", "dusk"):
         p.rect(x0, horizon, x1 - x0, h, ("#a9a4a8", 0.35), line="none")
         p.rect(x0, horizon, x1 - x0, h * 0.25, ("#c0662b", 0.25), line="none")

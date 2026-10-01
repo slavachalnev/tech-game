@@ -161,7 +161,7 @@ def cmd_roll(args):
 
 
 def cmd_shot(args):
-    out = shot(state.find_save(args.save), args.target, args.state, args.sheet, args.step, args.hotspots, args.set, args.half)
+    out = shot(state.find_save(args.save), args.target, args.state, args.sheet, args.step, args.hotspots, args.set, args.half, args.time)
     print(out.relative_to(Path.cwd()) if out.is_relative_to(Path.cwd()) else out)
 
 
@@ -257,6 +257,7 @@ def main():
     p.add_argument("--sheet", action="store_true", help="the thing's whole spec-sheet page, not just its drawing")
     p.add_argument("--step", help="only this step of a drawing's steps (data-step)")
     p.add_argument("--hotspots", action="store_true", help="outline what can be clicked in the drawing, with its id")
+    p.add_argument("--time", choices=["dawn", "day", "dusk", "night"], help="the time of day to show (for drawings with data-sky groups)")
     p.add_argument("--half", action="store_true", help="with board/<id>: stop with its drawing half open over its machine's, to check they line up")
     p.add_argument("--set", action="append", default=[], metavar="ID=STATE", help="show a thing drawn inside this drawing in another state, e.g. --set engine-10cm=cold")
     p.set_defaults(run=cmd_shot)

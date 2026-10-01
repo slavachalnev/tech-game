@@ -130,7 +130,13 @@ const caption = (path, thing) => cap(thing?.name ?? path.slice(8, -4).replace(/^
 const opens = (thing, url) => (thing ? `href="#/thing/${thing.id}"` : `href="${url}" target="_blank"`);
 
 const PHASES = ["dawn", "day", "dusk", "night"];
-const stateOf = (t) => t?.state ?? t?.states?.[0] ?? "";
+// A thing's state; one without states of its own shares that of what it's part of (a forge is lit when the smithy is).
+function stateOf(t, depth = 0) {
+  if (!t) return "";
+  if (t.state || t.states?.length) return t.state ?? t.states[0];
+  const whole = depth < 6 && S.things.find((x) => x.components?.includes(t.id));
+  return whole ? stateOf(whole, depth + 1) : "";
+}
 
 // A drawing's SVG with only the groups for the state and time of day being shown. A state group follows the
 // nearest thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the
@@ -573,7 +579,7 @@ async function plate(id, query) {
   const path = `visuals/${id}.svg`;
   const t = S.things.find((x) => x.id === id) ?? (S.visuals[path] && { visual: path, _v: S.visuals[path] });
   if (!t) return `<p class="empty">No drawing for “${esc(id)}”.</p>`;
-  const q = query.get("state") ?? undefined, phase = PHASES.includes(q) ? q : undefined; // a state, or a time of day
+  const q = query.get("state") ?? undefined, phase = query.get("time") ?? (PHASES.includes(q) ? q : undefined); // a state, a time of day
   const set = Object.fromEntries((query.get("set") ?? "").split(",").filter(Boolean).map((kv) => kv.split("=")));
   const svg = prepare(await svgText(t), phase || !q ? stateOf(t) : q, { phase, set, step: +query.get("step") || 1 });
   return `<div class="bare-plate">${svg.outerHTML}</div>`;

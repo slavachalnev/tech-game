@@ -31,7 +31,7 @@ s.dim(c.at(-57, 0), c.at(-57, 250))
 s.save()
 ```
 
-A Pen draws `rect`, `circle`, `ellipse`, `poly`, `line`, `path` and `text`, places other parts with `part(fn, at, thing=...)`, and names points with `anchor`. Materials are `brass`, `copper`, `iron`, `lead`, `timber`, `leather`, `masonry`, `earth`, `water`, `steam`, `fire` and `paper` (to blank out); `cut=True` hatches a cut surface. Lines are `outline`, `detail`, `faint`, `hidden`, `centre` and `red`. Draw back to front: a washed shape hides what's drawn before it, except `water`, `steam` and `fire`, which you see through. A Sheet places parts with `place(fn, at, thing=...)`, draws loose geometry with `s.draw`, and takes `label`, `flaw`, `dim` and `note`.
+A Pen draws `rect`, `circle`, `ellipse`, `poly`, `line`, `path` and `text`, places other parts with `part(fn, at, thing=...)`, and names points with `anchor`. Materials are `brass`, `copper`, `iron`, `lead`, `timber`, `leather`, `masonry`, `earth`, `water`, `steam`, `fire` and `paper` (to blank out); `cut=True` hatches a cut surface. Lines are `outline`, `detail`, `faint`, `hidden`, `centre` and `red`. Draw back to front: a washed shape hides what's drawn before it, except `water`, `steam` and `fire`, which you see through. A Sheet places parts with `place(fn, at, thing=...)`, draws loose geometry with `s.draw`, and takes `label`, `flaw`, `dim` and `note`. A second view (from above, a cross-section, an enlarged detail) goes in `s.inset(fn, at, scale=2, title="...")`: it sits beside the object and the board ignores it when lining parts up. On a wide drawing such as a site, labels read better in rows: `side="above"` or `"below"`.
 
 ## What to draw
 
@@ -45,14 +45,15 @@ A Pen draws `rect`, `circle`, `ellipse`, `poly`, `line`, `path` and `text`, plac
 ## States, steps, time of day, sound
 
 - **States:** `with p.state("running"):` around what differs by state. It follows the nearest marked thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the drawing's own thing. The view shows the thing's current state, and the player can switch to its other `states`.
-- **Animation**, inside the states that move: `p.spin`, `p.rock` (a beam), `p.slide` (a piston), `p.flicker` (fire). Keep it slow and legible: a stroke takes 2–5 s.
+- **Animation**, inside the states that move: `p.spin` (either way), `p.rock` (a beam), `p.slide` (a piston), `p.drift` (a puff), `p.flicker` (fire), and `p.during(0.2, 0.6, seconds)` for what shows only for part of a cycle (a valve open, a puff at the top of the stroke). Give everything in one machine the same `seconds`. Keep it slow and legible: a stroke takes 2–5 s.
+- **A thing without states** shares the state of what it's part of: the forge is lit when the smithy is.
 - **Steps** of a working cycle: `with s.step(n, "caption"):`, three to six of them, in a state of their own (e.g. `cycle`). Draw what doesn't move once, and in each step only what changes: valves open or shut, flows as washes, the moving parts where they are.
 - **Time of day** (sites and scenes): `with p.sky("night"):` (or `"day"`, `"dawn dusk"`). Stock has `sky`, `night` (a dark wash with pools of light) and `rain`.
 - **Sound:** `with p.sound("engine"):` (or `fire`, `water`, `hammer`, `wind`) around something that shows; the board plays it while that drawing is in view.
 
 ## Checking
 
-- `uv run tg shot <id>` and Read the PNG; add `--state running`, `--step 2` or `--set <thing>=<state>` for the others, and `--hotspots` to outline what's marked.
+- `uv run tg shot <id>` and Read the PNG; add `--state running`, `--time night`, `--step 2` or `--set <thing>=<state>` for the others, and `--hotspots` to outline what's marked.
 - `uv run tg shot board/<id> --half`: the part's drawing half open over its machine's. If both come from the same part function, they line up.
 - Fix what reads badly: crowded labels (shorter words, or `side="left"`), a tiny object (draw less around it), clashing washes. Two or three rounds.
 

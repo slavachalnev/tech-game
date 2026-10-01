@@ -87,7 +87,7 @@ def make_server(save, port):
     return server
 
 
-def shot(save, target, visual_state=None, sheet=False, step=None, hotspots=False, states=(), half=False):
+def shot(save, target, visual_state=None, sheet=False, step=None, hotspots=False, states=(), half=False, time=None):
     """Render a view with headless Chromium and return the PNG path."""
     from playwright.sync_api import sync_playwright
 
@@ -95,7 +95,7 @@ def shot(save, target, visual_state=None, sheet=False, step=None, hotspots=False
     threading.Thread(target=server.serve_forever, daemon=True).start()
     tab = (target in ("workshop", "capabilities", "people", "map", "journal", "sketch") or "/" in target) and not sheet
     route = f"#/{target}" if tab else f"#/{'thing' if sheet else 'visual'}/{target}"
-    query = [f"state={visual_state}"] * bool(visual_state) + [f"step={step}"] * bool(step) + ["hotspots"] * hotspots + [f"set={','.join(states)}"] * bool(states) + ["half"] * half
+    query = [f"state={visual_state}"] * bool(visual_state) + [f"step={step}"] * bool(step) + ["hotspots"] * hotspots + [f"set={','.join(states)}"] * bool(states) + ["half"] * half + [f"time={time}"] * bool(time)
     route += "?" + "&".join(query) if query else ""
     out = save / ".shots" / f"{target.replace('/', '-')}{'-sheet' if sheet else ''}{''.join('-' + q.split('=', 1)[-1].replace('=', '-').replace(',', '-') for q in query)}.png"
     out.parent.mkdir(exist_ok=True)

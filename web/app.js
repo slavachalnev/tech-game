@@ -139,8 +139,9 @@ function stateOf(t, depth = 0) {
 
 // A drawing's SVG with only the groups for the state and time of day being shown. A state group follows the
 // nearest thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the
-// drawing's own `state`. `set` overrides things' states ({ "engine-10cm": "cold" }); `step` keeps one step.
-function prepare(text, state, { phase = sky(S.world.clock).phase, set = {}, step } = {}) {
+// drawing's own `state`. `set` overrides things' states ({ "engine-10cm": "cold" }); `step` keeps one step. `self`: the
+// drawing's own thing, whose groups follow `state` even where it marks itself.
+function prepare(text, state, { phase = sky(S.world.clock).phase, set = {}, step, self } = {}) {
   const svg = new DOMParser().parseFromString(text, "image/svg+xml").documentElement;
   const things = Object.fromEntries(S.things.map((t) => [t.id, t]));
   const owner = (el) => {
@@ -153,7 +154,7 @@ function prepare(text, state, { phase = sky(S.world.clock).phase, set = {}, step
   svg.querySelectorAll("[data-sky]").forEach((el) => has(el, "data-sky", phase) || el.remove());
   svg.querySelectorAll("[data-state]").forEach((el) => {
     const id = owner(el);
-    has(el, "data-state", id ? set[id] ?? stateOf(things[id]) : state) || el.remove();
+    has(el, "data-state", id && id !== self ? set[id] ?? stateOf(things[id]) : state) || el.remove();
   });
   if (step) svg.querySelectorAll("[data-step]").forEach((el) => +el.dataset.step !== step && el.remove());
   return svg;
@@ -164,7 +165,7 @@ async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock)
   if (!thing.visual || !thing._v) return null;
   const key = `${thing.visual}@${thing._v}@${state}@${phase}@${S.things.map(stateOf).join()}`;
   if (!drawings.has(key)) {
-    const svg = prepare(await svgText(thing), state, { phase, step: 1 });
+    const svg = prepare(await svgText(thing), state, { phase, step: 1, self: thing.id });
     if (!svg.getAttribute("width")) {
       const [, , w, h] = (svg.getAttribute("viewBox") ?? "0 0 800 600").split(/[\s,]+/);
       svg.setAttribute("width", w);
@@ -547,7 +548,8 @@ async function plate(id, query) {
   if (!S.visuals[path]) return `<p class="empty">No drawing for “${esc(id)}”.</p>`;
   const q = query.get("state") ?? undefined, phase = query.get("time") ?? (PHASES.includes(q) ? q : undefined); // a state, a time of day
   const set = Object.fromEntries((query.get("set") ?? "").split(",").filter(Boolean).map((kv) => kv.split("=")));
-  const svg = prepare(await svgText({ visual: path, _v: S.visuals[path] }), phase || !q ? stateOf(thing) : q, { phase, set, step: +query.get("step") || 1 });
+  const state = q && !PHASES.includes(q) ? q : stateOf(thing); // --state, as well as --time
+  const svg = prepare(await svgText({ visual: path, _v: S.visuals[path] }), state, { phase, set, step: +query.get("step") || 1, self: thing?.id });
   return `<div class="bare-plate">${svg.outerHTML}</div>`;
 }
 

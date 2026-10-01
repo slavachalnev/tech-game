@@ -66,7 +66,7 @@ export function createBoard(host, h) {
     const key = `${path ?? "blank:" + item.id}@${S.visuals[path]}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
     if (!measured.has(key)) measured.set(key, (async () => {
       const text = path ? await h.svgText({ visual: path, _v: S.visuals[path] }) : blank(item);
-      const svg = h.prepare(text, state);
+      const svg = h.prepare(text, state, { self: item.id });
       const steps = [...svg.querySelectorAll("[data-step]")], n = Math.max(0, ...steps.map((g) => +g.dataset.step));
       const captions = Array.from({ length: n }, (_, i) => steps.find((g) => +g.dataset.step === i + 1 && g.dataset.caption)?.dataset.caption ?? "");
       steps.forEach((g) => +g.dataset.step !== step && g.remove()); // one step at a time

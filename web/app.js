@@ -6,7 +6,6 @@ import { createBoard } from "./board.js";
 const $ = (sel) => document.querySelector(sel);
 const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const KINDS = { machine: "Machines", component: "Components", structure: "Structures", tool: "Tools", material: "Materials", document: "Documents", site: "Sites", other: "Other" };
 const STATUS = { planned: "planned", building: "being built", ok: "OK", faulty: "faulty", broken: "broken", consumed: "used up" };
 const UNIT = /^(.*?)_((?:mm|cm|m|km|m2|m3|g|kg|t|l|ml|bar|kpa|mpa|atm|w|kw|c|pct|s|min|h|days|weeks|p)(?:_per_[a-z0-9]+)?)$/;
 const UNIT_LABEL = { m2: "m²", m3: "m³", l: "L", ml: "mL", kpa: "kPa", mpa: "MPa", w: "W", kw: "kW", c: "°C", pct: "%" };
@@ -110,7 +109,6 @@ const GLYPH = {
   site: `<path d="M5 40q19-11 38 0M24 34V9l12 4.5L24 18"/>`,
   other: `<path d="M24 11v26M12.7 17.5l22.6 13M35.3 17.5l-22.6 13"/>`,
 };
-const glyph = (kind) => `<svg class="glyph" viewBox="0 0 48 48">${GLYPH[kind] ?? GLYPH.other}</svg>`;
 
 // ---------- drawings ----------
 
@@ -178,9 +176,16 @@ async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock)
 
 // ---------- the drawing board ----------
 
-const board = ($("#board").api = createBoard($("#board"), { prepare, svgText, stateOf, esc, stamp, sounds: ambience }));
+const board = ($("#board").api = createBoard($("#board"), {
+  prepare, svgText, stateOf, esc, stamp, details, sounds: ambience,
+  glyph: (kind) => GLYPH[kind] ?? GLYPH.other,
+  located: (id) => { // the address follows what you're looking at on the board, without a new render
+    const hash = id ? `#/thing/${id}` : "#/workshop";
+    if (document.body.classList.contains("front") && location.hash !== hash) history.replaceState(null, "", hash), (shownHash = hash);
+  },
+}));
 let boardFor = null; // the state the board was last laid out for
-const hasBoard = () => S.things.some((t) => t.visual && t._v);
+const hasBoard = () => S.things.length > 0;
 // The things a thing is part of, from the top down to it: big-engine › big-cylinder.
 function lineage(id) {
   const chain = [id];
@@ -188,7 +193,7 @@ function lineage(id) {
   return chain;
 }
 // The Workshop is the drawing board, with your papers under it.
-const workshop = async () => (hasBoard() ? `<div class="papers"><button class="handle">Your papers</button>${await ledger()}</div>` : ledger());
+const workshop = () => `<div class="papers"><button class="handle">Your papers</button>${papers()}</div>`;
 
 // ---------- plots of trials ----------
 
@@ -231,36 +236,11 @@ function chart(m, prefix = "") {
 
 // ---------- views ----------
 
-async function card(t) {
-  const url = await drawing(t);
-  const qty = t.quantity !== undefined ? `<span class="qty">${t.quantity} ${esc(t.unit ?? "")}</span>` : "";
-  return `<a class="card${fresh.has(t.id) ? " fresh" : ""}" data-status="${t.status}" href="#/thing/${t.id}">
-    <div class="thumb">${url ? `<img src="${url}" alt="">` : glyph(t.kind)}</div>
-    <div class="card-body">
-      <h3>${esc(t.name)}</h3>
-      <div class="meta">${stamp(t.status)} ${qty} ${t.owner ? `<span class="owner">${esc(t.owner)}</span>` : ""}</div>
-      <p>${esc(t.summary)}</p>
-    </div>
-  </a>`;
-}
-
 // What's ahead, from world.json's coming_up: a note, not a calendar.
 function comingUp() {
   const items = (S.coming_up ?? []).slice(0, 5);
   return items.length ? `<aside class="coming-up"><h2>Coming up</h2><table>${items.map((c) =>
     `<tr><td class="date">${esc(c.label)}</td><td class="away">${esc(c.in)}</td><td>${inline(c.what)}</td></tr>`).join("")}</table></aside>` : "";
-}
-
-// The drawings changed most recently, newest first.
-async function recentDrawings() {
-  if (!S.log.length) return ""; // a new save's drawings all date from the scenario
-  const recent = Object.entries(S.visuals).sort((a, b) => b[1] - a[1]).slice(0, 4);
-  const items = await Promise.all(recent.map(async ([path, v]) => {
-    const thing = S.things.find((t) => t.visual === path);
-    const url = await drawing(thing ?? { visual: path, _v: v });
-    return `<a class="recent" ${opens(thing, url)}><span class="thumb"><img src="${url}" alt=""></span><span class="caption">${esc(caption(path, thing))}</span></a>`;
-  }));
-  return `<section><h2>Recent drawings</h2><div class="recent-row">${items.join("")}</div></section>`;
 }
 
 // The top of the Workshop: the last turn, to pick up from.
@@ -300,64 +280,41 @@ const foldable = (key, title, items) => (items?.length ? `<details class="fold" 
   <summary><h2>${title} <span class="count">${items.length}</span></h2></summary><ul class="threads">${items.map((t) => `<li>${inline(t)}</li>`).join("")}</ul></details>` : "");
 
 // Everything you have, as cards, under the last turn and the almanac.
-async function ledger() {
-  const cards = async (things) => `<div class="cards">${(await Promise.all(things.map(card))).join("")}</div>`;
-  const mine = S.things.filter((t) => !t.owner);
-  const groups = Object.keys(KINDS).map((k) => [k, mine.filter((t) => t.kind === k)]).filter(([, ts]) => ts.length);
-  const others = S.things.filter((t) => t.owner);
+// Your papers, under the drawing board: where you left off, what's coming, threads, house rules, stores.
+function papers() {
   const briefing = `<details class="briefing" data-key="briefing" ${S.log.length ? "" : "open"}><summary>Briefing</summary>${markdown(S.briefing)}</details>`;
   return `
-    <div class="desk"><div>${S.log.length ? lastTurn() + (await recentDrawings()) : briefing}</div>${almanac()}</div>
+    <div class="desk"><div>${S.log.length ? lastTurn() : briefing}</div>${almanac()}</div>
     ${S.log.length ? briefing : ""}
     ${foldable("threads", "Open threads", S.world.threads)}
     ${foldable("house-rules", "House rules", S.world.house_rules)}
-    ${(await Promise.all(groups.map(async ([k, ts]) => `<section><h2>${KINDS[k]}</h2>${await cards(ts)}</section>`))).join("")}
     ${S.stores.length ? `<section class="listing"><h2>Stores</h2><table><tr><th>Item</th><th>Quantity</th><th>Where</th><th>Notes</th></tr>
-      ${S.stores.map((s) => `<tr><td>${esc(s.name)}</td><td>${s.quantity} ${esc(s.unit)}</td><td>${esc(s.location ?? "")}</td><td>${esc(s.notes ?? "")}</td></tr>`).join("")}</table></section>` : ""}
-    ${others.length ? `<section><h2>Not yours</h2>${await cards(others)}</section>` : ""}`;
+      ${S.stores.map((s) => `<tr><td>${esc(s.name)}</td><td>${s.quantity} ${esc(s.unit)}</td><td>${esc(s.location ?? "")}</td><td>${esc(s.notes ?? "")}</td></tr>`).join("")}</table></section>` : ""}`;
 }
 
-async function thingPage(id, query) {
-  const t = S.things.find((x) => x.id === id);
-  if (!t) return `<p class="empty">Nothing called “${esc(id)}”.</p>`;
-  const state = query.get("state") ?? t.state ?? t.states?.[0] ?? "";
-  const url = await drawing(t, state);
+// The detail of a thing's sheet, below its drawing in the board's panel: trials, sizes, how it was made, history.
+function details(t) {
   const byId = Object.fromEntries(S.things.map((x) => [x.id, x]));
   const link = (x) => `<a href="#/thing/${x.id}">${esc(x.name)}</a>`;
-  const flawCount = (x) => (x?.flaws?.length ? ` <span class="flag">${x.flaws.length} flaw${x.flaws.length > 1 ? "s" : ""}</span>` : "");
   const m = t.made;
   const trials = S.log.flatMap((e) => (e.measurements ?? []).filter((x) => x.thing === t.id).map((x) => chart(x, `Turn ${e.turn}: `))).reverse();
   const madeRows = m && [["by", m.by?.join(", ")], ["took", m.took], ["cost", m.cost_p !== undefined && money(m.cost_p)], ["turn", m.turn]].filter(([, v]) => v || v === 0);
-  return `<article class="sheet">
-    <nav class="trail"><a href="#/workshop">The drawing board</a> › ${lineage(t.id).slice(0, -1).map((p) => `${link(byId[p])} › `).join("")}</nav>
-    <header>
-      <h1>${esc(t.name)}</h1>
-      <div class="meta">${stamp(t.status)} ${esc(t.kind)}${t.quantity !== undefined ? ` · ${t.quantity} ${esc(t.unit ?? "")}` : ""}${t.location ? ` · ${esc(t.location)}` : ""}${t.owner ? ` · belongs to ${esc(t.owner)}` : ""}</div>
-      <p class="summary">${esc(t.summary)}</p>
-    </header>
-    <div class="sheet-body">
-      <figure class="plate">
-        ${url ? `<img src="${url}" alt="${esc(t.name)}">` : `<div class="no-drawing">No drawing yet</div>`}
-        ${t.states?.length > 1 ? `<nav class="states">${t.states.map((s) => `<a href="#/thing/${t.id}?state=${esc(s)}" class="${s === state ? "on" : ""}">${esc(s)}</a>`).join("")}</nav>` : ""}
-      </figure>
-      <div class="spec">
-        <p><a class="more" href="#/board/${t.id}">See it on the drawing board →</a></p>
-        ${bullets("Known flaws", t.flaws?.map(esc), "flaws")}
-        ${trials.length ? `<h3>Trials</h3>${trials.join("")}` : ""}
-        ${bullets("Materials", t.materials?.map(esc))}
-        ${facts("Dimensions", t.dimensions)}
-        ${facts("Performance", t.performance)}
-        ${facts("Quality", t.quality)}
-        ${bullets("Components", t.components?.map((c) => (byId[c] ? link(byId[c]) + flawCount(byId[c]) : esc(c))))}
-        ${bullets("Used in", S.things.filter((x) => x.components?.includes(t.id)).map(link))}
-        ${m ? `<h3>How it was made</h3><p>${esc(m.how)}</p><dl>${madeRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${m.recipe ? `<p class="recipe">Made by a known recipe: <a href="#/capabilities">${esc(S.recipes.find((r) => r.id === m.recipe)?.name ?? m.recipe)}</a></p>` : ""}` : ""}
-        ${t.historical_year ? `<p class="dated">First made in real history: ${t.historical_year}.</p>` : ""}
-        ${fermi(t.fermi)}
-        ${t.notes ? `<h3>Notes</h3><p>${esc(t.notes)}</p>` : ""}
-        ${historyNotes(t.history)}
-      </div>
-    </div>
-  </article>`;
+  return `<div class="spec">
+    ${bullets("Known flaws", t.flaws?.map(esc), "flaws")}
+    ${trials.length ? `<h3>Trials</h3>${trials.join("")}` : ""}
+    ${t.quantity !== undefined ? `<h3>Quantity</h3><p>${t.quantity} ${esc(t.unit ?? "")}</p>` : ""}
+    ${bullets("Materials", t.materials?.map(esc))}
+    ${facts("Dimensions", t.dimensions)}
+    ${facts("Performance", t.performance)}
+    ${facts("Quality", t.quality)}
+    ${bullets("Used in", S.things.filter((x) => x.components?.includes(t.id)).map(link))}
+    ${m ? `<h3>How it was made</h3><p>${esc(m.how)}</p><dl>${madeRows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${m.recipe ? `<p class="recipe">Made by a known recipe: <a href="#/capabilities">${esc(S.recipes.find((r) => r.id === m.recipe)?.name ?? m.recipe)}</a></p>` : ""}` : ""}
+    ${t.owner ? `<p class="dated">Belongs to ${esc(t.owner)}.</p>` : ""}
+    ${t.historical_year ? `<p class="dated">First made in real history: ${t.historical_year}.</p>` : ""}
+    ${fermi(t.fermi)}
+    ${t.notes ? `<h3>Notes</h3><p>${esc(t.notes)}</p>` : ""}
+    ${historyNotes(t.history)}
+  </div>`;
 }
 
 // Everything the player has that the real world didn't have yet, furthest ahead first.
@@ -621,6 +578,7 @@ function masthead(route, arg) {
   $("#ahead").title = ahead ? `Furthest ahead: ${ahead.name}. See all.` : "";
   document.documentElement.style.setProperty("--top", `${$(".masthead").offsetHeight}px`); // where the stage starts
   const tab = route === "thing" || route === "board" ? "workshop" : route;
+  document.body.classList.remove("papers-open");
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#/${tab}`));
 }
 
@@ -637,13 +595,13 @@ async function render() {
   const main = $("#main");
   main.hidden = route === "sketch";
   if (route === "sketch") sketch.refresh();
-  const views = { workshop, board: workshop, thing: thingPage, capabilities, people, map, journal, visual: plate, sketch: () => "" };
+  const views = { workshop, board: workshop, thing: workshop, capabilities, people, map, journal, visual: plate, sketch: () => "" };
 
   const broken = `<p class="empty">world.json is broken, so there's nothing to show until the referee fixes the problems above.</p>`;
   const html = S.world.clock ? await (views[route] ?? workshop)(arg, query) : broken;
   if (id !== renderId) return; // a newer render started meanwhile
   // The drawing board: in front on the Workshop, behind every other page.
-  const onBoard = route !== "visual" && !!S.world.clock && hasBoard(), front = route === "workshop" || route === "board";
+  const onBoard = route !== "visual" && !!S.world.clock && hasBoard(), front = ["workshop", "board", "thing"].includes(route);
   $("#board").hidden = !onBoard;
   if (onBoard && boardFor !== S) { // laying the board out measures every drawing: only the Workshop waits for it
     boardFor = S;
@@ -652,8 +610,8 @@ async function render() {
   }
   if (id !== renderId) return;
   board.setBehind(!front);
-  if (onBoard && route === "board" && arg && location.hash !== shownHash) await board.show(lineage(arg), { half: query.has("half"), now: shownHash === null }); // #/board/<id>: open at a thing
-  if (onBoard && route === "thing" && location.hash !== shownHash) board.show(lineage(arg));
+  if (onBoard && (route === "thing" || route === "board") && arg && location.hash !== shownHash) // #/thing/<id>: the board, at that thing
+    await board.show(lineage(arg), { half: query.has("half"), now: shownHash === null });
   document.body.classList.toggle("staged", onBoard);
   document.body.classList.toggle("front", onBoard && front);
   const navigated = location.hash !== shownHash;
@@ -696,7 +654,7 @@ function toast(message, href) {
 
 // Clicking a row of the places table shows that place on the map; the journal's index jumps to a month.
 document.addEventListener("click", (e) => {
-  if (e.target.closest?.(".papers .handle")) return scrollTo({ top: innerHeight * 0.55, behavior: "smooth" });
+  if (e.target.closest?.(".papers .handle")) return togglePapers();
   const jump = e.target.closest?.("[data-jump]");
   if (jump) return document.getElementById(jump.dataset.jump)?.scrollIntoView({ behavior: "smooth" });
   const row = e.target.closest?.("tr[data-place]");
@@ -706,8 +664,17 @@ document.addEventListener("click", (e) => {
   label.scrollIntoView({ block: "center" });
   showPlaces([place], label);
 });
+// Your papers slide up over the board and back down: the handle toggles them, and a click on the board closes them.
+const papersOpen = () => document.body.classList.contains("papers-open");
+function togglePapers(open = !papersOpen()) {
+  const top = document.querySelector(".papers")?.getBoundingClientRect().top + scrollY - $(".masthead").offsetHeight - 24;
+  scrollTo({ top: open ? top : 0, behavior: "smooth" });
+}
+addEventListener("scroll", () => document.body.classList.toggle("papers-open", document.body.classList.contains("front") && scrollY > 40), { passive: true });
+$("#board").addEventListener("pointerdown", (e) => papersOpen() && (e.stopPropagation(), togglePapers(false)), true);
+
 // Clicking the board around a page, or Escape, puts the page down; on the board, Escape steps back out.
-const putDown = () => (document.body.classList.contains("front") ? board.up() : document.body.classList.contains("staged") && (location.hash = "#/workshop"));
+const putDown = () => (papersOpen() ? togglePapers(false) : document.body.classList.contains("front") ? board.up() : document.body.classList.contains("staged") && (location.hash = "#/workshop"));
 $("#board").addEventListener("click", (e) => $("#board").classList.contains("behind") && (e.stopPropagation(), putDown()), true);
 addEventListener("keydown", (e) => e.key === "Escape" && (document.querySelector(".place-card:not([hidden])") ? closePlaces() : putDown()));
 

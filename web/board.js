@@ -27,7 +27,7 @@ export function createBoard(host, h) {
   document.body.append(sandbox);
 
   let S = null, roots = [], cam = null, path = [], focus = null, hover = null, frameAsked = false, panelKey = "", playing = null;
-  let selected = null; // a part without a drawing of its own, shown in the panel
+  let selected = null; // a part without a drawing of its own: its sheet is shown in the panel
   let closing = null; // the detail being closed as the camera backs out of it: { key, parentKey }
   let quiet = false; // after a flight nothing opens by itself, until you zoom or drag
   let aim = null; // where on the screen you're zooming at with the wheel; else the middle of the clear part
@@ -47,13 +47,24 @@ export function createBoard(host, h) {
   };
 
   const stateFor = (t) => view[t.id]?.state ?? h.stateOf(t);
-  // A thing's drawing prepared for the board, in the state and step being looked at: parts not in hand drawn as
+  // A thing's sheets: its drawing, then any others (visuals/<id>--how-it-works.svg, say), each with a name.
+  const sheetsOf = (t) => [t.visual, ...Object.keys(S.visuals).filter((p) => p.startsWith(`visuals/${t.id}--`)).sort()].filter((p) => p && S.visuals[p]);
+  const sheetName = (path) => (path.includes("--") ? path.slice(path.indexOf("--") + 2, -4).replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()) : "Drawing");
+  const sheetFor = (t) => (sheetsOf(t).includes(view[t.id]?.sheet) ? view[t.id].sheet : sheetsOf(t)[0]);
+  // A blank sheet for a thing that hasn't been drawn yet: its name and its kind's mark.
+  const blank = (t) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, serif">
+    <rect x="30" y="30" width="740" height="540" fill="none" stroke="#b9a888" stroke-width="2" stroke-dasharray="14 8"/>
+    <g data-object=""><g fill="none" stroke="#7a6a55" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.7" transform="translate(304 150) scale(4)">${h.glyph(t.kind)}</g></g>
+    <text x="400" y="420" font-size="34" font-variant="small-caps" text-anchor="middle" fill="#4a3d2e">${h.esc(t.name)}</text>
+    <text x="400" y="462" font-size="22" font-style="italic" text-anchor="middle" fill="#7a6a55">not drawn yet</text></svg>`;
+
+  // A thing's sheet prepared for the board, in the state and step being looked at: parts not in hand drawn as
   // blueprint ghosts, on squared paper; measured.
   function measure(item) {
-    const all = things(), state = stateFor(item), step = view[item.id]?.step ?? 1;
-    const key = `${item.visual}@${item._v}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
+    const all = things(), state = stateFor(item), step = view[item.id]?.step ?? 1, path = sheetFor(item);
+    const key = `${path ?? "blank:" + item.id}@${S.visuals[path]}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
     if (!measured.has(key)) measured.set(key, (async () => {
-      const svg = h.prepare(await h.svgText(item), state);
+      const svg = h.prepare(path ? await h.svgText({ visual: path, _v: S.visuals[path] }) : blank(item), state);
       const steps = [...svg.querySelectorAll("[data-step]")], n = Math.max(0, ...steps.map((g) => +g.dataset.step));
       const captions = Array.from({ length: n }, (_, i) => steps.find((g) => +g.dataset.step === i + 1 && g.dataset.caption)?.dataset.caption ?? "");
       steps.forEach((g) => +g.dataset.step !== step && g.remove()); // one step at a time
@@ -70,7 +81,7 @@ export function createBoard(host, h) {
       sandbox.append(svg);
       const obj = svg.querySelector("[data-object]");
       const pieces = [...svg.querySelectorAll("[data-thing]")].map((el) => ({ id: el.getAttribute("data-thing"), box: boxIn(el, svg) })).filter((p) => p.box.w && all[p.id]);
-      const data = { captions, sounds: [...svg.querySelectorAll("[data-sound]")].map((g) => g.dataset.sound), vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
+      const data = { blank: !path, captions, sounds: [...svg.querySelectorAll("[data-sound]")].map((g) => g.dataset.sound), vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
       svg.remove();
       data.url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
       return data;
@@ -134,11 +145,11 @@ export function createBoard(host, h) {
 
   // Lay the top-level drawings out on the sheet, a section each: the project first and largest, then engines and
   // models, buildings and sites, spare parts, tools, materials, papers.
-  const SECTIONS = [["The project", 3000], ["Engines and models", 1700], ["Buildings and sites", 1300], ["Spare parts", 950], ["Tools", 700], ["Materials", 700], ["Papers", 700]];
-  async function layout() {
-    const fitted = new Set(S.things.flatMap((t) => t.components ?? []));
-    const section = (t) => (t.kind === "machine" && t.status === "building" ? 0 : { machine: 1, structure: 2, site: 2, component: 3, tool: 4, material: 5 }[t.kind] ?? 6);
-    const tops = S.things.filter((t) => !fitted.has(t.id) && t.status !== "consumed" && t.visual && t._v);
+  const SECTIONS = [["The project", 3000], ["Engines and models", 1700], ["Buildings and sites", 1300], ["Spare parts", 950], ["Tools", 700], ["Materials", 700], ["Papers", 700], ["Used up or gone", 600]];
+  const sectionOf = (t) => (t.status === "consumed" ? 7 : t.kind === "machine" && ["building", "planned"].includes(t.status) ? 0 : { machine: 1, structure: 2, site: 2, component: 3, tool: 4, material: 5 }[t.kind] ?? 6);
+  async function layout() { // every thing has a place: on its own sheet, or inside the sheet of what it's part of
+    const fitted = new Set(S.things.flatMap((t) => t.components ?? [])), section = sectionOf;
+    const tops = S.things.filter((t) => !fitted.has(t.id));
     const datas = new Map(await Promise.all(tops.map(async (t) => [t, await measure(t)])));
     // Each section is a block of rows; blocks go into three columns, each into the shortest so far.
     const COL = 3600, GAP = 220, cols = [0, 0, 0], heads = [];
@@ -153,7 +164,7 @@ export function createBoard(host, h) {
         if (x > 0 && x + w > COL) (x = 0), (y += rowH + GAP + 140), (rowH = 0);
         const rect = { x: x0 + x, y: y0 + y, w, h: hgt }, k = w / vb[2];
         (x += w + GAP), (rowH = Math.max(rowH, hgt));
-        return { key: t.id, id: t.id, thing: t, data, T: { k, tx: rect.x - vb[0] * k, ty: rect.y - vb[1] * k }, rect };
+        return { key: t.id, id: t.id, thing: t, data, section: title, T: { k, tx: rect.x - vb[0] * k, ty: rect.y - vb[1] * k }, rect };
       });
       cols[c] = y0 + y + rowH + 420;
       return nodes;
@@ -294,7 +305,7 @@ export function createBoard(host, h) {
     detailsG.querySelectorAll(":scope > g").forEach((g) => keep.has(g.id) || g.remove());
     if (was !== focus) (hover = null), (selected = null), h.sounds(focus?.data.sounds ?? []); // what you'd hear there
     drawOverlay();
-    if (focus !== was || panelKey !== (focus?.key ?? "")) showPanel();
+    if (focus !== was || panelKey !== `${focus?.key ?? ""}|${selected ?? ""}`) showPanel();
   }
 
   // ---------- balloons and the parts list ----------
@@ -341,23 +352,21 @@ export function createBoard(host, h) {
     overlay.innerHTML = marks.join("");
   }
 
+  // The panel is the sheet of what you're looking at: the drawing in focus, or a part of it you picked that has
+  // no drawing of its own. Zoomed out, it's the register of every sheet on the board.
   function showPanel() {
-    panelKey = focus?.key ?? "";
+    panelKey = `${focus?.key ?? ""}|${selected ?? ""}`;
     const crumbs = path.filter((e) => e.p >= 1).map((e) => e.node); // the drawings you've zoomed through
     trailEl.innerHTML = [`<a data-go="sheet">The drawing board</a>`, ...crumbs.map((n) => `<a data-go="${h.esc(n.key)}">${h.esc(n.thing.name)}</a>`)].join(" › ");
-    if (!focus) {
-      const project = roots.find((n) => n.thing.kind === "machine" && n.thing.status === "building");
-      panel.innerHTML = `<h3>The drawing board</h3><p>Every drawing you have, on one sheet. Scroll to zoom, drag to move, click a drawing to go to it.</p>
-        ${project ? `<p class="board-project">Your project: <a data-go="${h.esc(project.key)}">${h.esc(project.thing.name)}</a></p>${progress(project.thing)}` : ""}`;
-      return;
-    }
-    const t = focus.thing, parts = partsOf(focus), caps = focus.data.captions, step = view[t.id]?.step ?? 1, sel = selected && things()[selected];
-    panel.innerHTML = `${sel ? `<div class="board-part"><button class="close" title="Close">×</button>
-        <h4>Part ${parts.find((p) => p.id === sel.id)?.n ?? ""}: no drawing of its own yet</h4>
-        <b>${h.esc(sel.name)}</b> ${h.stamp(sel.status)}${sel.state ? ` <i>${h.esc(sel.state)}</i>` : ""}<p>${h.esc(sel.summary)}</p>
-        ${sel.flaws?.length ? `<ul class="flaws">${sel.flaws.map((f) => `<li>${h.esc(f)}</li>`).join("")}</ul>` : ""}
-        <a class="more" href="#/thing/${h.esc(sel.id)}">Its whole sheet →</a></div>` : ""}<h3>${h.esc(t.name)}</h3><div class="meta">${h.stamp(t.status)} ${h.esc(t.kind)}${t.state ? ` · ${h.esc(t.state)}` : ""}</div>
-      ${t.states?.length > 1 ? `<div class="board-states">${t.states.map((st) => `<button data-state="${h.esc(st)}" class="${st === stateFor(t) ? "on" : ""}">${h.esc(st)}</button>`).join("")}</div>` : ""}
+    h.located(selected ?? focus?.id ?? null); // the address bar follows
+    if (!focus) return (panel.innerHTML = register());
+    const sel = selected && things()[selected];
+    if (sel) return (panel.innerHTML = `<a class="back-to" data-unselect>← ${h.esc(focus.thing.name)}</a>${heading(sel)}<p>${h.esc(sel.summary)}</p>
+      <p class="hint">Part of the ${h.esc(focus.thing.name)}. It has no drawing of its own yet.</p>${h.details(sel)}`);
+    const t = focus.thing, parts = partsOf(focus), caps = focus.data.captions, step = view[t.id]?.step ?? 1, sheets = sheetsOf(t);
+    panel.innerHTML = `${heading(t)}
+      ${sheets.length > 1 ? `<div class="board-sheets">${sheets.map((p) => `<button data-sheet="${h.esc(p)}" class="${p === sheetFor(t) ? "on" : ""}">${h.esc(sheetName(p))}</button>`).join("")}</div>` : ""}
+      ${t.states?.length > 1 ? `<div class="board-states"><span>State</span>${t.states.map((st) => `<button data-state="${h.esc(st)}" class="${st === stateFor(t) ? "on" : ""}">${h.esc(st)}</button>`).join("")}</div>` : ""}
       ${caps.length ? `<div class="stepper"><button data-step="-1" title="Previous step">◀</button><span class="caption"><b>${step} of ${caps.length}</b> ${h.esc(caps[step - 1])}</span>
         <button data-step="1" title="Next step">▶</button><button class="play${playing ? " on" : ""}">${playing ? "Pause" : "Play"}</button></div>` : ""}
       <p>${h.esc(t.summary)}</p>
@@ -365,8 +374,19 @@ export function createBoard(host, h) {
       ${parts.length ? `<table class="bom"><tr><th></th><th>Part</th><th>Stands</th></tr>${parts.map((p) => `<tr data-id="${h.esc(p.id)}" class="${p.boxes.length ? "" : "unmarked"}">
         <td><span class="balloon-n ${standing(p.thing)}">${p.n}</span></td><td>${h.esc(p.thing.name)}${p.thing.visual ? ` <span class="opens">⊕</span>` : ""}</td><td>${STANDING[standing(p.thing)]}</td></tr>`).join("")}</table>
         <p class="hint">⊕ has its own drawing: zoom in on it, or click.</p>` : ""}
-      ${t.flaws?.length ? `<h4>Known flaws</h4><ul class="flaws">${t.flaws.map((f) => `<li>${h.esc(f)}</li>`).join("")}</ul>` : ""}
-      <p><a class="more" href="#/thing/${h.esc(t.id)}">The whole sheet: sizes, trials, history →</a></p>`;
+      ${h.details(t)}`;
+  }
+  const heading = (t) => `<h2 class="sheet-name">${h.esc(t.name)}</h2><div class="meta">${h.stamp(t.status)} ${h.esc(t.kind)}${t.state ? ` · ${h.esc(t.state)}` : ""}${t.location ? ` · ${h.esc(t.location)}` : ""}</div>`;
+
+  // Every sheet on the board, by section, as a drawing register.
+  function register() {
+    const project = roots.find((n) => n.section === SECTIONS[0][0]);
+    const bySection = SECTIONS.map(([title]) => [title, roots.filter((n) => n.section === title)]).filter(([, ns]) => ns.length);
+    return `<h2 class="sheet-name">The drawing board</h2>
+      <p class="hint">Everything you have, each on its sheet, its parts inside it. Scroll to zoom, drag to move, click to go.</p>
+      ${project ? `${progress(project.thing)}` : ""}
+      ${bySection.map(([title, ns]) => `<h4>${h.esc(title)}</h4><ul class="register">${ns.map((n) => `<li data-go="${h.esc(n.key)}">${h.esc(n.thing.name)}
+        ${n.thing.components?.length ? `<span class="count">${n.thing.components.length} parts</span>` : ""}${n.data.blank ? `<span class="count">not drawn</span>` : ""} ${h.stamp(n.thing.status)}</li>`).join("")}</ul>`).join("")}`;
   }
 
   // How far a machine's parts have got, as a line of coloured counts.
@@ -390,7 +410,7 @@ export function createBoard(host, h) {
     tag.hidden = !t;
     if (!t) return;
     const opens = t.visual && t._v;
-    tag.innerHTML = `<b>${h.esc(t.name)}</b> ${h.stamp(t.status)}<span>${focus ? (opens ? "Click or zoom in to open its drawing" : "No drawing of its own yet: click for its sheet") : "Click to go to this drawing"}</span>`;
+    tag.innerHTML = `<b>${h.esc(t.name)}</b> ${h.stamp(t.status)}<span>${focus ? (opens ? "Click or zoom in to open its drawing" : "No drawing of its own yet: click for its sheet") : "Click to go to its sheet"}</span>`;
     tag.style.left = `${Math.min(sx + 16, host.clientWidth - tag.offsetWidth - 8)}px`;
     tag.style.top = `${Math.max(8, sy - tag.offsetHeight - 14)}px`;
   }
@@ -448,11 +468,16 @@ export function createBoard(host, h) {
   function look(id, change) {
     view[id] = { ...view[id], ...change };
     children.forEach((c) => (c.stale = true));
-    layout().then(() => ((panelKey = "?"), draw()));
+    layout().then(() => {
+      panelKey = "?";
+      const n = change.sheet && (roots.find((r) => r.id === id) ?? null);
+      n ? fly(framed(n.rect), 300) : draw(); // another sheet may be another shape
+    });
   }
   panel.addEventListener("click", (e) => {
-    if (e.target.closest(".board-part .close")) return (selected = null), (panelKey = "?"), draw();
-    const t = focus?.thing, st = e.target.closest("[data-state]"), sp = e.target.closest("[data-step]");
+    if (e.target.closest("[data-unselect]")) return (selected = null), (panelKey = "?"), draw();
+    const t = focus?.thing, st = e.target.closest("[data-state]"), sp = e.target.closest("[data-step]"), sh = e.target.closest("[data-sheet]");
+    if (t && sh) clearInterval(playing), (playing = null), look(t.id, { sheet: sh.dataset.sheet, step: 1 });
     if (t && st) clearInterval(playing), (playing = null), look(t.id, { state: st.dataset.state, step: 1 });
     const n = focus?.data.captions.length, turn = (d) => look(t.id, { step: (((view[t.id]?.step ?? 1) - 1 + d + n) % n) + 1 });
     if (t && sp) turn(+sp.dataset.step);
@@ -488,9 +513,10 @@ export function createBoard(host, h) {
     // grown over the drawing it's part of (to check they line up); now: jump there.
     async show(chain, { half = false, now = false } = {}) {
       let node = roots.find((n) => n.id === chain[0]);
+      let pick = null;
       for (const id of chain.slice(1)) {
         const part = node && candidates(node).filter((p) => p.id === id).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h)[0];
-        if (!part || !things()[id]?.visual) break;
+        if (!part || !things()[id]?.visual) { pick = id; break; } // no drawing of its own: its sheet, in its machine
         let c = child(part.owner, { id, box: part.local });
         while (!c) (await new Promise((r) => setTimeout(r, 40))), (c = child(part.owner, { id, box: part.local }));
         opened.set(node.key, c);
@@ -499,7 +525,8 @@ export function createBoard(host, h) {
       if (!node) return;
       const P = node.part, f = OPEN[0] + (OPEN[1] - OPEN[0]) / 2;
       const to = half && P ? framed({ x: P.x + P.w / 2 - (node.rect.w * 0.5) / 2, y: P.y + P.h / 2 - (node.rect.h * 0.5) / 2, w: node.rect.w * 0.5, h: node.rect.h * 0.5 }, f / 2) : framed(node.rect);
-      return fly(to, now ? 0 : 750);
+      await fly(to, now ? 0 : 750);
+      (selected = pick), draw();
     },
     up,
     // The parts of the drawing in focus and their boxes on the screen (for tests and checks).

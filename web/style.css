@@ -32,7 +32,7 @@ body {
 a { color: inherit; }
 code { font: 0.85em ui-monospace, Menlo, monospace; background: rgba(122, 106, 85, 0.1); padding: 0 3px; border-radius: 2px; }
 h2, h3, h4 { font-weight: normal; }
-.thumb, .plate, .bare-plate {  /* squared notebook paper */
+.plate, .bare-plate {  /* squared notebook paper */
   background-color: var(--paper-light);
   background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 14px 14px;
@@ -82,13 +82,6 @@ section h2::after, .fold h2::after { content: ""; flex: 1; border-top: 1px solid
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 a.card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(60, 40, 20, 0.15), 0 10px 22px rgba(60, 40, 20, 0.12); }
-.thumb {
-  display: grid; place-items: center; aspect-ratio: 4 / 3; border-bottom: 1px solid var(--rule);
-}
-.thumb img { width: 100%; height: 100%; padding: 6px; object-fit: contain; }
-.glyph { width: 30%; fill: none; stroke: var(--faded); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; opacity: 0.55; }
-.card[data-status="planned"] .thumb, .card[data-status="building"] .thumb { background-image: none; background-color: rgba(79, 115, 144, 0.07); }
-.card[data-status="consumed"] { opacity: 0.6; }
 .card-body { padding: 10px 14px 14px; }
 .card h3 { margin: 0 0 3px; font: 20px/1.2 var(--fell); }
 .card p { margin: 6px 0 0; font-size: 15.5px; line-height: 1.4; color: var(--ink-soft); }
@@ -120,9 +113,6 @@ a.card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(60, 40, 2
 .coming-up .away { font: italic 15.5px var(--fell); color: var(--red); white-space: nowrap; }
 .journal-head { max-width: 780px; margin: 0 auto; }
 .journal-head .coming-up { margin-bottom: 0; }
-.recent-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-.recent { color: inherit; text-decoration: none; background: var(--paper-light); border: 1px solid var(--rule); box-shadow: var(--shadow); }
-.recent .caption { display: block; padding: 5px 12px 7px; font: 17px/1.25 var(--fell); }
 
 /* ---------- spec sheet ---------- */
 .back { font: italic 16px var(--fell); color: var(--faded); text-decoration: none; }
@@ -384,7 +374,7 @@ blockquote.order::before { content: "✎"; position: absolute; left: 11px; top: 
 .illus { color: inherit; text-decoration: none; }
 
 /* A new drawing inks itself in, left to right. */
-.fresh .thumb img, .fresh .illus img { animation: ink-in 1.8s ease-out; }
+.fresh .illus img { animation: ink-in 1.8s ease-out; }
 @keyframes ink-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 
 .leaf.turned { transform-origin: top; animation: leaf-drop 0.9s cubic-bezier(0.3, 1.4, 0.5, 1); }
@@ -404,8 +394,6 @@ blockquote.order::before { content: "✎"; position: absolute; left: 11px; top: 
   .timeline { overflow-x: auto; }
   .timeline svg { min-width: 720px; }
 }
-.desk .recent-row { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-.desk section h2 { margin-top: 22px; }
 
 /* ---------- pages laid over the drawing board like paper ---------- */
 body.staged :is(main, #sketch, #problems) { position: relative; z-index: 1; }
@@ -419,6 +407,7 @@ body.front main { max-width: none; margin-top: calc(100vh - 150px); padding: 0 0
 .papers { pointer-events: auto; max-width: 1240px; margin: 0 auto; padding: 0 36px 30px; background: var(--paper-light); box-shadow: 0 -4px 30px rgba(40, 25, 10, 0.3); }
 .papers .handle { display: block; margin: 0 auto 6px; padding: 8px 30px 6px; font: 17px var(--fell-sc); color: var(--faded); background: none; border: 0; border-bottom: 1px solid var(--rule); }
 .papers .handle::after { content: " ▴"; }
+body.papers-open .papers .handle::after { content: " ▾"; }
 .tag {  /* a paper label on a string, naming what the pointer is over */
   position: absolute; z-index: 4; max-width: 300px; padding: 7px 12px 8px 22px; pointer-events: none;
   font: 14.5px/1.35 var(--fell); color: var(--ink-soft); background: var(--paper-light);
@@ -471,9 +460,25 @@ main.arrive { animation: arrive 0.45s ease-out; }
 .board-trail { position: absolute; left: 20px; top: 12px; padding: 2px 10px; font: italic 16px var(--fell); color: var(--faded); background: rgba(248, 241, 225, 0.85); }
 .board-trail a { color: var(--ink-soft); cursor: pointer; }
 .board-trail a:hover { color: var(--red); }
-.board-panel { position: absolute; right: 16px; top: 12px; width: 340px; max-height: calc(100% - 170px); overflow: auto; padding: 10px 18px 12px; font-size: 15.5px; line-height: 1.4;
+.board-panel { position: absolute; right: 16px; top: 12px; width: 380px; max-height: calc(100% - 170px); overflow: auto; padding: 10px 18px 12px; font-size: 15.5px; line-height: 1.4;
   background: rgba(248, 241, 225, 0.95); border: 1px solid var(--rule); box-shadow: var(--shadow); }
-.board-panel h3 { margin: 2px 0; font: 22px var(--fell-sc); }
+.board-panel .sheet-name { margin: 2px 0; font: 22px var(--fell-sc); display: block; }
+.board-panel .sheet-name::after { display: none; }
+.board-panel .back-to { display: block; margin-bottom: 4px; font: italic 15px var(--fell); color: var(--red); cursor: pointer; }
+.board-panel .spec { margin-top: 10px; font-size: 15px; }
+.board-panel .spec h3 { margin: 14px 0 4px; font-size: 15px; }
+.board-panel .chart { max-width: 100%; }
+.board-panel dl { gap: 2px 12px; }
+.board-panel dt { font-size: 14.5px; }
+.board-sheets { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0 2px; border-bottom: 1px solid var(--rule); }
+.board-sheets button { padding: 2px 12px; font: 15px var(--fell-sc); color: var(--faded); background: none; border: 1px solid transparent; border-bottom: 0; border-radius: 3px 3px 0 0; }
+.board-sheets button.on { color: var(--ink); background: var(--paper-light); border-color: var(--rule); margin-bottom: -1px; }
+.board-states span { font: italic 14px var(--fell); color: var(--faded); align-self: center; }
+.register { margin: 0 0 6px; padding: 0; list-style: none; font-size: 15px; }
+.register li { display: flex; gap: 6px; align-items: baseline; padding: 2px 0; border-bottom: 1px dotted var(--rule); cursor: pointer; }
+.register li:hover { color: var(--red); }
+.register .count { margin-left: auto; font: italic 13.5px var(--fell); color: var(--faded); }
+.register .stamp { font-size: 11.5px; }
 .board-panel h4 { margin: 10px 0 2px; font: 14px var(--fell-sc); color: var(--faded); }
 .board-panel p { margin: 6px 0; }
 .board-panel .flaws { margin: 0; padding-left: 18px; color: var(--red); font-size: 14.5px; }

@@ -67,9 +67,14 @@ def test_trials_are_plotted_in_the_journal_and_on_the_sheet(browser, full_save):
         assert "Hammer rebound" in page.inner_text(".chart figcaption")
 
 
-def test_workshop_shows_what_is_coming_up_and_recent_drawings(browser, full_save):
+def test_your_papers_show_what_is_coming_up_and_open_and_close(browser, full_save):
     page, errors = open_page(browser, full_save, "workshop")
-    assert "24 June" in page.inner_text(".almanac") and page.locator(".recent img").count() == 4 and errors == []
+    assert "24 June" in page.inner_text(".almanac")
+    page.click(".papers .handle")
+    page.wait_for_function("document.body.classList.contains('papers-open')")
+    page.mouse.click(300, 140)  # on the board, above the papers: they close
+    page.wait_for_function("!document.body.classList.contains('papers-open')")
+    assert errors == []
 
 
 def test_the_workshop_is_a_drawing_board_of_machines_and_their_parts(browser, full_save):
@@ -79,7 +84,7 @@ def test_the_workshop_is_a_drawing_board_of_machines_and_their_parts(browser, fu
     page.wait_for_timeout(900)
     box = page.evaluate("(() => { const r = document.querySelector('.plate[data-id=smithy] image').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
     page.mouse.click(*box)
-    page.wait_for_function("document.querySelector('.board-panel h3')?.textContent === 'The smithy'", timeout=5000)
+    page.wait_for_function("document.querySelector('.board-panel .sheet-name')?.textContent === 'The smithy'", timeout=5000)
     assert page.locator(".board-overlay .balloon").count() == 7  # its forge and anvil, and the five other things in it
     assert "Hearth and bellows" in page.inner_text(".bom")
     page.locator(".balloon[data-id=anvil]").dispatch_event("click")  # the anvil's own drawing opens in place
@@ -114,3 +119,24 @@ def test_broken_world_shows_the_problems(browser, tmp_path, monkeypatch):
     page, errors = open_page(browser, save, "workshop")
     assert errors == [] and "world.json" in page.inner_text("#problems")
     assert "world.json is broken" in page.inner_text("main")
+
+
+def test_a_thing_has_one_home_on_the_board_with_its_sheet_beside_it(browser, full_save):
+    page, errors = open_page(browser, full_save, "thing/anvil")  # a part with a drawing: opened in its smithy
+    assert page.inner_text(".board-panel .sheet-name") == "Anvil" and "The smithy › Anvil" in page.inner_text(".board-trail")
+    assert page.locator(".board-panel .chart polyline").count() == 2 and errors == []  # its trials, on its sheet
+
+
+def test_a_part_without_a_drawing_is_shown_in_its_machine_and_a_lone_one_on_a_blank_sheet(browser, tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "undrawn")
+    anvil = state.read_json(save / "things/anvil.json")
+    del anvil["visual"]
+    state.write_json(save / "things/anvil.json", anvil)
+    state.write_json(save / "things/lathe.json", {"id": "lathe", "name": "Lathe", "kind": "tool", "status": "planned", "summary": "A pole lathe."})
+    page, errors = open_page(browser, save, "thing/anvil")
+    page.wait_for_function("document.querySelector('.board-panel .sheet-name')?.textContent === 'Anvil'")
+    assert "The smithy" in page.inner_text(".board-trail") and "no drawing of its own" in page.inner_text(".board-panel")
+    page.goto(page.url.replace("thing/anvil", "thing/lathe"))
+    page.wait_for_function("document.querySelector('.board-panel .sheet-name')?.textContent === 'Lathe'")
+    assert errors == []

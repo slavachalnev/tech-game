@@ -583,7 +583,8 @@ async function plate(id, query) {
 function outline(svg) {
   const W = svg.viewBox.baseVal.width, back = svg.getScreenCTM().inverse();
   svg.insertAdjacentHTML("beforeend", [...svg.querySelectorAll("[data-thing], [data-object]")].map((el) => {
-    const b = el.getBBox(), m = back.multiply(el.getScreenCTM()), p = new DOMPoint(b.x, b.y).matrixTransform(m), q = new DOMPoint(b.x + b.width, b.y + b.height).matrixTransform(m);
+    const b = el.getBBox(), m = back.multiply(el.getScreenCTM()), a = new DOMPoint(b.x, b.y).matrixTransform(m), z = new DOMPoint(b.x + b.width, b.y + b.height).matrixTransform(m);
+    const p = { x: Math.min(a.x, z.x), y: Math.min(a.y, z.y) }, q = { x: Math.max(a.x, z.x), y: Math.max(a.y, z.y) }; // drawings may be y-up inside
     const c = el.dataset.thing ? "#9c3b25" : "#4f7390";
     return `<rect x="${p.x}" y="${p.y}" width="${q.x - p.x}" height="${q.y - p.y}" fill="none" stroke="${c}" stroke-width="${W / 500}" stroke-dasharray="${W / 150} ${W / 250}"/>
       <text x="${p.x + 3}" y="${p.y + W / 75}" font-size="${W / 80}" fill="${c}">${esc(el.dataset.thing ?? "object")}</text>`;

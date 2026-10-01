@@ -2,11 +2,59 @@
 
 Every drawing looks like a page from a careful 18th-century engineer's notebook: iron-gall ink on warm paper, precise but hand-made. The view supplies the paper, so drawings have **transparent backgrounds**.
 
-## Starting points
+## How a drawing is made: the drawing kit
 
-- **Things** (machines, tools, materials, documents): copy `../../dm/visual_template.svg`.
-- **Scenes** (what the player sees on arriving somewhere or meeting someone): copy `../../dm/scene_template.svg`. Its comments set out the layers and how to size figures from the horizon.
-- **Parts:** `../../dm/drawing_parts.svg` is a sheet of 35 ready-drawn parts: drawing furniture, materials, hardware, figures, a horse, scenery and two animations. Copy a part's `<g id="part-…">`, drop the id, and wrap it in `<g transform="translate(x,y) scale(s)">`, keeping s between about 0.4 and 1.6. Parts need only the `<defs>` the templates already have.
+Every drawing of a thing, a project or a site is a short Python script in the save, `drawings/<id>.py`, written with the drawing kit (`engine/draw.py`; its docstrings are the reference). `uv run tg draw <id>` runs it and writes `visuals/<id>.svg`; `uv run tg draw` runs them all.
+
+- **Parts are drawn once.** Each part is a function in `drawings/parts.py`, in millimetres with y up and its origin stated in its docstring. Its own sheet and every machine or site it's in call the same function, so it has the same shape and faces the same way everywhere: the drawing board opens it in place, lined up. When a part changes (re-bored, patched, enlarged), edit its function and run `uv run tg draw`, and every drawing showing it follows.
+- **Stock parts** for everything that isn't the player's invention: `from engine.stock import person, barrel, pipe, cock, wheel, fire, ...`, true size in millimetres. The catalogue is `../../dm/stock.png`: read it before drawing.
+- **The kit does the house style**: it fits the object to the sheet, washes and hatches by material, lays labels out in the margins with leader lines, and adds dimensions, flaw rings, the cartouche and a scale bar. It also writes the marks the view reads, so you never write them by hand.
+
+```python
+# drawings/parts.py
+def cylinder(p, cut=False):
+    """The 10 cm cylinder. Origin: the middle of its base."""
+    p.rect(-57, 0, 114, 250, "brass", cut=cut)
+    if cut:
+        p.rect(-50, 12, 100, 238, "paper")  # the bore
+    p.anchor("boss", -57, 30)
+
+# drawings/cylinder-10cm.py
+from engine.draw import Sheet
+from parts import cylinder
+
+s = Sheet("cylinder-10cm", "10 cm cylinder", "Half section")
+c = s.place(cylinder, cut=True)
+s.label("boss for the steam inlet, drilled", c["boss"])
+s.flaw("bore tapers 0.4 mm", c.at(50, 200))
+s.dim(c.at(-57, 0), c.at(-57, 250))
+s.save()
+```
+
+A Pen draws `rect`, `circle`, `ellipse`, `poly`, `line`, `path` and `text`, places other parts with `part(fn, at, thing=...)`, and names points with `anchor`. Materials are `brass`, `copper`, `iron`, `lead`, `timber`, `leather`, `masonry`, `earth`, `water`, `steam`, `fire` and `paper` (to blank out); `cut=True` hatches a cut surface. Lines are `outline`, `detail`, `faint`, `hidden`, `centre` and `red`. A Sheet places parts with `place(fn, at, thing=...)`, draws loose geometry with `s.draw`, and takes `label`, `flaw`, `dim` and `note`.
+
+## What to draw
+
+- **A machine:** an elevation, or a section when the inside matters. Place each component as its own part with `thing="<id>"`, so the player can click through to it, and draw it open in place. Label what matters in plain modern words, put each flaw from the spec sheet where it is (`s.flaw`), and give the main dimensions.
+- **A component:** its own sheet places the same part function as the machine does, often `cut=True`, with its labels and dimensions.
+- **A project** (a machine being gathered and built): a general arrangement placing every part with `thing=`, including the parts not yet made, drawn as planned. The board draws parts not in hand as pale blueprint ghosts, so the drawing shows how the project stands; nothing needs redrawing as parts arrive. Mark what isn't settled yet in a `note`.
+- **A site** (the workshop, a mine yard): a cutaway or side view at true scale, placing every thing there with `thing=`, using the same part functions as the things' own drawings. People who work there are stock `person` figures, as illustration. A site grows with play: add or remove a placement as things come and go.
+- **Tools, materials and documents:** a simple still life with a label or two.
+- **Scenes** (`scene-<slug>`): the journal's illustrations of moments, with people. The kit and stock work for these too.
+
+## States, steps, time of day, sound
+
+- **States:** `with p.state("running"):` around what differs by state. It follows the nearest marked thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the drawing's own thing. The view shows the thing's current state, and the player can switch to its other `states`.
+- **Animation**, inside the states that move: `p.spin`, `p.rock` (a beam), `p.slide` (a piston), `p.flicker` (fire). Keep it slow and legible: a stroke takes 2–5 s.
+- **Steps** of a working cycle: `with s.step(n, "caption"):`, three to six of them, in a state of their own (e.g. `cycle`). Draw what doesn't move once, and in each step only what changes: valves open or shut, flows as washes, the moving parts where they are.
+- **Time of day** (sites and scenes): `with p.sky("night"):` (or `"day"`, `"dawn dusk"`). Stock has `sky`, `night` (a dark wash with pools of light) and `rain`.
+- **Sound:** `with p.sound("engine"):` (or `fire`, `water`, `hammer`, `wind`) around something that shows; the board plays it while that drawing is in view.
+
+## Checking
+
+- `uv run tg shot <id>` and Read the PNG; add `--state running`, `--step 2` or `--set <thing>=<state>` for the others, and `--hotspots` to outline what's marked.
+- `uv run tg shot board/<id> --half`: the part's drawing half open over its machine's. If both come from the same part function, they line up.
+- Fix what reads badly: crowded labels (shorter words, or `side="left"`), a tiny object (draw less around it), clashing washes. Two or three rounds.
 
 ## Palette
 
@@ -27,12 +75,11 @@ Washes are pale fills under ink outlines. Never fill a shape with solid ink.
 
 ## Line and type
 
+The kit draws these; they matter when drawing by hand.
+
 - Outlines are 2 px. Details are 1.2 px. Hatching is 0.6 px at 45°, about 5 px apart, in faded ink. Dimension lines are 0.8 px with small arrowheads.
 - Cut surfaces in sections are hatched: diagonal for metal, grain-like strokes for timber, stipple for masonry or earth.
-- Text: `font-family="Georgia, 'Times New Roman', serif"`, `font-style="italic"`, 13–16 px, in ink. Titles use `font-variant="small-caps"` at 18–22 px.
-- Every drawing has a title cartouche at the bottom right: the thing's name and a scale ("Scale 1:20", or "not to scale"). Add a small metric scale bar (0, 1, 2 m or 0, 10, 20 cm) when the drawing is to scale.
-- Label the parts that matter with leader lines, in plain modern words. Put dimensions from the spec sheet on the drawing, in metric (mm for small parts, m for large): bore, stroke, lengths.
-- Show each flaw from the spec sheet where it physically is, as a small red-ochre mark and label ("leaks here above 2 bar").
+- Text: Georgia, italic, 13–16 px, in ink. Titles in small caps at 18–22 px. Labels in plain modern words; dimensions in metric (mm for small parts, m for large).
 
 ## Maps
 
@@ -42,50 +89,11 @@ Washes are pale fills under ink outlines. Never fill a shape with solid ink.
 - Places the player hasn't visited but has heard of can be drawn with a dotted outline or a "?".
 - Places off the map's edge get an arrow at the edge: "London, 430 km, 7–9 days".
 
-## Sites: buildings and places
+## Drawing by hand
 
-Your workshop, a mine, a foundry: a building or site is a thing too (kind `structure` or `site`), and its drawing shows it with what's in it, like a cutaway of a workshop or a yard seen from the side. On the drawing board you zoom from the site into anything in it.
+Maps, and anything the kit can't do, are written as SVG by hand. The view reads these marks; keep them right:
 
-- **Start** from `../../dm/site_template.svg` (indoors) or `../../dm/yard_template.svg` (outdoors). Their header comments give the scale, the file order and the details below.
-- **True relative sizes:** pick a scale (e.g. 1 m = 150 px indoors, 36 px in a yard) and hold to it. Write the scale, the floor line, any projection and where there's free space in a comment at the top.
-- **What's there:** each thing in its own `<g data-thing="<id>">`, self-contained, after a one-line comment saying what and where, so it can be added, removed or redrawn alone as things come and go. Start each with a paper-coloured (`#f8f1e1`) silhouette so what's behind doesn't show through.
-- **People** who are usually there can be drawn (`<g data-person="<id>">`), as illustration.
-- **States and time of day:** a `data-state` group follows the nearest thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the site's own state (the smithy `idle` or `fire-lit`). `data-sky="day"`, `"dawn dusk"` or `"night"` groups show only at those times. Preview with `uv run tg shot <id> --state night --set engine-10cm=cold`.
-- **Sound:** `data-sound="fire"`, `engine`, `water`, `hammer` or `wind` on a group that shows, and the board plays it while the site is in view.
-- **Outdoors:** faint long shadows in `data-sky="dawn"` (falling west) and `data-sky="dusk"` (falling east).
-
-## Hotspots: parts you can click in a drawing
-
-In a machine's drawing, mark each component the player might want a closer look at, so clicking it opens that component. Either wrap the component's drawn parts in `<g data-thing="<component-id>">`, or add an invisible outline over it at the end of the drawing: `<g data-layer="hotspots"><rect data-thing="cylinder-10cm" x="…" y="…" width="…" height="…" fill="none"/></g>`. Only ids of existing things. Check them with `uv run tg shot <id> --hotspots`, which outlines everything clickable with its id.
-
-## Drawing sets: zooming from machine to part
-
-The Drawing Board shows every drawing on one sheet the player zooms through. A part with its own drawing opens in place: zoom in on it in its machine's drawing and its own drawing fades in right there, lined up over it, while the machine stays around it. For that to line up:
-
-- **Mark the object.** In every drawing, wrap the object itself (its outlines, washes and section, but no labels, leader lines, dimensions, notes or cartouche) in `<g data-object="">` (the empty value keeps it valid XML). The board fits that group's outline onto the part's outline in the machine's drawing.
-- **Draw parts the way their machine shows them**: the same side, the same way up. A cylinder standing upright in the engine stands upright in its own drawing; a section of it is fine.
-- **Mark parts snugly** in the machine's drawing (`data-thing`, see Hotspots), so the outline is the part's real extent.
-- Keep the object's proportions true to the spec sheet in both drawings, so the two outlines have the same shape.
-- **Check** with `uv run tg shot board/<part-id> --half`: the part's drawing, half grown in its circle, should sit over the machine's picture of it the same way round.
-- **A project** (a big machine being gathered and built) gets a general-arrangement drawing with each part's real geometry wrapped in its own `data-thing` group, not invisible outlines: the board draws parts not yet in hand as pale blueprint ghosts, so the drawing shows how the project stands.
-
-## Steps: how it works
-
-To show a machine's working cycle, give a state step groups: `<g data-step="1" data-caption="Steam in: the piston rises">…</g>`, numbered from 1, three to six of them. The view shows one step at a time with its caption, with buttons to step and play. Parts outside step groups show in every step, so draw the machine once and put only what changes (valve positions, flows as coloured washes and arrows, the piston's place) in the steps. Moving parts are easiest kept out of the still drawing and placed in each step with `<use>` and a transform. Add the new state only to the groups that don't move, so the other states stay as they were. Check each step with `uv run tg shot <id> --state <state> --step <n>`.
-
-## Technical conventions
-
-- Start from `../../dm/visual_template.svg`: `viewBox="0 0 800 600"`, transparent background, with the ink-wobble filter and hatch patterns already defined. Use a wider or taller viewBox when the subject needs it.
-- Drawings are shown as `<img>` (maps are drawn inline, so their place labels can be clicked): no scripts, no external files, no web fonts. Keep everything inside the SVG. Maps don't use `data-state` groups.
-- **States:** wrap the parts that differ by state in `<g data-state="running">`. A group may list several states, as in `data-state="running leaking"`. Parts with no `data-state` always show. The view shows only the groups that match the thing's current `state` (from its spec sheet), and the player can switch between the states listed in `states`.
-- **Animation:** use SMIL (`<animate>`, `<animateTransform>`) or CSS `@keyframes` in a `<style>` inside the SVG, only inside the state groups that move. Keep it slow and legible: a piston stroke takes 2–5 s, water drips and flows, fire flickers.
-- Tools, materials and documents get a simple, clear drawing too: the object itself, like a still life, with one or two labels.
-- Prefer sections and elevations: a cross-section when the inside matters, an elevation when the outside does, both side by side for machines. Keep proportions true to the spec's dimensions. The player reads these drawings as evidence.
-- Apply `filter="url(#ink)"` to the main linework for a hand-drawn wobble. Leave text unfiltered so it stays crisp.
-- After drawing, look at it with `uv run tg shot <id>` (plus `--state` for each state) and fix whatever reads badly.
-
-## Gotchas
-
-- **Straight lines can vanish under the ink filter.** With the default filter region (a margin around the element's bounding box), a perfectly horizontal or vertical line has zero height or width, so the region is empty and nothing is drawn. The templates define `#ink` with `filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%"`, which covers the whole drawing. Keep that definition when you copy it, and draw in positive coordinates.
-- **SMIL `keyTimes` must start at 0 and end at 1**, with as many entries as `values`. Otherwise the browser silently ignores the animation.
-- **Keep drawings 4:3 (800×600)** unless the subject really needs another shape. Any aspect ratio now displays in full, but 4:3 fits the view best.
+- `<g data-thing="<id>">` around a thing or part (or an invisible outline over it), `<g data-object="">` around the object itself without its labels (the empty value keeps it valid XML), `data-state="running"`, `data-step="1" data-caption="..."`, `data-sky="night"`, `data-sound="engine"`, and `data-person="<id>"` for people.
+- Drawings are shown as images: no scripts, external files or web fonts.
+- **Straight lines can vanish under the ink filter** unless `#ink` is defined with `filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%"` and put on an outer group in the drawing's own coordinates.
+- **SMIL `keyTimes` must start at 0 and end at 1**, with as many entries as `values`, or the browser silently ignores the animation.

@@ -2,7 +2,9 @@
 import argparse
 import json
 import math
+import os
 import random
+import subprocess
 import sys
 from pathlib import Path
 
@@ -131,6 +133,28 @@ def cmd_places(args):
         print(f"  {r['from']} – {r['to']}: {r['km']} km by {r['by']}, {r['time']}{'. ' + r['notes'] if r.get('notes') else ''}")
 
 
+def cmd_draw(args):
+    save = state.find_save(args.save)
+    folder = save / "drawings"
+    scripts = [folder / f"{i}.py" for i in args.ids] or sorted(p for p in folder.glob("*.py") if p.stem != "parts" and not p.stem.startswith("_"))
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(folder), str(state.ROOT)])}
+    failed = False
+    for script in scripts:
+        if not script.is_file():
+            raise SystemExit(f"No drawings/{script.name}. Drawings are scripts in the save's drawings/ folder (see the style guide).")
+        run = subprocess.run([sys.executable, script], cwd=save, env=env, capture_output=True, text=True)
+        if run.returncode:
+            failed = True
+            print(f"drawings/{script.name} failed:\n{run.stderr.strip()}")
+            continue
+        for written in run.stdout.split():
+            problems = state.check_file(save, save / written)
+            print(written + "".join(f"\n  {p}" for p in problems))
+            failed |= bool(problems)
+    if failed:
+        raise SystemExit(1)
+
+
 def cmd_roll(args):
     draw = random.random()
     print(f"{args.what}: p={args.p}, drew {draw:.3f} -> {'YES' if draw < args.p else 'NO'}")
@@ -219,6 +243,9 @@ def main():
     p.add_argument("origin", nargs="?", help="measure from this place id (default: the gazetteer's origin)")
     p.set_defaults(run=cmd_places)
 
+    p = command("draw", help="run drawing scripts (drawings/<id>.py) to write their drawings; all of them by default")
+    p.add_argument("ids", nargs="*", help="drawing ids, e.g. cylinder-10cm")
+    p.set_defaults(run=cmd_draw)
     p = command("roll", help='draw against a probability: roll 0.25 "Penrose is at the mine"')
     p.add_argument("p", type=float)
     p.add_argument("what", nargs="?", default="roll")

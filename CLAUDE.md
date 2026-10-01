@@ -42,12 +42,14 @@ A time-travel invention game. A Claude Code session is the referee (DM), a local
   - `history.py`: each save's snapshot history, a git repo in `<save>/.history`. It isn't `.git`, so Claude Code doesn't treat the save as its own project.
   - `server.py`: the live-view server (stdlib) and Playwright screenshots.
   - `cli.py`: the commands.
+  - `draw.py`: the drawing kit. Drawings are scripts in a save's `drawings/` folder (`tg draw` runs them): parts are functions in millimetres, drawn once in `drawings/parts.py` and used by every drawing they're in, so the board's alignment holds by construction. The kit fits the object to the sheet, lays out labels, and writes the marks the view reads.
+  - `stock.py`: true-size stock parts for the kit (people, barrels, pipes, taps, wheels, fire, sky and night…); `dm/stock.png` is their catalogue, made by `dm/stock_catalogue.py`.
   - `schema.json`: JSON Schema for every state file.
 - `web/`: the live view. Vanilla JS modules, no build step. `app.js` renders the state; `sketch.js` is the sketch canvas; `sound.js` the ambience; `board.js` the drawing board.
 - `dm/`: what the referee gets.
   - `rules.md`: the referee rulebook, the heart of the game.
   - `style_guide.md`: how drawings look.
-  - Starting points for drawings: `visual_template.svg`, `scene_template.svg`, and `drawing_parts.svg` (a sheet of 35 reusable parts).
+  - `stock.png`: the catalogue of stock parts the drawers read.
   - `save_template/`: what each new save gets: `CLAUDE.md`, `hidden.md`, `.claude/settings.json` and `.claude/agents/draw.md`.
 - `scenarios/<id>/`:
   - `scenario.md`: player briefing.
@@ -76,7 +78,7 @@ uv run pytest                                    # about 10 s, including the bro
 
 - **Playable over rigorous.** The player is the user. They can override anything out of character, and lasting overrides become house rules. Don't add strictness machinery, or automation that changes state behind the referee's back. Prefer tools that do one lookup or calculation and print it (see `dm/rules.md`, "The player is in charge of the game").
 - **Spoilers.** Don't show the user `scenarios/*/referee.md` or a save's `hidden.md`. That includes commands, heredocs and test fixtures they can see. Delegate edits to those files to a subagent that reports back without content. The server's refusal to serve `hidden.md` is spoiler courtesy, not security; don't harden it.
-- **The world is data.** State is JSON under `engine/schema.json`; the only code in a save is SVG drawings and Fermi scripts. A new field or state file usually touches:
+- **The world is data.** State is JSON under `engine/schema.json`; the only code in a save is drawings (SVG, and the kit scripts in `drawings/` that make them) and Fermi scripts. A new field or state file usually touches:
   - the schema;
   - `state.py` (`kind_of`, `load_state`, `new_save`, `check_save`);
   - the view (`web/app.js`);

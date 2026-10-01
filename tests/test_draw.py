@@ -105,3 +105,22 @@ def test_during_shows_something_for_part_of_a_cycle():
     with s.draw.during(0.25, 0.5, 4):
         s.place(box)
     assert 'values="0;1;0" keyTimes="0;0.25;0.5" calcMode="discrete" dur="4s"' in s.svg()
+
+
+def test_a_thing_can_have_more_sheets_and_nested_parts_name_their_points():
+    s = Sheet("crate", "Crate", sheet="how-it-opens")
+    c = s.place(crate, thing="crate")
+    assert c["lid.lid"] == (0, 600)  # the lid part's own "lid" anchor, reached through the crate
+    assert s.file == "crate--how-it-opens"
+
+
+def test_fine_detail_is_judged_at_the_scale_it_is_drawn():
+    def ribs(p):
+        p.rect(0, 0, 100, 100, "iron")
+        with p.fine(10):
+            p.line(0, 50, 100, 50, "faint")
+    small = Sheet("ribs", "Ribs", px_per_mm=0.3)  # 10 mm is 3 px: too fine
+    small.place(ribs)
+    big = Sheet("ribs", "Ribs", px_per_mm=0.3)
+    big.inset(ribs, at=(500, 0), scale=2)  # drawn twice the size: 6 px, shown
+    assert small.svg().count("<polyline") == 0 and big.svg().count("<polyline") == 1

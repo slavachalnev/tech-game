@@ -64,7 +64,8 @@ export function createBoard(host, h) {
     const all = things(), state = stateFor(item), step = view[item.id]?.step ?? 1, path = sheetFor(item);
     const key = `${path ?? "blank:" + item.id}@${S.visuals[path]}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
     if (!measured.has(key)) measured.set(key, (async () => {
-      const svg = h.prepare(path ? await h.svgText({ visual: path, _v: S.visuals[path] }) : blank(item), state);
+      const text = path ? await h.svgText({ visual: path, _v: S.visuals[path] }) : blank(item);
+      const svg = h.prepare(text, state);
       const steps = [...svg.querySelectorAll("[data-step]")], n = Math.max(0, ...steps.map((g) => +g.dataset.step));
       const captions = Array.from({ length: n }, (_, i) => steps.find((g) => +g.dataset.step === i + 1 && g.dataset.caption)?.dataset.caption ?? "");
       steps.forEach((g) => +g.dataset.step !== step && g.remove()); // one step at a time
@@ -81,7 +82,7 @@ export function createBoard(host, h) {
       sandbox.append(svg);
       const obj = svg.querySelector("[data-object]");
       const pieces = [...svg.querySelectorAll("[data-thing]")].map((el) => ({ id: el.getAttribute("data-thing"), box: boxIn(el, svg) })).filter((p) => p.box.w && all[p.id]);
-      const data = { blank: !path, captions, sounds: [...svg.querySelectorAll("[data-sound]")].map((g) => g.dataset.sound), vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
+      const data = { blank: !path, states: text.includes("data-state="), captions, sounds: [...svg.querySelectorAll("[data-sound]")].map((g) => g.dataset.sound), vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
       svg.remove();
       data.url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
       return data;
@@ -366,7 +367,7 @@ export function createBoard(host, h) {
     const t = focus.thing, parts = partsOf(focus), caps = focus.data.captions, step = view[t.id]?.step ?? 1, sheets = sheetsOf(t);
     panel.innerHTML = `${heading(t)}
       ${sheets.length > 1 ? `<div class="board-sheets">${sheets.map((p) => `<button data-sheet="${h.esc(p)}" class="${p === sheetFor(t) ? "on" : ""}">${h.esc(sheetName(p))}</button>`).join("")}</div>` : ""}
-      ${t.states?.length > 1 ? `<div class="board-states"><span>State</span>${t.states.map((st) => `<button data-state="${h.esc(st)}" class="${st === stateFor(t) ? "on" : ""}">${h.esc(st)}</button>`).join("")}</div>` : ""}
+      ${t.states?.length > 1 && focus.data.states ? `<div class="board-states"><span>State</span>${t.states.map((st) => `<button data-state="${h.esc(st)}" class="${st === stateFor(t) ? "on" : ""}">${h.esc(st)}</button>`).join("")}</div>` : ""}
       ${caps.length ? `<div class="stepper"><button data-step="-1" title="Previous step">◀</button><span class="caption"><b>${step} of ${caps.length}</b> ${h.esc(caps[step - 1])}</span>
         <button data-step="1" title="Next step">▶</button><button class="play${playing ? " on" : ""}">${playing ? "Pause" : "Play"}</button></div>` : ""}
       <p>${h.esc(t.summary)}</p>

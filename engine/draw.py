@@ -57,6 +57,10 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
+def _begin(delay):
+    return f' begin="-{num(float(delay))}s"' if delay else ""
+
+
 def wrap(text, width):
     """Words into lines of at most about `width` characters."""
     lines, line = [], ""
@@ -194,6 +198,8 @@ class Pen:
         turn = f" rotate({num(float(rotate))})" if rotate else ""
         size = f" scale({num((-1 if flip else 1) * float(scale))} {num(float(scale))})" if flip or scale != 1 else ""
         self.out += [f'<g{mark} transform="translate({num(at[0])} {num(at[1])}){turn}{size}">', *inner.out, "</g>"]
+        name = thing or getattr(draw, "__name__", "part")
+        self.anchors.update({f"{name}.{k}": v for k, v in inner.anchors.items()})  # e.g. mill["cutter-head.edge"]
         return Placed(inner)
 
     # ---- what shows when, and how it moves
@@ -215,7 +221,7 @@ class Pen:
             yield
         finally:
             inner, self.out = self.out, outer
-            self.out.append(Fine(self.sheet, mm, inner, coarse))
+            self.out.append(Fine(self.sheet, mm * math.hypot(self.T[0], self.T[1]), inner, coarse))  # at this pen's scale
 
     def fine(self, mm):
         """Fine detail (staves, rope lay, brick courses), drawn only if `mm`, its spacing, comes to at least 4 px on
@@ -242,9 +248,24 @@ class Pen:
         """Heard while this shows: fire, engine, water, hammer or wind."""
         return self._group(f'data-sound="{kind}"')
 
-    def spin(self, cx, cy, seconds, clockwise=True):
-        """Turns steadily about (cx, cy)."""
-        return self._group("", f'<animateTransform attributeName="transform" type="rotate" from="0 {num(cx)} {num(cy)}" to="{-360 if clockwise else 360} {num(cx)} {num(cy)}" dur="{seconds}s" repeatCount="indefinite"/>')
+    def spin(self, cx, cy, seconds, clockwise=True, delay=0):
+        """Turns steadily about (cx, cy). (A shaft seen side on doesn't turn in the drawing: show it with feed()
+        stripes, or a crank going round.)"""
+        return self._group("", f'<animateTransform attributeName="transform" type="rotate" from="0 {num(cx)} {num(cy)}" to="{-360 if clockwise else 360} {num(cx)} {num(cy)}" dur="{seconds}s"{_begin(delay)} repeatCount="indefinite"/>')
+
+    def feed(self, dx, dy, seconds, delay=0):
+        """Moves steadily by (dx, dy), then starts again: work fed onto a cutter, a belt, stripes on a turning
+        shaft (make dx one stripe's spacing for an endless run)."""
+        return self._group("", f'<animateTransform attributeName="transform" type="translate" values="0 0;{num(dx)} {num(dy)}" dur="{seconds}s"{_begin(delay)} repeatCount="indefinite"/>')
+
+    @contextmanager
+    def clip(self, x, y, w, h):
+        """Only what's inside the rectangle from (x, y), w by h, shows: a bore filling up, stripes on a shaft."""
+        cid = self.uid("clip")
+        self._reach((x, y), (x + w, y + h))
+        with self._group(f'clip-path="url(#{cid})"'):
+            self.out.append(f'<clipPath id="{cid}"><rect x="{num(x)}" y="{num(y)}" width="{num(w)}" height="{num(h)}"/></clipPath>')
+            yield
 
     def during(self, start, end, seconds):
         """Shows only from `start` to `end`, as fractions of a cycle `seconds` long: a valve open for part of a
@@ -254,14 +275,15 @@ class Pen:
             keys, values = keys[:-1], values.rsplit(";", 1)[0]
         return self._group("", f'<animate attributeName="opacity" values="{values}" keyTimes="{";".join(num(float(k)) for k in keys)}" calcMode="discrete" dur="{seconds}s" repeatCount="indefinite"/>')
 
-    def rock(self, cx, cy, degrees, seconds):
+    def rock(self, cx, cy, degrees, seconds, delay=0):
         """Rocks by ±degrees about (cx, cy), like a beam."""
         v = ";".join(f"{num(float(a))} {num(cx)} {num(cy)}" for a in (degrees, -degrees, degrees))
-        return self._group("", f'<animateTransform attributeName="transform" type="rotate" values="{v}" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" dur="{seconds}s" repeatCount="indefinite"/>')
+        return self._group("", f'<animateTransform attributeName="transform" type="rotate" values="{v}" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" dur="{seconds}s"{_begin(delay)} repeatCount="indefinite"/>')
 
-    def slide(self, dx, dy, seconds):
-        """Slides by (dx, dy) and back, like a piston."""
-        return self._group("", f'<animateTransform attributeName="transform" type="translate" values="0 0;{num(dx)} {num(dy)};0 0" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" dur="{seconds}s" repeatCount="indefinite"/>')
+    def slide(self, dx, dy, seconds, delay=0):
+        """Slides by (dx, dy) and back, like a piston. `delay` shifts it within the cycle (a quarter of `seconds`
+        puts it a quarter-turn behind, like a second crank)."""
+        return self._group("", f'<animateTransform attributeName="transform" type="translate" values="0 0;{num(dx)} {num(dy)};0 0" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" dur="{seconds}s"{_begin(delay)} repeatCount="indefinite"/>')
 
     def drift(self, dx, dy, seconds, delay=0, grow=1):
         """Drifts by (dx, dy), growing `grow` times about this pen's origin and fading in and out, over and over,
@@ -282,8 +304,11 @@ class Sheet:
     object is fitted to the sheet with room for the labels, unless you fix `px_per_mm` yourself (to keep the scale
     of a set of drawings the same, say)."""
 
-    def __init__(self, id, title, subtitle="", *, size=(1600, 1200), px_per_mm=None):
+    def __init__(self, id, title, subtitle="", *, size=(1600, 1200), px_per_mm=None, sheet=None):
+        """`sheet` names another sheet of the same thing (how it works, the valve gear), written to
+        visuals/<id>--<sheet>.svg and shown as a tab beside its main drawing."""
         self.id, self.title, self.subtitle, (self.W, self.H), self.fixed = id, title, subtitle, size, px_per_mm
+        self.file = f"{id}--{sheet}" if sheet else id
         self.texts, self.labels, self.flaws, self.dims, self.notes, self.conditions, self.box = [], [], [], [], [], [], None
         self.ids, self.k, self.extra, self.titles = 0, None, [], []
         self.draw = Pen(self, (1, 0, 0, 1, 0, 0), [])  # the sheet's own pen; everything drawn is the object
@@ -331,10 +356,10 @@ class Sheet:
         self.flaws.append((at, list(self.conditions)))
         self.label(text, at, colour=RED, **kw)
 
-    def dim(self, a, b, text=None, *, offset=22):
-        """A dimension line between two points, `offset` px off to the side away from the object's middle; the
-        text is the length in mm unless given."""
-        self.dims.append((a, b, text or f"{math.hypot(b[0] - a[0], b[1] - a[1]):.0f} mm", offset, list(self.conditions)))
+    def dim(self, a, b, text=None, *, offset=22, side=None):
+        """A dimension line between two points, `offset` px off to one side: `side` ("left", "right", "above",
+        "below"), else away from the middle of the drawing. The text is the length in mm unless given."""
+        self.dims.append((a, b, text or f"{math.hypot(b[0] - a[0], b[1] - a[1]):.0f} mm", offset, side, list(self.conditions)))
 
     def note(self, title, text):
         """A block of notes (How it works, say), set at the bottom left."""
@@ -379,11 +404,12 @@ class Sheet:
     def _dims(self, px, within):
         out = []
         mx, my = px(((self.box[0] + self.box[2]) / 2, (self.box[1] + self.box[3]) / 2)) if self.box else (self.W / 2, self.H / 2)
-        for a, b, text, offset, conds in self.dims:
+        for a, b, text, offset, side, conds in self.dims:
             (x1, y1), (x2, y2) = px(a), px(b)
             L = math.hypot(x2 - x1, y2 - y1) or 1
             nx, ny = -(y2 - y1) / L, (x2 - x1) / L
-            if nx * ((x1 + x2) / 2 - mx) + ny * ((y1 + y2) / 2 - my) < 0:  # away from the middle of the object
+            want = {"left": (-1, 0), "right": (1, 0), "above": (0, -1), "below": (0, 1)}.get(side)
+            if (nx * want[0] + ny * want[1] if want else nx * ((x1 + x2) / 2 - mx) + ny * ((y1 + y2) / 2 - my)) < 0:
                 nx, ny = -nx, -ny
             ox, oy = nx * offset, ny * offset
             angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
@@ -462,7 +488,7 @@ class Sheet:
                 f'<text x="{W - 50}" y="{H - 42}" font-size="13" font-style="italic" text-anchor="end" fill="{FADED}">{esc(self.subtitle)}</text>')
 
     def save(self, folder="visuals"):
-        path = Path(folder) / f"{self.id}.svg"
+        path = Path(folder) / f"{self.file}.svg"
         path.write_text(self.svg())
         print(path)
         return path

@@ -533,12 +533,11 @@ function gazetteer(mapId) {
 
 // One drawing alone, for screenshots: a thing's, or any other drawing in visuals/ (e.g. a scene).
 async function plate(id, query) {
-  const path = `visuals/${id}.svg`;
-  const t = S.things.find((x) => x.id === id) ?? (S.visuals[path] && { visual: path, _v: S.visuals[path] });
-  if (!t) return `<p class="empty">No drawing for “${esc(id)}”.</p>`;
+  const path = `visuals/${id}.svg`, thing = S.things.find((x) => x.id === id.split("--")[0]); // id--sheet: another sheet
+  if (!S.visuals[path]) return `<p class="empty">No drawing for “${esc(id)}”.</p>`;
   const q = query.get("state") ?? undefined, phase = query.get("time") ?? (PHASES.includes(q) ? q : undefined); // a state, a time of day
   const set = Object.fromEntries((query.get("set") ?? "").split(",").filter(Boolean).map((kv) => kv.split("=")));
-  const svg = prepare(await svgText(t), phase || !q ? stateOf(t) : q, { phase, set, step: +query.get("step") || 1 });
+  const svg = prepare(await svgText({ visual: path, _v: S.visuals[path] }), phase || !q ? stateOf(thing) : q, { phase, set, step: +query.get("step") || 1 });
   return `<div class="bare-plate">${svg.outerHTML}</div>`;
 }
 
@@ -619,6 +618,8 @@ async function render() {
   main.innerHTML = html;
   if (route === "map" && mapToMount) mountMap(main.querySelector(".map-host"), mapToMount);
   if (route === "visual" && query.has("hotspots")) outline(main.querySelector(".bare-plate svg"));
+  const still = route === "visual" && query.has("at") && main.querySelector(".bare-plate svg");
+  if (still) still.pauseAnimations(), still.setCurrentTime(+query.get("at")); // held at a moment of its animation
   if (navigated && shownHash !== null && route !== "visual") main.classList.remove("arrive"), void main.offsetWidth, main.classList.add("arrive"); // a new page comes in (not the first, or a screenshot's)
   main.querySelectorAll("details[data-key]").forEach((d) => d.dataset.key in opened && (d.open = opened[d.dataset.key]));
   await Promise.all([...main.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));

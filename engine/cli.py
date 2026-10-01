@@ -131,24 +131,6 @@ def cmd_places(args):
         print(f"  {r['from']} – {r['to']}: {r['km']} km by {r['by']}, {r['time']}{'. ' + r['notes'] if r.get('notes') else ''}")
 
 
-def cmd_room(args):
-    save = state.find_save(args.save)
-    places = {p["id"]: p for p in (state.valid(save, save / "places.json") or {"places": []})["places"]}
-    if args.place not in places:
-        raise SystemExit(f"No place {args.place!r}. Known: {', '.join(places)}")
-    path, name = save / "visuals" / f"room-{args.place}.svg", state.plain(places[args.place]["name"])
-    drawn = {mid for kind, mid in state.marks(path) if kind == "thing"} if path.is_file() else set()
-    things = state.records(save, "things")
-    fitted = {c for t in things for c in t.get("components", [])}
-    here = [t for t in things if name in state.plain(t.get("location", "")) and t["status"] != "consumed"]
-    print(f"{path.relative_to(save)}: {'drawn' if path.is_file() else 'not drawn yet'}")
-    print("Here and drawn: " + (", ".join(sorted(t["id"] for t in here if t["id"] in drawn)) or "nothing"))
-    missing = [t for t in here if t["id"] not in drawn and t["id"] not in fitted]
-    print("Here but not drawn yet:" + ("".join(f"\n  {t['id']}: {t['location']}" for t in missing) or " nothing"))
-    gone = sorted(drawn - {t["id"] for t in here} - fitted - {places[args.place].get("thing")})  # the place's own thing is the room
-    print("Drawn but not here by their location (moved? used up?):" + ("".join(f"\n  {i}: {next((t.get('location', '?') for t in things if t['id'] == i), 'no such thing')}" for i in gone) or " nothing"))
-
-
 def cmd_roll(args):
     draw = random.random()
     print(f"{args.what}: p={args.p}, drew {draw:.3f} -> {'YES' if draw < args.p else 'NO'}")
@@ -236,9 +218,6 @@ def main():
     p = command("places", help="the gazetteer: places by distance, and known routes")
     p.add_argument("origin", nargs="?", help="measure from this place id (default: the gazetteer's origin)")
     p.set_defaults(run=cmd_places)
-    p = command("room", help="what's at a place against what its room drawing shows: missing, and moved")
-    p.add_argument("place", help="a place id, e.g. smithy")
-    p.set_defaults(run=cmd_room)
 
     p = command("roll", help='draw against a probability: roll 0.25 "Penrose is at the mine"')
     p.add_argument("p", type=float)
@@ -252,7 +231,7 @@ def main():
     p.add_argument("--step", help="only this step of a drawing's steps (data-step)")
     p.add_argument("--hotspots", action="store_true", help="outline what can be clicked in the drawing, with its id")
     p.add_argument("--half", action="store_true", help="with board/<id>: stop with its drawing half open over its machine's, to check they line up")
-    p.add_argument("--set", action="append", default=[], metavar="ID=STATE", help="show a thing in another state, e.g. in a room: --set engine-10cm=cold")
+    p.add_argument("--set", action="append", default=[], metavar="ID=STATE", help="show a thing drawn inside this drawing in another state, e.g. --set engine-10cm=cold")
     p.set_defaults(run=cmd_shot)
 
     command("history", help="list the save's snapshots, newest first").set_defaults(run=cmd_history)

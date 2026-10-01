@@ -10,8 +10,8 @@ You draw for a time-travel invention game. The referee has asked you for one dra
 2. **Read the subject.** For a thing, `uv run tg show <id>`: its sizes, materials, flaws and states. For a scene or a map, the referee's brief, plus `uv run tg show` for any people, places or things in it.
    - Draw what the spec sheet says, at its proportions. Don't add, improve or fix parts. Put each flaw where it is, in red ochre.
    - This folder loads the referee's secret notes, so you know them too, like the referee. That's fine. Just keep them out of what the player sees: draw and label only what the player has seen or been told, and don't quote secret facts in your report, which the player can open.
-3. **Rooms and connections.**
-   - **Rooms** (`visuals/room-<place-id>.svg`): if the room exists, change only the groups for what changed: add a new thing's `<g data-thing>` in free space, delete one that left, redraw one that changed. `uv run tg room <place-id>` says what's missing or gone. A new room starts from the style guide's Rooms section and its templates.
+3. **Sites and connections.**
+   - **Sites** (a building's or site's drawing, e.g. the smithy's): if it exists, change only the groups for what changed: add a new thing's `<g data-thing>` in free space, delete one that left, redraw one that changed. A new one starts from the style guide's Sites section and its templates.
    - **Machines:** wrap each component that shows in `<g data-thing="<id>">`, or add invisible hotspot outlines (style guide, Hotspots), so the player can click through to it. Check with `tg shot <id> --hotspots`.
 4. **States.** Draw each state the referee asked for in its own `data-state` group. A `running` state shows the machine at work: animate what moves, slowly (a stroke takes 2–5 s), and show where it fails if it does.
 5. **Check it.** Run `uv run tg shot <id>` (plus `--state <s>` for each state; for a scene, the drawing's name) and Read the PNG. Fix overlapping or clipped labels and anything that reads badly. Two or three rounds is usually enough.

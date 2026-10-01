@@ -42,25 +42,17 @@ Washes are pale fills under ink outlines. Never fill a shape with solid ink.
 - Places the player hasn't visited but has heard of can be drawn with a dotted outline or a "?".
 - Places off the map's edge get an arrow at the edge: "London, 430 km, 7–9 days".
 
-## Rooms: places the player can look around
+## Sites: buildings and places
 
-A room is a place drawn so the player can stand in it: `visuals/room-<place-id>.svg`, where `<place-id>` is the place's id in `places.json`. The room of the player's base (the place of kind `base`) is the Workshop tab; other rooms open from the map and from each other.
+Your workshop, a mine, a foundry: a building or site is a thing too (kind `structure` or `site`), and its drawing shows it with what's in it, like a cutaway of a workshop or a yard seen from the side. On the drawing board you zoom from the site into anything in it.
 
-- **Frame:** `viewBox="0 0 1600 900"` (it fills a screen), transparent background, the same ink, washes and `#ink` filter as other drawings. No title cartouche: the view labels the room.
-- **Start** from `../../dm/room_template.svg` (indoors) or `../../dm/yard_template.svg` (outdoors).
-- **View:** a cutaway elevation, looking in, with a floor line. Keep true relative sizes (pick a scale, e.g. 1 m = 150 px indoors or 36 px in a yard, and hold to it: a person is about 1.7 m), so the room reads as a real space. Write the scale, the floor line, any projection formula and where there's free space (in the room's coordinates) in a comment at the top, so later additions land at the right size and place. Update the free-space note when you add or remove something.
-- **Order:** `<defs>`, then the empty room under `<!-- room -->`, then one top-level group per thing, back to front, each after a one-line comment saying what and where. Then people, then ways to go, then the time-of-day washes last. Keep each thing's group self-contained (its own transform, no shared clip paths), so it can be added, deleted or redrawn alone.
-- **Paper knockout:** start each thing's and person's group with an opaque paper-coloured (`#f8f1e1`) silhouette of it, so what's behind doesn't show through its washes. Use separate `<path>` elements for separate parts; opposite windings in one path cut holes.
-- **Things:** draw every thing that's there and visible, each wrapped in `<g data-thing="<id>">`. Draw what the player would pick out at room scale; small parts are reached through their machine's own drawing. Things not in the room aren't drawn.
-- **People** who are usually there: `<g data-person="<id>">`.
-- **Ways to go:** `<g data-go="#/journal">` on something that leads to another page: the journal on the bench (`#/journal`), the map on the wall or the door (`#/map`), letters on a nail (`#/people`), a sketchbook (`#/sketch`), the ledger of methods (`#/capabilities`), or a door to another room (`#/room/<place-id>`).
-- **States:** a `data-state` group follows the nearest thing around it that has states, so the engine runs when its state is `running`. Groups inside a thing without states (a forge), or outside any thing, follow the state of the place's own thing (the smithy's `idle` or `fire-lit`). Preview other states with `uv run tg shot room-<place> --set engine-10cm=cold --set smithy=fire-lit`.
-- **Outdoors, shadows:** give each thing faint long shadows in `data-sky="dawn"` (falling west, to the left when looking north) and `data-sky="dusk"` (falling east, to the right), inside its own group.
-- **Sound:** a group with `data-sound="fire"`, `engine`, `water`, `hammer` or `wind` is heard while it shows (the view makes the sound; the player can turn it off). Put it on the fire's lit state, the engine's running state, a smith by day, the wind outdoors.
-- **Time of day:** `<g data-sky="day">`, `data-sky="dawn dusk"` or `data-sky="night"` show only at those times: daylight through the door, dusk light, and at night the hearth's glow and a lantern.
-- **Labels:** few. The view shows each thing's name on a tag when the player points at it; hand-lettered labels only where they add character.
-- **Ink and motion:** put `filter="url(#ink)"` on an outer group drawn in the room's coordinates; parts placed with negative local coordinates (a horse anchored at its feet) lose the filter. Leave moving parts unfiltered: filters are redrawn every frame.
-- **Keeping up:** a room is never finished. When something arrives, leaves or changes, edit its group; `uv run tg room <place-id>` lists what's there but not drawn and what's drawn but gone, and the view lists undrawn things beside the room meanwhile.
+- **Start** from `../../dm/site_template.svg` (indoors) or `../../dm/yard_template.svg` (outdoors). Their header comments give the scale, the file order and the details below.
+- **True relative sizes:** pick a scale (e.g. 1 m = 150 px indoors, 36 px in a yard) and hold to it. Write the scale, the floor line, any projection and where there's free space in a comment at the top.
+- **What's there:** each thing in its own `<g data-thing="<id>">`, self-contained, after a one-line comment saying what and where, so it can be added, removed or redrawn alone as things come and go. Start each with a paper-coloured (`#f8f1e1`) silhouette so what's behind doesn't show through.
+- **People** who are usually there can be drawn (`<g data-person="<id>">`), as illustration.
+- **States and time of day:** a `data-state` group follows the nearest thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the site's own state (the smithy `idle` or `fire-lit`). `data-sky="day"`, `"dawn dusk"` or `"night"` groups show only at those times. Preview with `uv run tg shot <id> --state night --set engine-10cm=cold`.
+- **Sound:** `data-sound="fire"`, `engine`, `water`, `hammer` or `wind` on a group that shows, and the board plays it while the site is in view.
+- **Outdoors:** faint long shadows in `data-sky="dawn"` (falling west) and `data-sky="dusk"` (falling east).
 
 ## Hotspots: parts you can click in a drawing
 

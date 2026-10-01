@@ -27,6 +27,10 @@ export function createBoard(host, h) {
   document.body.append(sandbox);
 
   let S = null, roots = [], cam = null, path = [], focus = null, hover = null, frameAsked = false, panelKey = "", playing = null;
+  let selected = null; // a part without a drawing of its own, shown in the panel
+  let closing = null; // the detail being closed as the camera backs out of it: { key, parentKey }
+  let quiet = false; // after a flight nothing opens by itself, until you zoom or drag
+  let aim = null; // where on the screen you're zooming at with the wheel; else the middle of the clear part
   const view = {}; // thing id -> { state, step } the player chose to look at, else its current state and step 1
   const measured = new Map(); // drawing key -> promise of { url, vb, object, parts }
   const children = new Map(), measuring = new Set(); // node key -> child node; keys being measured
@@ -49,7 +53,7 @@ export function createBoard(host, h) {
     const all = things(), state = stateFor(item), step = view[item.id]?.step ?? 1;
     const key = `${item.visual}@${item._v}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
     if (!measured.has(key)) measured.set(key, (async () => {
-      const svg = h.prepare(await h.svgText(item), item.visual, state);
+      const svg = h.prepare(await h.svgText(item), state);
       const steps = [...svg.querySelectorAll("[data-step]")], n = Math.max(0, ...steps.map((g) => +g.dataset.step));
       const captions = Array.from({ length: n }, (_, i) => steps.find((g) => +g.dataset.step === i + 1 && g.dataset.caption)?.dataset.caption ?? "");
       steps.forEach((g) => +g.dataset.step !== step && g.remove()); // one step at a time
@@ -66,7 +70,7 @@ export function createBoard(host, h) {
       sandbox.append(svg);
       const obj = svg.querySelector("[data-object]");
       const pieces = [...svg.querySelectorAll("[data-thing]")].map((el) => ({ id: el.getAttribute("data-thing"), box: boxIn(el, svg) })).filter((p) => p.box.w && all[p.id]);
-      const data = { captions, vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
+      const data = { captions, sounds: [...svg.querySelectorAll("[data-sound]")].map((g) => g.dataset.sound), vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
       svg.remove();
       data.url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
       return data;
@@ -183,7 +187,8 @@ export function createBoard(host, h) {
   function fly(to, ms = 750) {
     if (!ms) return (cam = to), draw(), Promise.resolve();
     let landed;
-    const done = new Promise((r) => (landed = r)), from = cam.slice(), t0 = performance.now(), id = (flight = {});
+    (quiet = true), (aim = null);
+    const done = new Promise((r) => (landed = r)), from = cam.slice(), t0 = performance.now(), id = (flight = { e: 0 });
     // Fly in log space for the zoom, so a deep zoom doesn't rush the last part.
     const step = (now) => {
       if (flight !== id) return;
@@ -192,15 +197,24 @@ export function createBoard(host, h) {
       const cx = from[0] + from[2] / 2 + (to[0] + to[2] / 2 - from[0] - from[2] / 2) * (Number.isFinite(f) ? f : e);
       const cy = from[1] + from[3] / 2 + (to[1] + to[3] / 2 - from[1] - from[3] / 2) * (Number.isFinite(f) ? f : e);
       const hh = (w * to[3]) / to[2];
-      cam = [cx - w / 2, cy - hh / 2, w, hh];
+      (cam = [cx - w / 2, cy - hh / 2, w, hh]), (id.e = e);
+      if (k >= 1) { // landed: a detail being closed is now shut
+        if (closing?.parentKey) opened.delete(closing.parentKey);
+        (closing = null), (flight = null);
+      }
       draw();
-      k < 1 ? requestAnimationFrame(step) : ((flight = null), landed());
+      k < 1 ? requestAnimationFrame(step) : landed();
     };
     requestAnimationFrame(step);
     return done;
   }
-  const zoom = (factor, sx, sy) => { // about a point on the screen
+  // Zoom about a point on the screen, but not more than three times past the deepest drawing there: no blank paper.
+  const zoom = (factor, sx, sy) => {
     const [W, H] = size(), x = cam[0] + (sx / W) * cam[2], y = cam[1] + (sy / H) * cam[3];
+    const deep = path.at(-1)?.node, under = deep && candidates(deep).filter((p) => things()[p.id]?.visual && inside(p.box, x, y)).sort((a, b) => a.box.w * a.box.h - b.box.w * b.box.h)[0];
+    const limit = (under && child(under.owner, { id: under.id, box: under.local })) ?? deep ?? roots.find((r) => inside(r.rect, x, y));
+    const most = limit ? fill(limit.rect) / 3 : Math.min(...roots.map(fill)) / 2; // the smallest factor allowed
+    if (factor < 1 && factor < most) factor = Math.min(1, most);
     cam = [x - (x - cam[0]) * factor, y - (y - cam[1]) * factor, cam[2] * factor, cam[3] * factor];
     ask();
   };
@@ -221,22 +235,25 @@ export function createBoard(host, h) {
   // What the camera is looking into: a drawing on the sheet, then the part under the middle of the screen whose
   // drawing is opening, and so on down.
   function walk() {
-    const a = clear(), [cx, cy] = atScreen(a.x + a.w / 2, a.y + a.h / 2); // the middle of the clear part
+    const a = clear(), [cx, cy] = aim ? atScreen(...aim) : atScreen(a.x + a.w / 2, a.y + a.h / 2);
     const root = roots.find((n) => inside(n.rect, cx, cy) && fill(n.rect) >= FOCUS);
     const out = root ? [{ node: root, p: 1 }] : [];
     for (let node = root; node; ) {
-      // The child already open stays open while you're inside its drawing. Else the outermost part under the middle
-      // opens, unless other parts are drawn inside it (an engine house, a cylinder with its piston): those open on
-      // a click, since zooming in on them is zooming toward what's inside.
+      // The child already open stays open while you're inside its drawing. Else the smallest part you're zooming at
+      // opens, but not one with other parts drawn over much of it (an engine house, a cylinder with its piston):
+      // zooming in on those is zooming toward what's inside, so they open on a click.
       let c = opened.get(node.key);
       if (c) c = child(nodeByKey(c.parent.key) ?? c.parent, { id: c.id, box: c.local }) ?? c; // the fresh one, after a change
-      if (!c || !inside(c.rect, cx, cy)) {
-        const cands = candidates(node), holds = (p) => cands.some((q) => q.id !== p.id && within(q.box, p.box));
-        const part = cands.filter((p) => things()[p.id]?.visual && things()[p.id]?._v && inside(p.box, cx, cy) && !holds(p)).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h)[0];
+      if (c && !inside(c.rect, cx, cy) && c.key !== closing?.key) c = null; // you've moved out of it
+      if (!c && !quiet) {
+        const cands = candidates(node), area = (b) => b.w * b.h;
+        const holds = (p) => cands.filter((q) => q.id !== p.id && within(q.box, p.box)).reduce((sum, q) => sum + area(q.box), 0) > 0.25 * area(p.box);
+        const part = cands.filter((p) => things()[p.id]?.visual && things()[p.id]?._v && inside(p.box, cx, cy) && !holds(p)).sort((a, b) => area(a.box) - area(b.box))[0];
         c = part && child(part.owner, { id: part.id, box: part.local });
       }
       if (!c) break;
-      const p = clamp((fill(c.rect) - OPEN[0]) / (OPEN[1] - OPEN[0]));
+      let p = clamp((fill(c.rect) - OPEN[0]) / (OPEN[1] - OPEN[0]));
+      if (c.key === closing?.key) p = Math.min(p, 1 - (flight?.e ?? 1)); // shrinking away as the camera backs out
       if (p <= 0) { if (!flight) opened.delete(node.key); break; } // zoomed back out of it (not on the way in)
       opened.set(node.key, c);
       out.push({ node: c, p });
@@ -275,7 +292,7 @@ export function createBoard(host, h) {
       g.style.opacity = Math.min(1, p * 3);
     });
     detailsG.querySelectorAll(":scope > g").forEach((g) => keep.has(g.id) || g.remove());
-    if (was !== focus) hover = null;
+    if (was !== focus) (hover = null), (selected = null), h.sounds(focus?.data.sounds ?? []); // what you'd hear there
     drawOverlay();
     if (focus !== was || panelKey !== (focus?.key ?? "")) showPanel();
   }
@@ -311,7 +328,7 @@ export function createBoard(host, h) {
     }
     balloons.forEach((a) => ((a.x = Math.max(16, Math.min(W - 16, a.x))), (a.y = Math.max(16, Math.min(H - 16, a.y)))));
     for (const { p, b, ax, ay, x, y } of balloons) {
-      const hot = hover === p.id, opens = !!(p.thing.visual && p.thing._v), st = standing(p.thing);
+      const hot = hover === p.id || selected === p.id, opens = !!(p.thing.visual && p.thing._v), st = standing(p.thing);
       const ex = Math.max(b.x, Math.min(b.x + b.w, x)), ey = Math.max(b.y, Math.min(b.y + b.h, y)); // where the leader meets the part
       if (opens && hot) marks.push(`<ellipse class="detail-mark hot" cx="${ax}" cy="${ay}" rx="${b.w * 0.62 + 6}" ry="${b.h * 0.62 + 6}"/>`);
       if (hot) marks.push(...p.boxes.map(screen).map((r) => `<rect class="part-hot" x="${r.x - 4}" y="${r.y - 4}" width="${r.w + 8}" height="${r.h + 8}" rx="6"/>`));
@@ -334,8 +351,12 @@ export function createBoard(host, h) {
         ${project ? `<p class="board-project">Your project: <a data-go="${h.esc(project.key)}">${h.esc(project.thing.name)}</a></p>${progress(project.thing)}` : ""}`;
       return;
     }
-    const t = focus.thing, parts = partsOf(focus), caps = focus.data.captions, step = view[t.id]?.step ?? 1;
-    panel.innerHTML = `<h3>${h.esc(t.name)}</h3><div class="meta">${h.stamp(t.status)} ${h.esc(t.kind)}${t.state ? ` · ${h.esc(t.state)}` : ""}</div>
+    const t = focus.thing, parts = partsOf(focus), caps = focus.data.captions, step = view[t.id]?.step ?? 1, sel = selected && things()[selected];
+    panel.innerHTML = `${sel ? `<div class="board-part"><button class="close" title="Close">×</button>
+        <h4>Part ${parts.find((p) => p.id === sel.id)?.n ?? ""}: no drawing of its own yet</h4>
+        <b>${h.esc(sel.name)}</b> ${h.stamp(sel.status)}${sel.state ? ` <i>${h.esc(sel.state)}</i>` : ""}<p>${h.esc(sel.summary)}</p>
+        ${sel.flaws?.length ? `<ul class="flaws">${sel.flaws.map((f) => `<li>${h.esc(f)}</li>`).join("")}</ul>` : ""}
+        <a class="more" href="#/thing/${h.esc(sel.id)}">Its whole sheet →</a></div>` : ""}<h3>${h.esc(t.name)}</h3><div class="meta">${h.stamp(t.status)} ${h.esc(t.kind)}${t.state ? ` · ${h.esc(t.state)}` : ""}</div>
       ${t.states?.length > 1 ? `<div class="board-states">${t.states.map((st) => `<button data-state="${h.esc(st)}" class="${st === stateFor(t) ? "on" : ""}">${h.esc(st)}</button>`).join("")}</div>` : ""}
       ${caps.length ? `<div class="stepper"><button data-step="-1" title="Previous step">◀</button><span class="caption"><b>${step} of ${caps.length}</b> ${h.esc(caps[step - 1])}</span>
         <button data-step="1" title="Next step">▶</button><button class="play${playing ? " on" : ""}">${playing ? "Pause" : "Play"}</button></div>` : ""}
@@ -377,7 +398,7 @@ export function createBoard(host, h) {
   async function open(id) {
     if (!focus) { const n = roots.find((r) => r.id === id); return n && fly(framed(n.rect)); }
     const part = candidates(focus).filter((p) => p.id === id).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h)[0], t = things()[id];
-    if (!part || !(t.visual && t._v)) return h.go(`#/thing/${id}`);
+    if (!part || !(t.visual && t._v)) return (selected = id), (panelKey = "?"), draw(); // nothing to open: show it in the panel
     const get = () => child(part.owner, { id, box: part.local });
     let c = get();
     while (!c) (await new Promise((r) => setTimeout(r, 40))), (c = get());
@@ -385,8 +406,9 @@ export function createBoard(host, h) {
     fly(framed(c.rect));
   }
   const nodeByKey = (key) => roots.find((n) => n.key === key) ?? children.get(key);
-  function up() { // back out to the drawing you came through, or the whole sheet
+  function up() { // back out to the drawing you came through, closing the one you were in, or to the whole sheet
     const open = path.filter((e) => e.p >= 1), back = open.at(-2)?.node;
+    closing = back && { key: open.at(-1).node.key, parentKey: back.key };
     fly(back ? framed(back.rect) : framed(sheet(), 0.96));
   }
 
@@ -397,7 +419,7 @@ export function createBoard(host, h) {
     if (drag) {
       const [W] = size(), dx = ((e.clientX - drag.x) / W) * drag.cam[2], dy = ((e.clientY - drag.y) / W) * drag.cam[2];
       if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
-      if (drag.moved) (flight = null), (cam = [drag.cam[0] - dx, drag.cam[1] - dy, cam[2], cam[3]]), ask();
+      if (drag.moved) (flight = null), (quiet = false), (aim = null), (cam = [drag.cam[0] - dx, drag.cam[1] - dy, cam[2], cam[3]]), ask();
       return;
     }
     const id = pick(sx, sy);
@@ -412,10 +434,11 @@ export function createBoard(host, h) {
     if (id) open(id);
   });
   svg.addEventListener("pointerleave", () => ((hover = null), drawOverlay(), label(null)));
-  svg.addEventListener("wheel", (e) => {
+  host.addEventListener("wheel", (e) => { // anywhere on the board, balloons included, but the panel scrolls
+    if (e.target.closest(".board-panel")) return;
     e.preventDefault();
-    flight = null;
     const r = host.getBoundingClientRect();
+    (flight = null), (quiet = false), (aim = [e.clientX - r.left, e.clientY - r.top]);
     zoom(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), e.clientX - r.left, e.clientY - r.top);
   }, { passive: false });
   overlay.addEventListener("click", (e) => { const b = e.target.closest(".balloon"); if (b) open(b.dataset.id); });
@@ -428,6 +451,7 @@ export function createBoard(host, h) {
     layout().then(() => ((panelKey = "?"), draw()));
   }
   panel.addEventListener("click", (e) => {
+    if (e.target.closest(".board-part .close")) return (selected = null), (panelKey = "?"), draw();
     const t = focus?.thing, st = e.target.closest("[data-state]"), sp = e.target.closest("[data-step]");
     if (t && st) clearInterval(playing), (playing = null), look(t.id, { state: st.dataset.state, step: 1 });
     const n = focus?.data.captions.length, turn = (d) => look(t.id, { step: (((view[t.id]?.step ?? 1) - 1 + d + n) % n) + 1 });
@@ -478,6 +502,11 @@ export function createBoard(host, h) {
       return fly(to, now ? 0 : 750);
     },
     up,
+    // The parts of the drawing in focus and their boxes on the screen (for tests and checks).
+    parts() {
+      const [W, H] = size();
+      return partsOf(focus).map((p) => ({ id: p.id, n: p.n, boxes: p.boxes.map((b) => [((b.x - cam[0]) / cam[2]) * W, ((b.y - cam[1]) / cam[3]) * H, (b.w / cam[2]) * W, (b.h / cam[3]) * H]) }));
+    },
     setBehind(b) { host.classList.toggle("behind", b); },
     get focus() { return focus?.id ?? null; },
   };

@@ -125,23 +125,19 @@ function fetchText(url) {
 const svgText = (item) => fetchText(item._rev ? `/api/rev/${item._rev}/${item.visual}` : `/save/${item.visual}?v=${item._v}`);
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
 // A drawing's caption: its thing's name, or the file's name for a scene.
-const caption = (path, thing) => cap(thing?.name ?? path.slice(8, -4).replace(/^(scene|room)-/, "").replace(/-/g, " "));
+const caption = (path, thing) => cap(thing?.name ?? path.slice(8, -4).replace(/^scene-/, "").replace(/-/g, " "));
 // Link attributes for a drawing: a thing's opens its spec sheet, a scene opens full size.
 const opens = (thing, url) => (thing ? `href="#/thing/${thing.id}"` : `href="${url}" target="_blank"`);
 
 const PHASES = ["dawn", "day", "dusk", "night"];
 const stateOf = (t) => t?.state ?? t?.states?.[0] ?? "";
-const isRoom = (path) => path.startsWith("visuals/room-");
-const roomPlace = (path) => S.places.places.find((p) => p.id === path.slice(13, -4));
 
-// A drawing's SVG with only the groups for its state and the time of day kept. In a room, a state group follows
-// the nearest thing around it that has states, else the state of the place's own thing (the smithy's, say).
-// `set` overrides things' states, for checking a drawing: { "engine-10cm": "cold" }.
-function prepare(text, path, state, phase = sky(S.world.clock).phase, set = {}) {
+// A drawing's SVG with only the groups for the state and time of day being shown. A state group follows the
+// nearest thing around it that has states (the engine drawn in the smithy runs when the engine runs), else the
+// drawing's own `state`. `set` overrides things' states ({ "engine-10cm": "cold" }); `step` keeps one step.
+function prepare(text, state, { phase = sky(S.world.clock).phase, set = {}, step } = {}) {
   const svg = new DOMParser().parseFromString(text, "image/svg+xml").documentElement;
-  const room = isRoom(path), things = Object.fromEntries(S.things.map((t) => [t.id, t]));
-  const stateOfId = (id) => set[id] ?? stateOf(things[id]);
-  if (room) state = stateOfId(roomPlace(path)?.thing);
+  const things = Object.fromEntries(S.things.map((t) => [t.id, t]));
   const owner = (el) => {
     for (let a = el.parentElement.closest("[data-thing]"); a; a = a.parentElement?.closest("[data-thing]")) {
       const t = things[a.getAttribute("data-thing")];
@@ -151,18 +147,19 @@ function prepare(text, path, state, phase = sky(S.world.clock).phase, set = {}) 
   const has = (el, attr, value) => el.getAttribute(attr).split(/\s+/).includes(value);
   svg.querySelectorAll("[data-sky]").forEach((el) => has(el, "data-sky", phase) || el.remove());
   svg.querySelectorAll("[data-state]").forEach((el) => {
-    const id = room && owner(el);
-    has(el, "data-state", id ? stateOfId(id) : state) || el.remove();
+    const id = owner(el);
+    has(el, "data-state", id ? set[id] ?? stateOf(things[id]) : state) || el.remove();
   });
+  if (step) svg.querySelectorAll("[data-step]").forEach((el) => +el.dataset.step !== step && el.remove());
   return svg;
 }
 
-// A thing's drawing (or a scene or room) as an <img>-ready URL (isolates each drawing's ids and styles).
+// A thing's drawing (or a scene) as an <img>-ready URL (isolates each drawing's ids and styles); its first step.
 async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock).phase) {
   if (!thing.visual || !thing._v) return null;
-  const key = `${thing.visual}@${thing._v}@${state}@${phase}${isRoom(thing.visual) ? "@" + S.things.map(stateOf).join() : ""}`;
+  const key = `${thing.visual}@${thing._v}@${state}@${phase}@${S.things.map(stateOf).join()}`;
   if (!drawings.has(key)) {
-    const svg = prepare(await svgText(thing), thing.visual, state, phase);
+    const svg = prepare(await svgText(thing), state, { phase, step: 1 });
     if (!svg.getAttribute("width")) {
       const [, , w, h] = (svg.getAttribute("viewBox") ?? "0 0 800 600").split(/[\s,]+/);
       svg.setAttribute("width", w);
@@ -173,210 +170,9 @@ async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock)
   return drawings.get(key);
 }
 
-// ---------- scenes: drawings you can point at ----------
-
-const PICKABLE = "[data-thing],[data-person],[data-go]";
-const GOES = { journal: "Your journal", map: "The map", people: "Letters, and who's who", sketch: "Your sketchbook", capabilities: "Your account book" };
-const slots = new Map(); // inline drawings waiting for their place in the page: slot number -> [svg, options]
-let slotCount = 0;
-let camera = null; // the last zoom into a drawing: { from, to, box }, so coming back zooms out again
-let stepTimer = null;
-
-// A place in the page for an inline drawing; render() mounts it once the page's HTML is in.
-function sceneSlot(svg, options = {}, cls = "") {
-  slots.set(String(++slotCount), [svg, options]);
-  if (slots.size > 20) slots.delete(slots.keys().next().value); // left behind by renders that were overtaken
-  return `<div class="scene-host ${cls}" data-slot="${slotCount}"></div>`;
-}
-const roomHref = (id) => `#/room/${id}`;
-const goesTo = (d) => (d.thing ? `#/thing/${d.thing}` : d.person ? `#/people?who=${d.person}` : d.go);
-
-// What the tag says about something in a drawing; empty for ids that don't exist, which then can't be picked.
-function tagFor(d) {
-  const t = d.thing && S.things.find((x) => x.id === d.thing), p = d.person && S.people.find((x) => x.id === d.person);
-  if (t) return `<b>${esc(t.name)}</b> ${stamp(t.status)}<span>${esc(t.summary)}</span>`;
-  if (p) return `<b>${esc(p.name)}</b><span>${esc(p.role)}</span>`;
-  const room = d.go?.match(/^#\/room\/(.+)/)?.[1], place = room && S.places.places.find((x) => x.id === room);
-  if (place) return `<b>To ${esc(place.name)}</b>`;
-  return d.go ? `<b>${esc(GOES[d.go.slice(2)] ?? d.go.slice(2))}</b>` : "";
-}
-
-// An element's bounding box in the drawing's own coordinates.
-function boxOf(el, svg) {
-  const b = el.getBBox(), m = svg.getScreenCTM().inverse().multiply(el.getScreenCTM());
-  const pts = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(m));
-  const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
-  return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
-}
-// A box with a margin, grown to the drawing's shape, as a viewBox.
-function framing(box, [, , W, H]) {
-  let w = box.width * 1.3 + W / 40, h = box.height * 1.3 + H / 40;
-  if (w / h > W / H) h = (w * H) / W; else w = (h * W) / H;
-  return [box.x + box.width / 2 - w / 2, box.y + box.height / 2 - h / 2, w, h];
-}
-// Move the drawing's camera (its viewBox) smoothly.
-function glide(svg, from, to, ms = 700) {
-  return new Promise((done) => {
-    const t0 = performance.now();
-    const frame = (now) => {
-      const k = Math.min(1, (now - t0) / ms), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
-      svg.setAttribute("viewBox", from.map((f, i) => f + (to[i] - f) * e).join(" "));
-      k < 1 ? requestAnimationFrame(frame) : done();
-    };
-    requestAnimationFrame(frame);
-  });
-}
-
-// Draw `svg` inline in `host`, so the things, people and ways out marked in it can be pointed at: the rest fades,
-// a tag names it, and a click zooms in and goes there. With `focus`, one thing is lit and nothing else responds.
-function mountScene(host, svg, { focus, back, outlines } = {}) {
-  const root = host.attachShadow({ mode: "open" });
-  root.innerHTML = `<style>
-    svg { display: block; width: 100%; height: auto; max-height: calc(100vh - 150px); }
-    :host(.fill) svg { height: 100%; max-height: none; }
-    .dim { pointer-events: none; transition: opacity 0.25s; }
-  </style>`;
-  root.append(svg);
-  const vb = (svg.getAttribute("viewBox") ?? "0 0 800 600").split(/[\s,]+/).map(Number), [x0, y0, W, H] = vb;
-  const night = sky(S.world.clock).phase === "night";
-  svg.insertAdjacentHTML("beforeend", `<defs>
-      <filter id="spot-soft" filterUnits="userSpaceOnUse" x="${x0}" y="${y0}" width="${W}" height="${H}"><feGaussianBlur stdDeviation="${W / 110}"/></filter>
-      <mask id="spot" maskUnits="userSpaceOnUse" x="${x0}" y="${y0}" width="${W}" height="${H}"><rect x="${x0}" y="${y0}" width="${W}" height="${H}" fill="#fff"/><g class="holes" fill="#000" filter="url(#spot-soft)"/></mask>
-    </defs><rect class="dim" x="${x0}" y="${y0}" width="${W}" height="${H}" fill="${night ? "#1c140c" : "#f2e8d2"}" opacity="0" mask="url(#spot)"/>`);
-  const holes = svg.querySelector(".holes"), dim = svg.querySelector(".dim"), pad = W / 80;
-  const same = (a, b) => ["thing", "person", "go"].some((k) => a.dataset[k] && a.dataset[k] === b.dataset[k]);
-  const spot = (t) => { // light the thing: every piece of it marked in the drawing
-    if (t) holes.innerHTML = targets.filter((x) => same(x.el, t.el)).map(({ box: b }) =>
-      `<rect x="${b.x - pad}" y="${b.y - pad}" width="${b.width + 2 * pad}" height="${b.height + 2 * pad}" rx="${W / 60}"/>`).join("");
-    dim.setAttribute("opacity", t ? (night ? 0.5 : 0.62) : 0);
-  };
-  const targets = [...svg.querySelectorAll(PICKABLE)].filter((el) => tagFor(el.dataset)).map((el) => ({ el, box: boxOf(el, svg) })).filter((t) => t.box.width);
-  if (outlines) svg.insertAdjacentHTML("beforeend", targets.map(({ el, box: b }) => `<rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}"
-    fill="rgba(156,59,37,0.08)" stroke="#9c3b25" stroke-width="${W / 500}" stroke-dasharray="${W / 150} ${W / 250}"/><text x="${b.x + 3}" y="${b.y + W / 75}"
-    font-size="${W / 80}" fill="#9c3b25">${esc(el.dataset.thing ?? el.dataset.person ?? el.dataset.go)}</text>`).join(""));
-  if (focus) return svg.classList.add("quiet"), spot(targets.find((t) => t.el.dataset.thing === focus)), { svg, vb, targets };
-  if (back) glide(svg, framing(back, vb), vb, 600);
-
-  const tag = host.parentElement.querySelector(":scope > .tag");
-  // What the pointer is on: a drawn shape of a thing, else the smallest invisible outline or small thing within
-  // a few pixels (big groups don't claim the empty space inside their bounds).
-  const pick = (e) => {
-    const el = root.elementFromPoint(e.clientX, e.clientY)?.closest(PICKABLE);
-    const m = svg.getScreenCTM(), p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse()), slack = 6 / m.a;
-    const near = ({ el: x, box: b }) => (x.closest("[data-layer=hotspots]") || b.width * b.height < W * H * 0.03)
-      && p.x >= b.x - slack && p.x <= b.x + b.width + slack && p.y >= b.y - slack && p.y <= b.y + b.height + slack;
-    return targets.find((t) => t.el === el) ?? targets.filter(near).sort((a, b) => a.box.width * a.box.height - b.box.width * b.box.height)[0];
-  };
-  const label = (t) => {
-    tag.hidden = !t;
-    if (!t) return;
-    tag.innerHTML = tagFor(t.el.dataset);
-    const m = svg.getScreenCTM(), frame = tag.offsetParent.getBoundingClientRect();
-    const top = new DOMPoint(t.box.x + t.box.width / 2, t.box.y).matrixTransform(m), bottom = new DOMPoint(0, t.box.y + t.box.height).matrixTransform(m);
-    const y = top.y - frame.top - tag.offsetHeight - 12;
-    tag.style.left = `${Math.max(8, Math.min(top.x - frame.left - tag.offsetWidth / 2, frame.width - tag.offsetWidth - 8))}px`;
-    tag.style.top = `${y > 60 ? y : bottom.y - frame.top + 12}px`;
-  };
-  let hot = null;
-  svg.addEventListener("pointermove", (e) => {
-    const t = pick(e);
-    if (t !== hot) (hot = t), spot(t), tag && label(t);
-  });
-  svg.addEventListener("pointerleave", () => ((hot = null), spot(null), tag && label(null)));
-  svg.style.cursor = "pointer";
-  svg.addEventListener("click", async (e) => {
-    const t = pick(e);
-    if (!t) return;
-    spot(null), tag && label(null);
-    camera = { from: location.hash, to: goesTo(t.el.dataset), box: t.box };
-    await glide(svg, vb, framing(t.box, vb));
-    location.hash = camera.to;
-  });
-  return { svg, vb, targets };
-}
-
-// The step-by-step view of a drawing's step groups (data-step, data-caption), with buttons and play.
-function stepper(bar, svg) {
-  const groups = [...svg.querySelectorAll("[data-step]")];
-  if (!groups.length) return;
-  const n = Math.max(...groups.map((g) => +g.dataset.step));
-  let i = 1;
-  const show = () => {
-    groups.forEach((g) => (g.style.display = +g.dataset.step === i ? "" : "none"));
-    const caption = groups.find((g) => +g.dataset.step === i && g.dataset.caption)?.dataset.caption ?? "";
-    bar.querySelector(".caption").innerHTML = `<b>${i} of ${n}</b> ${esc(caption)}`;
-  };
-  bar.innerHTML = `<button data-d="-1" title="Previous step">◀</button><span class="caption"></span><button data-d="1" title="Next step">▶</button><button class="play">Play</button>`;
-  bar.hidden = false;
-  const play = bar.querySelector(".play");
-  bar.onclick = (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    if (b === play) {
-      stepTimer = stepTimer ? clearInterval(stepTimer) : setInterval(() => ((i = (i % n) + 1), show()), 3200);
-      play.textContent = stepTimer ? "Pause" : "Play";
-      play.classList.toggle("on", !!stepTimer);
-    } else (i = ((i - 1 + +b.dataset.d + n) % n) + 1), show();
-  };
-  show();
-}
-
-// Where a thing is drawn as part of something bigger: the machine it's fitted to, else a room.
-async function container(id) {
-  const parents = S.things.filter((x) => x.components?.includes(id) && x.visual && x._v);
-  const rooms = Object.keys(S.visuals).filter((path) => isRoom(path) && roomPlace(path)).map((path) => ({ visual: path, _v: S.visuals[path] }));
-  for (const c of [...parents, ...rooms]) if ((await svgText(c))?.includes(`data-thing="${id}"`)) return c;
-  return null;
-}
-// The chain of containers from the room down to a thing, e.g. smithy › 10 cm engine.
-async function trail(id) {
-  const chain = [];
-  for (let c = await container(id); c && !chain.includes(c) && chain.length < 6; c = c.id ? await container(c.id) : null) chain.unshift(c);
-  return chain;
-}
-const crumb = (c) => (c.id ? `<a href="#/thing/${c.id}">${esc(c.name)}</a>` : `<a href="${roomHref(roomPlace(c.visual).id)}">${esc(cap(roomPlace(c.visual).name))}</a>`);
-
-// Things whose location says they're at a place (by its name) but that its room doesn't show yet.
-function undrawn(place, svgTextOfRoom) {
-  const name = place.name.replace(/^(the|your) /i, "");
-  return S.things.filter((t) => t.status !== "consumed" && mentions(t.location, name) && !svgTextOfRoom.includes(`data-thing="${t.id}"`)
-    && !S.things.some((x) => x.components?.includes(t.id))); // a fitted part is reached through its machine
-}
-
-// ---------- the stage: the room you're in, behind every page ----------
-
-let stage = null; // the room on the stage: { key, place, svg, vb, targets }
-const hasRoom = (id) => !!S.visuals[`visuals/room-${id}.svg`];
-
-// Put a place's room on the stage, behind its papers (redrawn only when it, the hour or what's in it changes).
-async function setStage(id) {
-  const el = $("#stage"), path = `visuals/room-${id}.svg`, place = S.places.places.find((p) => p.id === id);
-  document.body.classList.toggle("staged", !!place && hasRoom(id));
-  if (!place || !hasRoom(id)) return (el.hidden = true), (stage = null);
-  const key = [path, S.visuals[path], S.clock_label, S.things.map(stateOf)].join("@");
-  el.hidden = false; // before mounting: a drawing is measured as it's laid out
-  if (stage?.key !== key) {
-    const text = await svgText({ visual: path, _v: S.visuals[path] }), loose = undrawn(place, text);
-    const others = S.places.places.filter((p) => p.id !== id && hasRoom(p.id));
-    el.innerHTML = `<div class="scene-host fill"></div>
-      <div class="room-name">${esc(cap(place.name))}<span>${esc(S.clock_label)}</span></div>
-      ${loose.length ? `<div class="loose"><span>Here, not drawn yet:</span>${loose.map((t) => `<a href="#/thing/${t.id}">${esc(t.name)}</a>`).join("")}</div>` : ""}
-      ${others.length ? `<nav class="exits">${others.map((p) => `<a href="${roomHref(p.id)}">To ${esc(p.name)} →</a>`).join("")}</nav>` : ""}
-      <div class="tag" hidden></div>`;
-    stage = { key, place: id, ...mountScene(el.querySelector(".scene-host"), prepare(text, path)) };
-  }
-}
-
-// The papers lying under a room: what you know of the place.
-function room(id) {
-  const place = S.places.places.find((p) => p.id === id);
-  if (!place || !hasRoom(id)) return `<p class="empty">Nothing drawn of “${esc(id)}” yet.</p>`;
-  return `<div class="papers"><button class="handle">About this place</button>${placeInfo(place)}</div>`;
-}
-
 // ---------- the drawing board ----------
 
-const board = createBoard($("#board"), { prepare, svgText, stateOf, esc, stamp, go: (hash) => (location.hash = hash) });
+const board = ($("#board").api = createBoard($("#board"), { prepare, svgText, stateOf, esc, stamp, sounds: ambience }));
 let boardFor = null; // the state the board was last laid out for
 const hasBoard = () => S.things.some((t) => t.visual && t._v);
 // The things a thing is part of, from the top down to it: big-engine › big-cylinder.
@@ -519,9 +315,7 @@ async function thingPage(id, query) {
   const t = S.things.find((x) => x.id === id);
   if (!t) return `<p class="empty">Nothing called “${esc(id)}”.</p>`;
   const state = query.get("state") ?? t.state ?? t.states?.[0] ?? "";
-  const drawn = t.visual && t._v && prepare(await svgText(t), t.visual, state);
-  const chain = await trail(t.id), here = chain.at(-1);
-  const locator = here && prepare(await svgText(here), here.visual, here.id ? stateOf(here) : undefined);
+  const url = await drawing(t, state);
   const byId = Object.fromEntries(S.things.map((x) => [x.id, x]));
   const link = (x) => `<a href="#/thing/${x.id}">${esc(x.name)}</a>`;
   const flawCount = (x) => (x?.flaws?.length ? ` <span class="flag">${x.flaws.length} flaw${x.flaws.length > 1 ? "s" : ""}</span>` : "");
@@ -529,7 +323,7 @@ async function thingPage(id, query) {
   const trials = S.log.flatMap((e) => (e.measurements ?? []).filter((x) => x.thing === t.id).map((x) => chart(x, `Turn ${e.turn}: `))).reverse();
   const madeRows = m && [["by", m.by?.join(", ")], ["took", m.took], ["cost", m.cost_p !== undefined && money(m.cost_p)], ["turn", m.turn]].filter(([, v]) => v || v === 0);
   return `<article class="sheet">
-    <nav class="trail">${chain.length ? chain.map(crumb).join(" › ") + " ›" : `<a href="#/workshop">Workshop</a> ›`}</nav>
+    <nav class="trail"><a href="#/workshop">The drawing board</a> › ${lineage(t.id).slice(0, -1).map((p) => `${link(byId[p])} › `).join("")}</nav>
     <header>
       <h1>${esc(t.name)}</h1>
       <div class="meta">${stamp(t.status)} ${esc(t.kind)}${t.quantity !== undefined ? ` · ${t.quantity} ${esc(t.unit ?? "")}` : ""}${t.location ? ` · ${esc(t.location)}` : ""}${t.owner ? ` · belongs to ${esc(t.owner)}` : ""}</div>
@@ -537,11 +331,11 @@ async function thingPage(id, query) {
     </header>
     <div class="sheet-body">
       <figure class="plate">
-        ${drawn ? sceneSlot(drawn, { camera: true, steps: true }) + `<div class="tag" hidden></div><div class="stepper" hidden></div>` : `<div class="no-drawing">No drawing yet</div>`}
+        ${url ? `<img src="${url}" alt="${esc(t.name)}">` : `<div class="no-drawing">No drawing yet</div>`}
         ${t.states?.length > 1 ? `<nav class="states">${t.states.map((s) => `<a href="#/thing/${t.id}?state=${esc(s)}" class="${s === state ? "on" : ""}">${esc(s)}</a>`).join("")}</nav>` : ""}
       </figure>
       <div class="spec">
-        ${locator ? `<a class="locator" href="${here.id ? `#/thing/${here.id}` : roomHref(roomPlace(here.visual)?.id)}">${sceneSlot(locator, { focus: t.id })}<span>Where it is: ${here.id ? `on the ${esc(here.name)}` : `in ${esc(roomPlace(here.visual)?.name)}`} →</span></a>` : ""}
+        <p><a class="more" href="#/board/${t.id}">See it on the drawing board →</a></p>
         ${bullets("Known flaws", t.flaws?.map(esc), "flaws")}
         ${trials.length ? `<h3>Trials</h3>${trials.join("")}` : ""}
         ${bullets("Materials", t.materials?.map(esc))}
@@ -614,7 +408,7 @@ function capabilities() {
     </div></div>`).join("")}</div></section>`;
 }
 
-function people(arg, query) {
+function people() {
   const me = S.world.player;
   const you = `<div class="card person you"><div class="card-body">
     <header class="who"><span class="cameo">${esc(initials(me.name || "You"))}</span><div><h3>${esc(me.name || "You")}</h3><div class="meta">you</div></div></header>
@@ -627,7 +421,7 @@ function people(arg, query) {
   const last = (p) => Math.max(0, ...(p.history ?? []).map((h) => h.turn));
   const cast = [...S.people].sort((a, b) => !!b.employed - !!a.employed || last(b) - last(a)); // your people, then the most recently met
   return `<div class="people">${you}${cast.map((p) => `
-    <div class="card person${p.employed ? " yours" : ""}${fresh.has("p:" + p.id) || query?.get("who") === p.id ? " fresh" : ""}" data-who="${esc(p.id)}"><div class="card-body">
+    <div class="card person${p.employed ? " yours" : ""}${fresh.has("p:" + p.id) ? " fresh" : ""}"><div class="card-body">
       <header class="who"><span class="cameo">${esc(initials(p.name))}</span><div>
         <h3>${esc(p.name)}</h3>
         <div class="meta">${esc(p.role)}${p.employed ? ` · <b>works for you</b>${p.wage_p_week ? `, ${money(p.wage_p_week)} a week` : ""}` : ""}</div>
@@ -751,7 +545,7 @@ function placeInfo(p) {
   return `<div class="place-info">
     <h3>${esc(p.name)}</h3>
     <div class="meta">${esc(p.kind)}${o && p !== o ? ` · ${where(p, o)} from ${esc(o.name)}` : ""} · ${p.visited ? "you've been here" : "not visited yet"}</div>
-    ${hasRoom(p.id) && !location.hash.startsWith("#/room") ? `<p><a class="more" href="${roomHref(p.id)}">Look around →</a></p>` : ""}
+    ${thing?.visual ? `<p><a class="more" href="#/board/${thing.id}">On the drawing board →</a></p>` : ""}
     ${p.notes ? `<p>${esc(p.notes)}</p>` : ""}
     ${thing ? `<p><a href="#/thing/${thing.id}">${esc(thing.name)}</a> ${stamp(thing.status)} ${esc(thing.summary)}</p>` : ""}
     ${people.length ? `<h4>People here</h4><ul>${people.map((x) => `<li>${esc(x.name)}, ${esc(x.role)}</li>`).join("")}</ul>` : ""}
@@ -778,15 +572,22 @@ function gazetteer(mapId) {
 async function plate(id, query) {
   const path = `visuals/${id}.svg`;
   const t = S.things.find((x) => x.id === id) ?? (S.visuals[path] && { visual: path, _v: S.visuals[path] });
-  const q = query.get("state") ?? undefined, step = query.get("step"), outlines = query.has("hotspots"); // for a room, state is a time of day
-  const set = Object.fromEntries((query.get("set") ?? "").split(",").filter(Boolean).map((kv) => kv.split("="))); // things' states
-  if (t && (step || outlines || query.has("set"))) { // for checking a drawing: one step, what can be clicked, other states
-    const svg = prepare(await svgText(t), t.visual, PHASES.includes(q) ? undefined : q ?? stateOf(t), PHASES.includes(q) ? q : undefined, set);
-    svg.querySelectorAll("[data-step]").forEach((g) => step && g.dataset.step !== step && g.remove());
-    return `<div class="bare-plate">${sceneSlot(svg, { outlines }, "fill")}</div>`;
-  }
-  const url = t && (await (PHASES.includes(q) ? drawing(t, undefined, q) : drawing(t, q)));
-  return url ? `<div class="bare-plate"><img src="${url}" alt=""></div>` : `<p class="empty">No drawing for “${esc(id)}”.</p>`;
+  if (!t) return `<p class="empty">No drawing for “${esc(id)}”.</p>`;
+  const q = query.get("state") ?? undefined, phase = PHASES.includes(q) ? q : undefined; // a state, or a time of day
+  const set = Object.fromEntries((query.get("set") ?? "").split(",").filter(Boolean).map((kv) => kv.split("=")));
+  const svg = prepare(await svgText(t), phase || !q ? stateOf(t) : q, { phase, set, step: +query.get("step") || 1 });
+  return `<div class="bare-plate">${svg.outerHTML}</div>`;
+}
+
+// Outline what a drawing marks, with its id: parts in red, the object itself in blue (tg shot <id> --hotspots).
+function outline(svg) {
+  const W = svg.viewBox.baseVal.width, back = svg.getScreenCTM().inverse();
+  svg.insertAdjacentHTML("beforeend", [...svg.querySelectorAll("[data-thing], [data-object]")].map((el) => {
+    const b = el.getBBox(), m = back.multiply(el.getScreenCTM()), p = new DOMPoint(b.x, b.y).matrixTransform(m), q = new DOMPoint(b.x + b.width, b.y + b.height).matrixTransform(m);
+    const c = el.dataset.thing ? "#9c3b25" : "#4f7390";
+    return `<rect x="${p.x}" y="${p.y}" width="${q.x - p.x}" height="${q.y - p.y}" fill="none" stroke="${c}" stroke-width="${W / 500}" stroke-dasharray="${W / 150} ${W / 250}"/>
+      <text x="${p.x + 3}" y="${p.y + W / 75}" font-size="${W / 80}" fill="${c}">${esc(el.dataset.thing ?? "object")}</text>`;
+  }).join(""));
 }
 
 // ---------- page ----------
@@ -812,7 +613,7 @@ function masthead(route, arg) {
   $("#ahead").textContent = ahead ? `· ${ahead.ahead} years ahead of history` : "";
   $("#ahead").title = ahead ? `Furthest ahead: ${ahead.name}. See all.` : "";
   document.documentElement.style.setProperty("--top", `${$(".masthead").offsetHeight}px`); // where the stage starts
-  const tab = route === "thing" || route === "board" ? "workshop" : route === "room" ? "map" : route;
+  const tab = route === "thing" || route === "board" ? "workshop" : route;
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#/${tab}`));
 }
 
@@ -829,47 +630,36 @@ async function render() {
   const main = $("#main");
   main.hidden = route === "sketch";
   if (route === "sketch") sketch.refresh();
-  const views = { workshop, board: workshop, room, thing: thingPage, capabilities, people, map, journal, visual: plate, sketch: () => "" };
-  clearInterval(stepTimer), (stepTimer = null);
+  const views = { workshop, board: workshop, thing: thingPage, capabilities, people, map, journal, visual: plate, sketch: () => "" };
 
   const broken = `<p class="empty">world.json is broken, so there's nothing to show until the referee fixes the problems above.</p>`;
   const html = S.world.clock ? await (views[route] ?? workshop)(arg, query) : broken;
   if (id !== renderId) return; // a newer render started meanwhile
-  // On the stage behind the page: a room you're in, else the drawing board (in front on the Workshop).
-  await setStage(route === "room" ? arg : null);
-  const onBoard = route !== "room" && route !== "visual" && !!S.world.clock && hasBoard();
+  // The drawing board: in front on the Workshop, behind every other page.
+  const onBoard = route !== "visual" && !!S.world.clock && hasBoard(), front = route === "workshop" || route === "board";
   $("#board").hidden = !onBoard;
   if (onBoard && boardFor !== S) { // laying the board out measures every drawing: only the Workshop waits for it
     boardFor = S;
     const laid = board.update(S);
-    if (route === "workshop" || route === "board") await laid;
+    if (front) await laid;
   }
   if (id !== renderId) return;
-  board.setBehind(route !== "workshop" && route !== "board");
+  board.setBehind(!front);
   if (onBoard && route === "board" && arg && location.hash !== shownHash) await board.show(lineage(arg), { half: query.has("half"), now: shownHash === null }); // #/board/<id>: open at a thing
   if (onBoard && route === "thing" && location.hash !== shownHash) board.show(lineage(arg));
-  document.body.classList.toggle("staged", onBoard || route === "room");
-  document.body.classList.toggle("in-room", route === "room" || ((route === "workshop" || route === "board") && onBoard)); // the stage is in front
+  document.body.classList.toggle("staged", onBoard);
+  document.body.classList.toggle("front", onBoard && front);
   const navigated = location.hash !== shownHash;
   if (navigated) scrolls[shownHash] = scrollY;
   main.innerHTML = html;
   if (route === "map" && mapToMount) mountMap(main.querySelector(".map-host"), mapToMount);
-  const back = camera?.from === location.hash && camera.to === shownHash ? camera.box : null; // came back out: zoom out
-  main.querySelectorAll("[data-slot]").forEach((host) => {
-    const [svg, o] = slots.get(host.dataset.slot) ?? [];
-    slots.delete(host.dataset.slot);
-    if (!svg) return;
-    mountScene(host, svg, { ...o, back: o.camera && back });
-    if (o.steps) stepper(host.parentElement.querySelector(":scope > .stepper"), svg);
-  });
-  ambience([...main.querySelectorAll(".scene-host")].flatMap((h) => [...(h.shadowRoot?.querySelectorAll("svg:not(.quiet) [data-sound]") ?? [])].map((e) => e.dataset.sound)));
+  if (route === "visual" && query.has("hotspots")) outline(main.querySelector(".bare-plate svg"));
   if (navigated && shownHash !== null && route !== "visual") main.classList.remove("arrive"), void main.offsetWidth, main.classList.add("arrive"); // a new page comes in (not the first, or a screenshot's)
   main.querySelectorAll("details[data-key]").forEach((d) => d.dataset.key in opened && (d.open = opened[d.dataset.key]));
   await Promise.all([...main.querySelectorAll("img")].map((img) => img.decode().catch(() => {})));
   await document.fonts.ready;
   if (id !== renderId) return;
   if (navigated) scrollTo(0, scrolls[location.hash] ?? 0);
-  if (navigated && query.get("who")) main.querySelector(`[data-who="${CSS.escape(query.get("who"))}"]`)?.scrollIntoView({ block: "center" });
   shownHash = location.hash;
   document.body.dataset.ready = "1";
 }
@@ -910,7 +700,7 @@ document.addEventListener("click", (e) => {
   showPlaces([place], label);
 });
 // Clicking the board around a page, or Escape, puts the page down; on the board, Escape steps back out.
-const putDown = () => (document.body.classList.contains("in-room") ? /^#\/(workshop|board)|^$/.test(location.hash) && board.up() : document.body.classList.contains("staged") && (location.hash = "#/workshop"));
+const putDown = () => (document.body.classList.contains("front") ? board.up() : document.body.classList.contains("staged") && (location.hash = "#/workshop"));
 $("#board").addEventListener("click", (e) => $("#board").classList.contains("behind") && (e.stopPropagation(), putDown()), true);
 addEventListener("keydown", (e) => e.key === "Escape" && (document.querySelector(".place-card:not([hidden])") ? closePlaces() : putDown()));
 

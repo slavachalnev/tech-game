@@ -1,26 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="Georgia, 'Times New Roman', serif">
-  <title>A room</title>
+  <title>A building, inside</title>
   <!--
-    Room template: a place the player can stand in. Copy it to visuals/room-<place-id>.svg and make it that place.
+    Site template, indoors: a building seen in cutaway with what is in it (the drawing of a structure or site
+    thing, e.g. the smithy). Copy it to visuals/<thing-id>.svg and make it that building.
     Scale: 1 m = 155 px, so a 9 m room fills the frame (x 110-1490 here). The back wall meets the floor at y=820:
       things against the wall stand on y=820, things out in the room on y 850-880. Eaves and tie-beam at 2.7 m
       (y 374-405). A person of 1.7 m is 264 px: the figure below is dm/drawing_parts.svg's part-person at scale 3.1
-      with strokes thinned to about 0.55. A smaller room can take a bigger scale; keep one scale per room.
+      with strokes thinned to about 0.55. A smaller building can take a bigger scale; keep one scale per drawing.
     Order: defs; the empty room (walls, floor, roof, tie-beam, door frame, window, lantern) under the room comment;
       then one top-level group per thing, each after a one-line comment naming it and where it stands; then
-      people; then ways to go; then the time-of-day groups last.
+      people; then the time-of-day groups last.
     Self-contained groups: each thing keeps its own transforms and uses only the shared defs, so deleting its
       group leaves no hole and no dangling reference. Nest a machine's big parts as data-thing groups inside it.
     Knockout: washes are see-through. Anything standing in front of something else starts with a paper-coloured
       copy of its outline (fill #f8f1e1, no stroke), one path per shape: shapes wound in opposite directions
       inside one path cancel and leave holes.
     States: a data-state group follows the nearest enclosing thing that has states, else the state of the
-      place's own thing. Time of day: data-sky="day", "dawn dusk" or "night", on any element.
+      building itself. Time of day: data-sky="day", "dawn dusk" or "night", on any element.
     Sound: data-sound="fire|engine|water|hammer|wind" on a group; it's heard only while that group shows, so put
       it on a state or sky group (a lit fire, a running engine), or on a small empty one: <g data-sky="day" data-sound="hammer"/>.
     Free space: keep some wall and floor clear for things yet to come, and say where in this comment.
       Here everything is free but the example table, the person, the door and the window.
-    Check: uv run tg shot room-<place-id> [ state night | dawn | dusk ] [ set <thing-id>=<state> ],
+    Check: uv run tg shot <thing-id> [ state night | dawn | dusk ] [ set <thing-id>=<state> ] [ hotspots ],
       with double dashes before state and set.
   -->
   <defs>
@@ -139,8 +140,8 @@
   </g>
 
   <!-- ways to go -->
-  <!-- door: to another room (#/room/<place-id>) or the map (#/map); the view through it changes with the time of day -->
-  <g data-go="#/map">
+  <!-- door: the view through it changes with the time of day -->
+  <g>
     <path d="M1150,575 H1330 V818 H1150 Z" fill="#8a7a62" fill-opacity="0.14"/>
     <g data-sky="day"><rect x="1150" y="510" width="180" height="65" fill="#f3dfa0" fill-opacity="0.55"/><rect x="1150" y="575" width="180" height="243" fill="#f3dfa0" fill-opacity="0.22"/></g>
     <g data-sky="dawn dusk"><rect x="1150" y="510" width="180" height="65" fill="url(#dusk-sky)"/><circle cx="1200" cy="570" r="10" fill="#e8a13a" fill-opacity="0.45"/></g>

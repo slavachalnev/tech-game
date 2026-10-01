@@ -215,12 +215,9 @@ def check_save(save):
         problems += [f"recipes/{rid}: unknown person {x!r}" for x in r.get("people", []) if x not in people]
         if "first_made" in r and r["first_made"] not in things:
             problems.append(f"recipes/{rid}: unknown first_made thing {r['first_made']!r}")
-    places = {p["id"] for p in (valid(save, save / "places.json") or {"places": []})["places"]}
     for svg in sorted((save / "visuals").glob("*.svg")):
         problems += [f"visuals/{svg.name}: marks unknown {kind} {mid!r}"
                      for kind, mid in sorted(set(marks(svg))) if mid not in (things if kind == "thing" else people)]
-        rooms = set(re.findall(r'data-go="#/room/([^"]+)"', svg.read_text())) | ({svg.stem[5:]} if svg.stem.startswith("room-") else set())
-        problems += [f"visuals/{svg.name}: no place {p!r} in places.json for a room" for p in sorted(rooms - places)]
     names = [p.stem for p in sorted((save / "log").glob("*.json"))]
     if names != [f"{i:04d}" for i in range(1, len(names) + 1)]:
         problems.append("log: turn files must be numbered 0001, 0002, 0003… without gaps")

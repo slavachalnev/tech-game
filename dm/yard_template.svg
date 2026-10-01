@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="Georgia, 'Times New Roman', serif">
   <title>Yard</title>
   <!--
-    Outdoor room template: copy to visuals/room-<place-id>.svg, retitle it, and replace the example shed,
+    Site template, outdoors: a yard or site seen from the side with what is in it (the drawing of a site thing,
+    e.g. a mine). Copy to visuals/<thing-id>.svg, retitle it, and replace the example shed,
     person and signpost (THING-ID, PERSON-ID, PLACE-ID are placeholders). Looking north unless you say otherwise.
-    Scale: 1 m = 36 px (a person 1.7 m = 61 px); keep it for every thing in the room.
+    Scale: 1 m = 36 px (a person 1.7 m = 61 px); keep it for every thing in the drawing.
     Projection: a shallow oblique. With x metres across (right = east), d metres back (away from you) and
     h metres up:   X = 800 + 36x + 4d,   Y = 700 - 7d - 36h.
     So a circle on the ground is a flat ellipse, and things further back sit a little higher and to the right.
@@ -112,8 +113,8 @@
     <!-- Heard while showing, e.g. a smith by day: a child group with data-sky day and data-sound hammer -->
   </g>
 
-  <!-- Ways to go: a signpost at the left edge to another room (or #/map, #/journal ...) -->
-  <g data-go="#/room/PLACE-ID">
+  <!-- A signpost at the left edge, naming where the track goes -->
+  <g>
     <path d="M154.8,649 L154.8,669 L26,669 L14,659 L26,649 Z" fill="#f8f1e1"/>
     <path d="M154.8,649 L154.8,669 L26,669 L14,659 L26,649 Z" fill="#9a7446" fill-opacity="0.25"/>
     <path d="M147.8,721 h6 v-76 h-6 Z" fill="#9a7446" fill-opacity="0.4"/>

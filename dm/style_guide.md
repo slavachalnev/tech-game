@@ -31,14 +31,14 @@ s.dim(c.at(-57, 0), c.at(-57, 250))
 s.save()
 ```
 
-A Pen draws `rect`, `circle`, `ellipse`, `poly`, `line`, `path` and `text`, places other parts with `part(fn, at, thing=...)`, and names points with `anchor`. Materials are `brass`, `copper`, `iron`, `lead`, `timber`, `leather`, `masonry`, `earth`, `water`, `steam`, `fire` and `paper` (to blank out); `cut=True` hatches a cut surface. Lines are `outline`, `detail`, `faint`, `hidden`, `centre` and `red`. A Sheet places parts with `place(fn, at, thing=...)`, draws loose geometry with `s.draw`, and takes `label`, `flaw`, `dim` and `note`.
+A Pen draws `rect`, `circle`, `ellipse`, `poly`, `line`, `path` and `text`, places other parts with `part(fn, at, thing=...)`, and names points with `anchor`. Materials are `brass`, `copper`, `iron`, `lead`, `timber`, `leather`, `masonry`, `earth`, `water`, `steam`, `fire` and `paper` (to blank out); `cut=True` hatches a cut surface. Lines are `outline`, `detail`, `faint`, `hidden`, `centre` and `red`. Draw back to front: a washed shape hides what's drawn before it, except `water`, `steam` and `fire`, which you see through. A Sheet places parts with `place(fn, at, thing=...)`, draws loose geometry with `s.draw`, and takes `label`, `flaw`, `dim` and `note`.
 
 ## What to draw
 
 - **A machine:** an elevation, or a section when the inside matters. Place each component as its own part with `thing="<id>"`, so the player can click through to it, and draw it open in place. Label what matters in plain modern words, put each flaw from the spec sheet where it is (`s.flaw`), and give the main dimensions.
 - **A component:** its own sheet places the same part function as the machine does, often `cut=True`, with its labels and dimensions.
 - **A project** (a machine being gathered and built): a general arrangement placing every part with `thing=`, including the parts not yet made, drawn as planned. The board draws parts not in hand as pale blueprint ghosts, so the drawing shows how the project stands; nothing needs redrawing as parts arrive. Mark what isn't settled yet in a `note`.
-- **A site** (the workshop, a mine yard): a cutaway or side view at true scale, placing every thing there with `thing=`, using the same part functions as the things' own drawings. People who work there are stock `person` figures, as illustration. A site grows with play: add or remove a placement as things come and go.
+- **A site** (the workshop, a mine yard): a cutaway or side view at true scale, placing every thing there with `thing=`, using the same part functions as the things' own drawings. People who work there are stock `person` figures, as illustration. Lay things side by side rather than one in front of another: on the board, a thing whose outline sits mostly inside another's looks like a part of it. A site grows with play: add or remove a placement as things come and go.
 - **Tools, materials and documents:** a simple still life with a label or two.
 - **Scenes** (`scene-<slug>`): the journal's illustrations of moments, with people. The kit and stock work for these too.
 

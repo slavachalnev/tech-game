@@ -38,6 +38,7 @@ WASH = {
     "water": ("#4f7390", 0.35), "steam": ("#9aa5a8", 0.3), "fire": ("#c0662b", 0.5), "paper": (PAPER, 1.0),
     "brick": ("#a8664a", 0.3),
 }  # a material can also be given as a (colour, opacity) pair
+SEE_THROUGH = {"water", "steam", "fire"}  # washes that show what's drawn behind them; the others hide it
 CUT = {"brass": "metal", "copper": "metal", "iron": "metal", "lead": "metal", "timber": "grain", "masonry": "stipple", "earth": "stipple", "brick": "stipple"}
 LINES = {  # (colour, width in px, dashes in px)
     "outline": (INK, 2.0, None), "detail": (INK, 1.2, None), "faint": (FADED, 0.9, None), "hidden": (FADED, 1.0, "6 4"),
@@ -114,6 +115,8 @@ class Pen:
         paint = f'fill="{wash}" fill-opacity="{num(opacity)}"' if material else f'fill="{fill or "none"}"'
         stroke = f' stroke="{colour}" stroke-width="{num(width)}" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"' if colour else ' stroke="none"'
         dashes = f' stroke-dasharray="{dash}"' if dash else ""
+        if material and material not in SEE_THROUGH and opacity < 1:  # paper under the wash: what's in front hides what's behind
+            self.out.append(f'<{tag} {attrs} fill="{PAPER}" stroke="none"/>')
         self.out.append(f"<{tag} {attrs} {paint}{stroke}{dashes}/>")
         if cut and material in CUT:
             self.out.append(f'<{tag} {attrs} fill="url(#{CUT[material]})" stroke="none"/>')

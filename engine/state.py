@@ -50,8 +50,8 @@ def new_save(scenario, name):
         raise SystemExit(f"No scenario {scenario!r}. There are: {', '.join(sorted(d.name for d in SCENARIOS.iterdir() if d.is_dir()))}")
     if dst.exists():
         raise SystemExit(f"{dst} already exists. Pick another --name.")
-    shutil.copytree(start, dst, ignore=shutil.ignore_patterns(".*"))
-    for sub in ("things", "people", "recipes", "log", "fermi", "visuals", "maps", "sketches"):
+    shutil.copytree(start, dst, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+    for sub in ("things", "people", "recipes", "log", "fermi", "drawings", "visuals", "maps", "sketches"):
         (dst / sub).mkdir(exist_ok=True)
     template = ROOT / "dm" / "save_template"
     (dst / "CLAUDE.md").write_text((template / "CLAUDE.md").read_text().replace("{scenario}", scenario))

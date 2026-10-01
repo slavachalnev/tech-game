@@ -1,81 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
-  <defs>
-    <filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="8"/>
-      <feDisplacementMap in="SourceGraphic" scale="2"/>
-    </filter>
-    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="6" stroke="#7a6a55" stroke-width="0.7"/>
-    </pattern>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
-    </marker>
-    <marker id="red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#9c3b25" stroke-width="1.2"/>
-    </marker>
-  </defs>
-
-  <!-- The bundle, shortened -->
-  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M30,190 H770" stroke="#7a6a55" stroke-width="1"/>
-    <path d="M130,169 H170 V190 H130 Z M600,169 H640 V190 H600 Z" fill="#9a7446" fill-opacity="0.35" stroke-width="1.6"/>
-    <path d="M42,120 L40,127 L44,134 L41,141 L43,148 L39,155 L42,162 L40,169 H388 Q382,156 390,145 Q396,132 388,120 Z M412,120 Q420,132 414,145 Q406,156 412,169 H758 L760,162 L756,155 L759,148 L757,141 L760,134 L756,127 L758,120 Z" fill="#56514b" fill-opacity="0.35"/>
-    <path d="M44,127 H388 M412,127 H756 M44,134 H388 M412,134 H756 M44,141 H388 M412,141 H756 M44,148 H388 M412,148 H756 M44,155 H388 M412,155 H756 M44,162 H388 M412,162 H756" stroke-width="1"/>
-    <path d="M118,115 V174 M122,115 V174 M298,115 V174 M302,115 V174 M518,115 V174 M522,115 V174 M688,115 V174 M692,115 V174" stroke-width="1.3"/>
-    <path d="M120,115 q-4,-8 3,-10 M300,115 q-4,-8 3,-10 M520,115 q-4,-8 3,-10 M690,115 q-4,-8 3,-10" stroke-width="1.2"/>
-  </g>
-
-  <!-- Section and edge of one bar (5 px = 1 mm) -->
-  <rect x="80" y="300" width="190" height="65" fill="url(#hatch)"/>
-  <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="80" y="300" width="190" height="65"/>
-    <path d="M384,300 H736 Q742,316 734,332 Q728,350 736,365 H384 Q378,350 386,332 Q392,316 384,300 Z" fill="#56514b" fill-opacity="0.25"/>
-    <path d="M392,308 q56,-2 112,0 t112,0 t112,0 M392,316 q56,2 112,0 t112,0 t112,0 M392,325 q56,-2 112,0 t112,0 t112,0 M392,334 q56,2 112,0 t112,0 t112,0 M392,343 q56,-1.5 112,0 t112,0 t112,0 M392,352 q56,2 112,0 t112,0 t112,0 M392,360 q56,-1 112,0 t112,0 t112,0" stroke="#7a6a55" stroke-width="0.8"/>
-  </g>
-  <g fill="#9c3b25" fill-opacity="0.6">
-    <ellipse cx="112" cy="318" rx="5" ry="1.6"/><ellipse cx="164" cy="341" rx="7" ry="1.8"/><ellipse cx="222" cy="322" rx="4" ry="1.4"/><ellipse cx="246" cy="351" rx="6" ry="1.6"/>
-    <path d="M420,321 q40,-4 80,0 q-40,4 -80,0 Z M540,341 q60,-4 120,0 q-60,4 -120,0 Z M600,317 q25,-3 50,0 q-25,3 -50,0 Z M450,352 q30,-3 60,0 q-30,3 -60,0 Z"/>
-  </g>
-
-  <!-- Dimensions -->
-  <g stroke="#7a6a55" stroke-width="0.8" fill="none">
-    <path d="M40,116 V86 M760,116 V86 M392,96 L396,86 L404,98 L408,88"/>
-    <line x1="42" y1="92" x2="392" y2="92" marker-start="url(#arrow)"/>
-    <line x1="408" y1="92" x2="758" y2="92" marker-end="url(#arrow)"/>
-    <path d="M80,370 V392 M270,370 V392 M76,300 H52 M76,365 H52"/>
-    <line x1="82" y1="386" x2="268" y2="386" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-    <line x1="58" y1="302" x2="58" y2="363" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-    <path d="M276,300 H378 M276,365 H378" stroke-dasharray="3 3"/>
-  </g>
-  <path d="M470,392 L476,356" fill="none" stroke="#9c3b25" stroke-width="0.8" marker-end="url(#red)"/>
-
-  <!-- Labels -->
-  <g fill="#2b2118" font-style="italic" font-size="14">
-    <text x="400" y="80" text-anchor="middle">3.7 m</text>
-    <text x="40" y="218">Wrought-iron flat bar, 38 × 13 mm, bundled with wire</text>
-    <text x="40" y="236">100 kg in all: about 7 bars</text>
-    <text x="80" y="284" font-size="15">Section of one bar</text>
-    <text x="384" y="284" font-size="15">Edge of the bar</text>
-    <text x="175" y="404" text-anchor="middle">38 mm</text>
-    <text x="50" y="338" text-anchor="end">13 mm</text>
-  </g>
-  <g fill="#9c3b25" font-style="italic" font-size="13">
-    <text x="440" y="406">streaks of slag along the grain:</text>
-    <text x="440" y="422">ordinary merchant bar</text>
-  </g>
-
-  <!-- Scale bar for the section and edge -->
-  <g stroke="#2b2118" stroke-width="0.8">
-    <rect x="80" y="440" width="50" height="6" fill="#7a6a55" fill-opacity="0.5"/>
-    <rect x="130" y="440" width="50" height="6" fill="none"/>
-  </g>
-  <g fill="#2b2118" font-style="italic" font-size="12" text-anchor="middle">
-    <text x="80" y="462">0</text><text x="130" y="462">10</text><text x="180" y="462">20 mm</text>
-  </g>
-
-  <!-- Cartouche -->
-  <g fill="#2b2118">
-    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Bar Iron</text>
-    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Bundle shortened, not to scale · section and edge enlarged</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520" font-family="Georgia, 'Times New Roman', serif">
+<title>Bar iron</title>
+<!-- Made with the drawing kit from drawings/bar-iron.py: edit that and run uv run tg draw bar-iron. -->
+<defs><filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="1600" height="520"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2"/></filter><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/></marker><pattern id="metal" width="22.47" height="22.47" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="22.47" stroke="#7a6a55" stroke-width="2.621"/></pattern><pattern id="grain" width="29.96" height="18.725" patternUnits="userSpaceOnUse"><path d="M0,14.98 Q7.49,0 14.98,9.363 T29.96,3.745" fill="none" stroke="#7a6a55" stroke-width="2.247"/></pattern><pattern id="stipple" width="33.705" height="33.705" patternUnits="userSpaceOnUse"><circle cx="7.49" cy="11.235" r="2.621" fill="#7a6a55"/><circle cx="24.343" cy="26.215" r="2.247" fill="#7a6a55"/></pattern></defs>
+<g data-object="" filter="url(#ink)"><g transform="matrix(0.267 0 0 -0.267 799.332 246.155)"><g transform="translate(0 0)"><rect x="-1850" y="0" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1850" y="0" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-1832" y="13" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1832" y="13" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-1862" y="26" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1862" y="26" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-1825" y="39" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1825" y="39" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-1870" y="52" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1870" y="52" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-1842" y="65" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1842" y="65" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-1855" y="78" width="3700" height="13" fill="#f8f1e1" stroke="none"/><rect x="-1855" y="78" width="3700" height="13" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="-900" cy="32" rx="130" ry="2.2" fill="#f8f1e1" stroke="none"/><ellipse cx="-900" cy="32" rx="130" ry="2.2" fill="#9c3b25" fill-opacity="0.55" stroke="none"/><ellipse cx="-200" cy="33" rx="90" ry="2.2" fill="#f8f1e1" stroke="none"/><ellipse cx="-200" cy="33" rx="90" ry="2.2" fill="#9c3b25" fill-opacity="0.55" stroke="none"/><ellipse cx="600" cy="19" rx="160" ry="2.2" fill="#f8f1e1" stroke="none"/><ellipse cx="600" cy="19" rx="160" ry="2.2" fill="#9c3b25" fill-opacity="0.55" stroke="none"/><ellipse cx="1200" cy="58" rx="100" ry="2.2" fill="#f8f1e1" stroke="none"/><ellipse cx="1200" cy="58" rx="100" ry="2.2" fill="#9c3b25" fill-opacity="0.55" stroke="none"/><ellipse cx="-1400" cy="71" rx="75" ry="2.2" fill="#f8f1e1" stroke="none"/><ellipse cx="-1400" cy="71" rx="75" ry="2.2" fill="#9c3b25" fill-opacity="0.55" stroke="none"/><rect x="-1354" y="-3" width="8" height="97" fill="#f8f1e1" stroke="none"/><rect x="-1354" y="-3" width="8" height="97" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><path d="M-1350,94 q14,22 -6,30" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="-454" y="-3" width="8" height="97" fill="#f8f1e1" stroke="none"/><rect x="-454" y="-3" width="8" height="97" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><path d="M-450,94 q14,22 -6,30" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="446" y="-3" width="8" height="97" fill="#f8f1e1" stroke="none"/><rect x="446" y="-3" width="8" height="97" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><path d="M450,94 q14,22 -6,30" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><rect x="1346" y="-3" width="8" height="97" fill="#f8f1e1" stroke="none"/><rect x="1346" y="-3" width="8" height="97" fill="#56514b" fill-opacity="0.3" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><path d="M1350,94 q14,22 -6,30" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></g></g></g>
+<g><circle cx="959.546" cy="241.081" r="11" fill="none" stroke="#9c3b25" stroke-width="1.2" stroke-dasharray="3 2"/></g>
+<g><g stroke="#7a6a55" stroke-width="0.8" fill="none"><line x1="305.34" y1="250.155" x2="305.34" y2="282.155"/><line x1="1293.324" y1="250.155" x2="1293.324" y2="282.155"/><line x1="305.34" y1="276.155" x2="1293.324" y2="276.155" marker-start="url(#arrow)" marker-end="url(#arrow)"/></g><text x="799.332" y="285.155" dy="4" font-size="12" font-style="italic" text-anchor="middle" fill="#7a6a55" transform="rotate(0 799.332 285.155)">3.7 m</text></g>
+<g><text x="272" y="223.139" font-size="13" font-style="italic" text-anchor="end" fill="#2b2118"><tspan x="272" dy="0">seven wrought-iron flat</tspan><tspan x="272" dy="15">bars, 38 by 13 mm, 100 kg in</tspan><tspan x="272" dy="15">all, from a Bristol merchant</tspan></text><polyline points="278,234.139 290,234.139 305.34,234.139" fill="none" stroke="#2b2118" stroke-width="0.7" opacity="0.85"/><circle cx="305.34" cy="234.139" r="1.8" fill="#2b2118"/><text x="1328" y="225.055" font-size="13" font-style="italic" text-anchor="start" fill="#2b2118"><tspan x="1328" dy="0">bound with wire</tspan></text><polyline points="1322,221.055 1310,221.055 919.493,221.055" fill="none" stroke="#2b2118" stroke-width="0.7" opacity="0.85"/><circle cx="919.493" cy="221.055" r="1.8" fill="#2b2118"/><text x="1328" y="247.055" font-size="13" font-style="italic" text-anchor="start" fill="#9c3b25"><tspan x="1328" dy="0">streaks of slag along the</tspan><tspan x="1328" dy="15">grain: ordinary merchant bar</tspan></text><polyline points="1322,250.555 1310,250.555 959.546,241.081" fill="none" stroke="#9c3b25" stroke-width="0.7" opacity="0.85"/><circle cx="959.546" cy="241.081" r="1.8" fill="#9c3b25"/></g>
+<g><rect x="60" y="468" width="33.378" height="6" fill="#2b2118" stroke="#2b2118" stroke-width="0.8"/><rect x="93.378" y="468" width="33.378" height="6" fill="#f8f1e1" stroke="#2b2118" stroke-width="0.8"/><rect x="126.756" y="468" width="33.378" height="6" fill="#2b2118" stroke="#2b2118" stroke-width="0.8"/><rect x="160.134" y="468" width="33.378" height="6" fill="#f8f1e1" stroke="#2b2118" stroke-width="0.8"/><text x="60" y="490" font-size="12" text-anchor="middle" fill="#7a6a55">0</text><text x="126.756" y="490" font-size="12" text-anchor="middle" fill="#7a6a55">25</text><text x="193.511" y="490" font-size="12" text-anchor="middle" fill="#7a6a55">50 cm</text><text x="1550" y="456" font-size="22" font-variant="small-caps" text-anchor="end" fill="#2b2118">Bar iron</text><text x="1550" y="478" font-size="13" font-style="italic" text-anchor="end" fill="#7a6a55">The bundle from the side · to scale</text></g>
 </svg>

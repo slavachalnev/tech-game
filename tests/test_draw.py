@@ -70,7 +70,7 @@ def test_wrap_keeps_lines_short():
 
 def test_tg_draw_runs_the_save_drawing_scripts_and_checks_them(save, monkeypatch, capsys):  # noqa: F811
     folder = save / "drawings"
-    folder.mkdir()
+    folder.mkdir(exist_ok=True)
     (folder / "parts.py").write_text("def box(p):\n    p.rect(0, 0, 100, 50, 'brass')\n")
     (folder / "anvil.py").write_text("from engine.draw import Sheet\nfrom parts import box\ns = Sheet('anvil', 'Anvil')\ns.place(box)\ns.save()\n")
     (folder / "broken.py").write_text("raise ValueError('no such part')\n")

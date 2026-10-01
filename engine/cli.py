@@ -137,7 +137,7 @@ def cmd_draw(args):
     save = state.find_save(args.save)
     folder = save / "drawings"
     scripts = [folder / f"{i}.py" for i in args.ids] or sorted(p for p in folder.glob("*.py") if p.stem != "parts" and not p.stem.startswith("_"))
-    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(folder), str(state.ROOT)])}
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(folder), str(state.ROOT)]), "PYTHONDONTWRITEBYTECODE": "1"}  # no __pycache__ in the save
     failed = False
     for script in scripts:
         if not script.is_file():

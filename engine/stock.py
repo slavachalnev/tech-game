@@ -53,15 +53,75 @@ def person(p, height=1700, pose="stand", hat="tricorn", facing="right"):
 
 
 def horse(p, facing="right"):
-    """A working horse, about 1.5 m at the withers. Origin: on the ground under its middle."""
+    """A working horse in its collar, about 1.5 m at the withers and 2.4 m nose to tail. Origin: on the ground under
+    its middle. Anchors: back (the top of its back), collar (where traces or a sweep are hitched), head."""
     f = 1 if facing == "right" else -1
     P = lambda pts: [(x * f, y) for x, y in pts]  # noqa: E731
-    p.poly(P([(-800, 900), (500, 950), (700, 1350), (1000, 1600), (1200, 1450), (1150, 1350), (900, 1300), (750, 1050), (650, 800), (-750, 750), (-950, 950), (-1100, 800)]), "timber")
-    for lx in (-650, -450, 350, 550):
-        p.poly(P([(lx - 50, 800), (lx + 50, 800), (lx + 40, 60), (lx - 40, 60)]), "timber", line="detail")
-        p.rect(lx * f - 50, 0, 100, 60, "iron", line="detail")
-    p.poly(P([(1000, 1600), (900, 1720), (980, 1650)]), closed=False, line="detail")  # an ear
-    p.anchor("back", -100, 980)
+
+    def leg(x, hind, material, line):
+        if hind:  # thigh, hock and cannon, the hoof at x
+            pts = [(-100, 980), (95, 930), (60, 560), (25, 140), (45, 60), (70, 0), (-60, 0), (-45, 90), (-50, 470), (-110, 560), (-150, 820)]
+        else:  # forearm, knee and cannon
+            pts = [(-60, 960), (80, 930), (70, 540), (55, 140), (75, 60), (100, 0), (-30, 0), (-15, 80), (-20, 500), (-45, 560), (-70, 800)]
+        p.poly(P([(x + a, b) for a, b in pts]), material, line=line)
+
+    for x, hind in ((-520, True), (330, False)):  # the far legs, a stride apart from the near ones
+        leg(x, hind, "leather", "detail")
+    p.poly(P([(-850, 1400), (-990, 1150), (-940, 760), (-880, 800), (-860, 1150), (-780, 1430)]), "leather", line="detail")  # tail
+    body = [(600, 1050), (700, 1330), (850, 1610), (990, 1530), (1230, 1250), (1290, 1240), (1310, 1320), (1250, 1460),
+            (1130, 1690), (1020, 1820), (1005, 1940), (955, 1840), (820, 1790), (560, 1650), (330, 1550), (100, 1470),
+            (-200, 1460), (-560, 1530), (-780, 1470), (-840, 1250), (-790, 1000), (-640, 850), (-450, 820), (-50, 770),
+            (380, 830), (520, 900)]
+    p.poly(P(body), "timber")
+    p.poly(P([(955, 1840), (820, 1790), (560, 1650), (330, 1550), (400, 1620), (600, 1730), (880, 1860)]), "leather", line="detail")  # mane
+    for x, hind in ((-660, True), (450, False)):  # the near legs
+        leg(x, hind, "timber", "outline")
+    p.poly(P([(610, 1010), (720, 1060), (480, 1660), (380, 1610)]), "leather", line="detail")  # collar
+    p.circle(1090 * f, 1660, 18, "iron", line="detail")  # eye
+    p.anchor("back", -100 * f, 1455)
+    p.anchor("collar", 560 * f, 1330)
+    p.anchor("head", 1120 * f, 1550)
+
+
+def whim(p, radius=3000, drum=1100, walking=True, seconds=24):
+    """A horse whim (a horse gin), seen side on: a horse walking round a tall timber spindle under a big drum, which
+    winds a rope or drives an endless one. Origin: the foot of the spindle. radius: the horse's circle. walking: the
+    horse goes round once every `seconds` (seen side on, it walks to and fro), else it stands on the near side.
+    Anchors: left and right, the drum's edges at its middle height; top and bottom, the middle of its top and foot."""
+    top = 4700
+    for sx in (-1, 1):  # the frame's two legs, splayed fore and aft of the spindle
+        p.poly([(sx * 650, 0), (sx * 800, 0), (sx * 230, top - 170), (sx * 110, top - 170)], "timber", line="detail")
+    p.rect(-130, 0, 260, top, "timber")  # the spindle
+    p.rect(-520, top - 190, 1040, 210, "timber")  # the cap beam, with the top bearing
+    p.rect(-drum, 2560, 2 * drum, 880, "timber")  # the drum, with its flanges
+    for fy in (2480, 3440):
+        p.rect(-drum - 70, fy, 2 * drum + 140, 80, "timber", line="detail")
+    with p.fine(drum / 6):
+        for i in range(1, 8):
+            p.line(-drum + 2 * drum * i / 8, 2560, -drum + 2 * drum * i / 8, 3440, "faint")
+
+    def sweep(q):  # the sweep arm, hitched to the horse's collar, with its brace
+        q.poly([(0, 2380), (radius, 1300)], closed=False, line="outline")
+        q.poly([(0, 1500), (radius * 0.55, 1300 + 1080 * 0.45)], closed=False, line="detail")
+
+    ease = 'keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"'
+    times = f'dur="{seconds}s" repeatCount="indefinite"'
+    if walking:  # seen side on, going round is going to and fro, facing the way it walks
+        p._reach((-radius - 1300, 0), (radius + 1300, 1900))
+        with p._group("", f'<animateTransform attributeName="transform" type="scale" values="1 1;-1 1;1 1" {ease} {times}/>'):
+            sweep(p)
+        with p.slide(-2 * radius, 0, seconds):
+            with p._group("", f'<animate attributeName="opacity" values="1;0;1" keyTimes="0;0.5;1" calcMode="discrete" {times}/>'):
+                p.part(horse, at=(radius, 0), facing="left")
+            with p._group("", f'<animate attributeName="opacity" values="0;1;0" keyTimes="0;0.5;1" calcMode="discrete" {times}/>'):
+                p.part(horse, at=(radius, 0))
+    else:
+        sweep(p)
+        p.part(horse, at=(radius, 0))
+    p.anchor("left", -drum, 3000)
+    p.anchor("right", drum, 3000)
+    p.anchor("top", 0, top)
+    p.anchor("bottom", 0, 0)
 
 
 # ---------- the workshop
@@ -102,10 +162,11 @@ def bench(p, length=1800, height=850):
 
 
 def shelf(p, length=1200):
-    """A plank shelf on two iron brackets, against a wall. Origin: the middle of its top surface."""
+    """A plank shelf on two iron brackets, against a wall, seen from the front. Origin: the middle of its top surface."""
+    for bx in (-length / 2 + min(120, length / 5), length / 2 - min(120, length / 5) - 20):
+        p.rect(bx, -230, 20, 195, "iron", line="detail")
+        p.circle(bx + 10, -200, 4, "iron", line="detail")  # its screw
     p.rect(-length / 2, -35, length, 35, "timber")
-    for bx in (-length / 2 + 120, length / 2 - 120):
-        p.poly([(bx, -35), (bx, -230), (bx + 20, -230), (bx + 20, -60), (bx + 180, -35)], "iron", line="detail")
     p.anchor("top", 0, 0)
 
 
@@ -334,8 +395,10 @@ def night(p, x0, y0, x1, y1, lights=()):
         p.raw(f'<defs><radialGradient id="{mid}-fade"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'
               f'<radialGradient id="{mid}-warm"><stop offset="0" stop-color="#e8a24a" stop-opacity="0.45"/><stop offset="1" stop-color="#e8a24a" stop-opacity="0"/></radialGradient>'
               f'<mask id="{mid}" maskUnits="userSpaceOnUse" x="{num(x0)}" y="{num(y0)}" width="{num(x1 - x0)}" height="{num(y1 - y0)}">'
-              f'<rect x="{num(x0)}" y="{num(y0)}" width="{num(x1 - x0)}" height="{num(y1 - y0)}" fill="#fff"/>{holes}</mask></defs>'
-              f'<rect x="{num(x0)}" y="{num(y0)}" width="{num(x1 - x0)}" height="{num(y1 - y0)}" fill="#1c1610" fill-opacity="0.55" mask="url(#{mid})"/>{glows}')
+              f'<rect x="{num(x0)}" y="{num(y0)}" width="{num(x1 - x0)}" height="{num(y1 - y0)}" fill="#fff"/>{holes}</mask>'
+              f'<clipPath id="{mid}-area"><rect x="{num(x0)}" y="{num(y0)}" width="{num(x1 - x0)}" height="{num(y1 - y0)}"/></clipPath></defs>'
+              f'<rect x="{num(x0)}" y="{num(y0)}" width="{num(x1 - x0)}" height="{num(y1 - y0)}" fill="#1c1610" fill-opacity="0.55" mask="url(#{mid})"/>'
+              f'<g clip-path="url(#{mid}-area)">{glows}</g>')
 
 
 def rain(p, x0, x1, y0, y1):

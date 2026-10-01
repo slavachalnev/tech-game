@@ -1,62 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="Georgia, 'Times New Roman', serif">
-  <defs>
-    <filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="2"/>
-      <feDisplacementMap in="SourceGraphic" scale="2"/>
-    </filter>
-    <!-- chain lines of laid paper -->
-    <pattern id="laid" width="26" height="10" patternUnits="userSpaceOnUse">
-      <line x1="13" y1="0" x2="13" y2="10" stroke="#7a6a55" stroke-width="0.6" stroke-opacity="0.3"/>
-    </pattern>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
-    </marker>
-  </defs>
-
-  <!-- Address side -->
-  <g transform="rotate(-3 210 260)">
-    <g filter="url(#ink)" stroke="#2b2118" stroke-linejoin="round">
-      <rect x="45" y="155" width="340" height="220" fill="none" stroke="#7a6a55" stroke-width="1.2"/>
-      <rect x="40" y="150" width="340" height="220" fill="#f8f1e1" stroke-width="2"/>
-      <rect x="40" y="150" width="340" height="220" fill="url(#laid)" stroke="none"/>
-      <path d="M160,318 q40,8 80,-2 t70,4" fill="none" stroke-width="1"/>
-    </g>
-    <g fill="#2b2118" font-style="italic" font-size="23">
-      <text x="64" y="222">To Mr Nicholas Penrose,</text>
-      <text x="80" y="262">Treasurer of Wheal Fortune,</text>
-      <text x="168" y="302">at Redruth</text>
-    </g>
-  </g>
-
-  <!-- Seal side -->
-  <g transform="rotate(4 600 265)">
-    <g filter="url(#ink)" stroke="#2b2118" stroke-linejoin="round" fill="none">
-      <rect x="435" y="160" width="340" height="220" stroke="#7a6a55" stroke-width="1.2"/>
-      <rect x="430" y="155" width="340" height="220" fill="#f8f1e1" stroke-width="2"/>
-      <rect x="430" y="155" width="340" height="220" fill="url(#laid)" stroke="none"/>
-      <path d="M430,188 H578 M430,342 H578" stroke="#7a6a55" stroke-width="0.8"/>
-      <path d="M600,155 L566,265 L600,375" stroke-width="1.4"/>
-      <path d="M606,162 L574,265 L606,368" stroke="#7a6a55" stroke-width="0.6"/>
-      <!-- wax seal -->
-      <path d="M572,238 Q590,234 598,246 Q610,252 604,268 Q608,286 590,290 Q576,298 564,286 Q548,280 552,264 Q548,244 572,238 Z" fill="#9c3b25" fill-opacity="0.5" stroke-width="1.3"/>
-      <circle cx="578" cy="265" r="15" stroke-width="1"/>
-      <path d="M570,256 H586 V266 Q586,276 578,280 Q570,276 570,266 Z" stroke-width="1"/>
-    </g>
-  </g>
-
-  <path d="M640,122 L592,236" fill="none" stroke="#7a6a55" stroke-width="0.8" marker-end="url(#arrow)"/>
-
-  <!-- Labels -->
-  <g fill="#2b2118" font-style="italic" font-size="14">
-    <text x="600" y="116">Wax seal, unbroken</text>
-    <text x="210" y="420" text-anchor="middle">Address side</text>
-    <text x="600" y="428" text-anchor="middle">Seal side: folded and sealed, no envelope</text>
-    <text x="600" y="446" text-anchor="middle" font-size="13">Written and sealed by a Truro lawyer who owes you a favour</text>
-  </g>
-
-  <!-- Cartouche -->
-  <g fill="#2b2118">
-    <text x="780" y="568" text-anchor="end" font-size="21" font-variant="small-caps">Letter of Introduction</text>
-    <text x="780" y="588" text-anchor="end" font-size="13" font-style="italic">Both sides of the folded letter · not to scale</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" font-family="Georgia, 'Times New Roman', serif">
+<title>Letter of introduction</title>
+<!-- Made with the drawing kit from drawings/letter-of-introduction.py: edit that and run uv run tg draw letter-of-introduction. -->
+<defs><filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="1600" height="1200"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2"/></filter><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9" fill="none" stroke="#7a6a55" stroke-width="1.2"/></marker><pattern id="metal" width="2.16" height="2.16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="2.16" stroke="#7a6a55" stroke-width="0.252"/></pattern><pattern id="grain" width="2.88" height="1.8" patternUnits="userSpaceOnUse"><path d="M0,1.44 Q0.72,0 1.44,0.9 T2.88,0.36" fill="none" stroke="#7a6a55" stroke-width="0.216"/></pattern><pattern id="stipple" width="3.24" height="3.24" patternUnits="userSpaceOnUse"><circle cx="0.72" cy="1.08" r="0.252" fill="#7a6a55"/><circle cx="2.34" cy="2.52" r="0.216" fill="#7a6a55"/></pattern></defs>
+<g data-object="" filter="url(#ink)"><g transform="matrix(2.778 0 0 -2.778 300 689.833)"><g transform="translate(0 0)"><rect x="0" y="0" width="160" height="105" fill="#f8f1e1" stroke="none"/><rect x="0" y="0" width="160" height="105" fill="#f3e7c6" fill-opacity="0.9" stroke="#2b2118" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="12,2 12,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="36,2 36,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="60,2 60,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="84,2 84,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="108,2 108,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="132,2 132,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="156,2 156,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><path d="M44,26 Q80,20 118,28" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></g><g transform="translate(200 0)"><rect x="0" y="0" width="160" height="105" fill="#f8f1e1" stroke="none"/><rect x="0" y="0" width="160" height="105" fill="#f3e7c6" fill-opacity="0.9" stroke="#2b2118" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="12,2 12,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="36,2 36,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="60,2 60,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="84,2 84,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="108,2 108,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="132,2 132,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="156,2 156,103" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="0,78 96,70 160,74" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="0,26 88,32 160,28" fill="none" stroke="#7a6a55" stroke-width="0.9" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><polyline points="70,105 88,32 104,0" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><circle cx="92" cy="52" r="15" fill="#f8f1e1" stroke="none"/><circle cx="92" cy="52" r="15" fill="#9c3b25" fill-opacity="0.55" stroke="#2b2118" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><circle cx="92" cy="52" r="9" fill="#f8f1e1" stroke="none"/><circle cx="92" cy="52" r="9" fill="#9c3b25" fill-opacity="0.35" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/><path d="M88,57 L96,57 L96,50 Q92,44 88,50 Z" fill="none" stroke="#2b2118" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></g></g></g>
+<g><text x="333.333" y="484.278" font-size="19" text-anchor="start" font-style="italic" fill="#2b2118">To Mr Nicholas Penrose,</text><text x="366.667" y="539.833" font-size="19" text-anchor="start" font-style="italic" fill="#2b2118">Treasurer of Wheal Fortune,</text><text x="438.889" y="595.389" font-size="19" text-anchor="start" font-style="italic" fill="#2b2118">at Redruth</text></g>
+<g><g stroke="#7a6a55" stroke-width="0.8" fill="none"><line x1="855.556" y1="693.833" x2="855.556" y2="716.233"/><line x1="1300" y1="693.833" x2="1300" y2="716.233"/><line x1="855.556" y1="711.833" x2="1300" y2="711.833" marker-start="url(#arrow)" marker-end="url(#arrow)"/></g><text x="1077.778" y="720.833" dy="4" font-size="12" font-style="italic" text-anchor="middle" fill="#7a6a55" transform="rotate(0 1077.778 720.833)">16 cm</text></g>
+<g><text x="272" y="654.944" font-size="13" font-style="italic" text-anchor="end" fill="#2b2118"><tspan x="272" dy="0">the address side</tspan></text><polyline points="278,650.944 290,650.944 333.333,650.944" fill="none" stroke="#2b2118" stroke-width="0.7" opacity="0.85"/><circle cx="333.333" cy="650.944" r="1.8" fill="#2b2118"/><text x="1328" y="472.444" font-size="13" font-style="italic" text-anchor="start" fill="#2b2118"><tspan x="1328" dy="0">folded and sealed, no</tspan><tspan x="1328" dy="15">envelope</tspan></text><polyline points="1322,475.944 1310,475.944 938.889,475.944" fill="none" stroke="#2b2118" stroke-width="0.7" opacity="0.85"/><circle cx="938.889" cy="475.944" r="1.8" fill="#2b2118"/><text x="1328" y="532.722" font-size="13" font-style="italic" text-anchor="start" fill="#2b2118"><tspan x="1328" dy="0">wax seal, unbroken</tspan></text><polyline points="1322,528.722 1310,528.722 1133.333,528.722" fill="none" stroke="#2b2118" stroke-width="0.7" opacity="0.85"/><circle cx="1133.333" cy="528.722" r="1.8" fill="#2b2118"/></g>
+<g><text x="60" y="1038" font-size="16" font-variant="small-caps" fill="#7a6a55">From</text><text x="60" y="1058" font-size="13" font-style="italic" fill="#2b2118"><tspan x="60" dy="0">A Truro lawyer who owes you a favor wrote and sealed it.</tspan></text><rect x="60" y="1148" width="34.722" height="6" fill="#2b2118" stroke="#2b2118" stroke-width="0.8"/><rect x="94.722" y="1148" width="34.722" height="6" fill="#f8f1e1" stroke="#2b2118" stroke-width="0.8"/><rect x="129.444" y="1148" width="34.722" height="6" fill="#2b2118" stroke="#2b2118" stroke-width="0.8"/><rect x="164.167" y="1148" width="34.722" height="6" fill="#f8f1e1" stroke="#2b2118" stroke-width="0.8"/><text x="60" y="1170" font-size="12" text-anchor="middle" fill="#7a6a55">0</text><text x="129.444" y="1170" font-size="12" text-anchor="middle" fill="#7a6a55">2.5</text><text x="198.889" y="1170" font-size="12" text-anchor="middle" fill="#7a6a55">5 cm</text><text x="1550" y="1136" font-size="22" font-variant="small-caps" text-anchor="end" fill="#2b2118">Letter of introduction</text><text x="1550" y="1158" font-size="13" font-style="italic" text-anchor="end" fill="#7a6a55">Both sides of the folded letter · to scale</text></g>
 </svg>

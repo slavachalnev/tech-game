@@ -40,9 +40,6 @@ def full_save(tmp_path_factory):
     save = state.new_save("cornwall-1705", "view")
     state.SAVES = old
     (save / "visuals/scene-yard.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><text x="10" y="20">Yard</text></svg>')
-    smithy = (save / "visuals/smithy.svg").read_text()
-    (save / "visuals/smithy.svg").write_text(smithy.replace("</svg>", '<g data-layer="hotspots"><rect data-thing="forge" x="300" y="250" width="200" height="300" fill="none"/>'
-                                                            '<rect data-thing="anvil" x="600" y="430" width="140" height="110" fill="none"/></g></svg>'))
     state.write_json(save / "stores.json", {"items": [{"name": "Scrap brass", "quantity": 20, "unit": "kg"}]})
     state.write_json(save / "recipes/hoops.json", {
         "id": "hoops", "name": "Forge iron hoops", "makes": "hoops", "how": "bend and weld", "tools": ["anvil"],
@@ -83,7 +80,7 @@ def test_the_workshop_is_a_drawing_board_of_machines_and_their_parts(browser, fu
     box = page.evaluate("(() => { const r = document.querySelector('.plate[data-id=smithy] image').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
     page.mouse.click(*box)
     page.wait_for_function("document.querySelector('.board-panel h3')?.textContent === 'The smithy'", timeout=5000)
-    assert page.locator(".board-overlay .balloon").count() == 2  # its forge and anvil, marked in the drawing
+    assert page.locator(".board-overlay .balloon").count() == 7  # its forge and anvil, and the five other things in it
     assert "Hearth and bellows" in page.inner_text(".bom")
     page.locator(".balloon[data-id=anvil]").dispatch_event("click")  # the anvil's own drawing opens in place
     page.wait_for_function("document.querySelector('.board-trail').textContent.includes('Anvil')", timeout=5000)

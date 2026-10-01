@@ -15,7 +15,7 @@ ElementTree.register_namespace("", "http://www.w3.org/2000/svg")
 # (function, its arguments as written in the call, the time of day to show)
 CALLS = [
     ("person", {}, None), ("person", {"pose": "work", "hat": "cap"}, None), ("person", {"pose": "carry", "facing": "left"}, None),
-    ("person", {"pose": "sit"}, None), ("horse", {}, None), ("barrel", {"water": 0.6}, None), ("bucket", {}, None),
+    ("person", {"pose": "sit"}, None), ("horse", {}, None), ("whim", {"walking": False}, None), ("barrel", {"water": 0.6}, None), ("bucket", {}, None),
     ("bench", {}, None), ("shelf", {}, None), ("ladder", {}, None), ("door", {}, None), ("door", {"open": True}, None),
     ("window", {}, None), ("masonry", {"x": 0, "y": 0, "w": 2400, "h": 1500}, None), ("ground", {"x0": 0, "x1": 3000, "kind": "grass"}, None),
     ("water", {"x0": 0, "x1": 2000, "level": 0, "depth": 600}, None), ("pipe", {"points": [(0, 0), (400, 0), (400, 300), (900, 300)]}, None),

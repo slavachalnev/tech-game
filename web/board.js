@@ -305,6 +305,7 @@ export function createBoard(host, h) {
     });
     detailsG.querySelectorAll(":scope > g").forEach((g) => keep.has(g.id) || g.remove());
     if (was !== focus) (hover = null), (selected = null), h.sounds(focus?.data.sounds ?? []); // what you'd hear there
+    if (!was !== !focus) h.desk(!focus); // your papers are out at the whole sheet, away in a drawing
     drawOverlay();
     if (focus !== was || panelKey !== `${focus?.key ?? ""}|${selected ?? ""}`) showPanel();
   }

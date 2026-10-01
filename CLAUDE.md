@@ -19,15 +19,19 @@ A time-travel invention game. A Claude Code session is the referee (DM), a local
 - **The `draw` subagent** (`.claude/agents/draw.md` in each save) makes every drawing in the background while the referee narrates. Running in the save, it loads the secret notes like the referee does; its instructions only keep them out of what the player sees. When it's done it adds the drawing to the turn's `visuals` and sets the thing's `visual`, so nothing points at a missing file meanwhile.
 - **Validation** (`engine/state.py`) works in two layers:
   - `check_file`: one file's schema, `id` matching the file name, well-formed SVG.
-  - `check_save`: adds cross-references between files (missing drawings, unknown components, tools or recipes, places not labelled on their maps). It feeds `tg validate`, `tg status` and the view's "State problems" banner.
+  - `check_save`: adds cross-references between files (missing drawings, unknown components, tools or recipes, places not labelled on their maps, drawings marking unknown things, people or rooms). It feeds `tg validate`, `tg status` and the view's "State problems" banner.
 
   `load_state` passes only valid records to the view.
 - **The view** (`web/`): `tg serve` streams a change event whenever a visible file in the save changes. The page refetches `/api/state` (`state.load_state`) and re-renders.
-  - Routes: `#/workshop`, `#/thing/<id>[?state=…]`, `#/capabilities`, `#/people`, `#/map[/<id>]`, `#/journal`, `#/sketch`, and `#/visual/<name>` (one drawing alone, for `tg shot`).
+  - Routes: `#/workshop` (the drawing board), `#/board/<id>[?half]` (the board opened at a thing), `#/room/<place-id>`, `#/thing/<id>[?state=…]`, `#/capabilities`, `#/people[?who=<id>]`, `#/map[/<id>]`, `#/journal`, `#/sketch`, and `#/visual/<name>[?state=…&step=…&hotspots&set=id=state,…]` (one drawing alone, for `tg shot`).
+  - **The drawing board** (`web/board.js`, the Workshop): every top-level drawing laid out in sections on one sheet, zoomed like a map (the root SVG's viewBox is the camera). Drawings are `<image>`s of prepared SVGs, measured once in a hidden sandbox for their `[data-object]` and `[data-thing]` outlines. A part with its own drawing opens in place: its drawing is fitted object-outline-to-part-outline and grows out of a clipping circle as it fills the screen (`walk()` decides the path; an open detail stays open while you're inside it; parts with other parts drawn inside them open only on a click). Balloons and the panel's parts list are drawn by the view; parts not in hand are restyled as blueprint ghosts. Other pages lie over the board like paper (`body.staged`); a thing's page flies the board to it (`lineage`). The old workshop page (`ledger()`) is the papers under the board.
+  - **Rooms** (`visuals/room-<place-id>.svg`) are places to look around, opened from the map; the room sits on `#stage` behind its papers.
+  - **Scenes** (`mountScene`): rooms and spec-sheet drawings are drawn inline in shadow roots, placed through `sceneSlot()` and mounted after the HTML is in. Anything marked `data-thing`, `data-person` or `data-go` can be pointed at (spotlight and tag) and clicked (the camera zooms, then the hash changes). `prepare()` keeps only the groups for the current states (in rooms, per thing) and time of day (`data-sky`). `data-step` groups get a stepper.
+  - **Sound** (`web/sound.js`): Web Audio makes ambience on the fly for the `data-sound` groups showing; off until the player turns it on.
   - A turn's `measurements` are plotted as inline SVG line charts (`chart()` in `app.js`), in the journal and on the tested thing's sheet.
   - Journal illustrations show each drawing as it was when that turn ended. `/api/state` includes `snapshots` (`history.turn_ends`: the last snapshot before the next turn was logged), and `/api/rev/<sha>/<path>` serves a drawing or spec sheet from it. The latest turn uses the current files.
   - `world.json`'s `coming_up` is shown as a note at the top of the Workshop and the Journal (`state.upcoming` labels it); the Workshop also shows the four most recently changed drawings.
-  - Drawings are shown as `<img>` blob URLs, with any `data-state` groups for other states removed. That keeps each drawing's ids and styles separate.
+  - Thumbnails and journal illustrations are `<img>` blob URLs of prepared drawings. That keeps each drawing's ids and styles separate.
   - Maps are drawn inline in a shadow root so their labels can be clicked.
   - `render()` sets `document.body.dataset.ready = "1"` when a page is complete, and `tg shot` and the tests wait for it. New async view code must finish before that.
 - **The sketch tab** (`web/sketch.js`) is the only place the browser writes: it POSTs PNGs to `/api/sketch`.
@@ -40,7 +44,7 @@ A time-travel invention game. A Claude Code session is the referee (DM), a local
   - `server.py`: the live-view server (stdlib) and Playwright screenshots.
   - `cli.py`: the commands.
   - `schema.json`: JSON Schema for every state file.
-- `web/`: the live view. Vanilla JS modules, no build step. `app.js` renders the state; `sketch.js` is the sketch canvas.
+- `web/`: the live view. Vanilla JS modules, no build step. `app.js` renders the state; `sketch.js` is the sketch canvas; `sound.js` the ambience; `board.js` the drawing board.
 - `dm/`: what the referee gets.
   - `rules.md`: the referee rulebook, the heart of the game.
   - `style_guide.md`: how drawings look.

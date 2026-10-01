@@ -51,6 +51,8 @@ h2, h3, h4 { font-weight: normal; }
 .ledger b { font-weight: normal; font-style: normal; color: var(--ink); }
 #purse.debt { color: var(--red); }
 #ahead { color: var(--red); text-decoration: none; }
+#sound { padding: 0; font: italic 16.5px var(--fell); color: var(--faded); background: none; border: 0; }
+#sound.on { color: var(--ink); }
 #ahead:empty { display: none; }
 #live { display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--rule); vertical-align: middle; }
 #live.on { background: var(--green); }
@@ -287,7 +289,7 @@ button u { text-underline-offset: 2px; }  /* a shortcut key */
 body.bare .masthead, body.bare #problems { display: none; }
 body.bare main { max-width: none; padding: 0; }
 .bare-plate { height: 100vh; padding: 20px; }
-.bare-plate img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.bare-plate img, .bare-plate .scene-host { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 @media (max-width: 900px) {
   .masthead, main, #sketch { padding-left: 16px; padding-right: 16px; }
@@ -404,3 +406,124 @@ blockquote.order::before { content: "✎"; position: absolute; left: 11px; top: 
 }
 .desk .recent-row { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 .desk section h2 { margin-top: 22px; }
+
+/* ---------- the stage: the room you're in, with pages laid over it like paper ---------- */
+#stage, #board { position: fixed; inset: 0; z-index: 0; background: var(--paper); }
+#stage > .scene-host { position: absolute; inset: var(--top, 88px) 12px 0; transition: filter 0.5s, opacity 0.5s; }
+body.staged :is(main, #sketch, #problems) { position: relative; z-index: 1; }
+body.staged:not(.in-room) :is(main, #sketch) {
+  margin: 26px auto 70px; padding: 20px 40px 44px; background: var(--paper-light);
+  box-shadow: 0 2px 4px rgba(40, 25, 10, 0.2), 0 18px 50px rgba(40, 25, 10, 0.35);
+}
+body.staged main.arrive { animation-name: paper-in; }  /* a page is laid over the room */
+@keyframes paper-in { from { opacity: 0; transform: translateY(30px) rotate(0.4deg); } }
+body.in-room main { max-width: none; margin-top: calc(100vh - 150px); padding: 0 0 60px; pointer-events: none; }
+.papers { pointer-events: auto; max-width: 1240px; margin: 0 auto; padding: 0 36px 30px; background: var(--paper-light); box-shadow: 0 -4px 30px rgba(40, 25, 10, 0.3); }
+.papers .handle { display: block; margin: 0 auto 6px; padding: 8px 30px 6px; font: 17px var(--fell-sc); color: var(--faded); background: none; border: 0; border-bottom: 1px solid var(--rule); }
+.papers .handle::after { content: " ▴"; }
+.room-name { position: absolute; left: 28px; top: calc(var(--top, 88px) + 8px); font: 26px var(--fell-sc); color: var(--ink); pointer-events: none; }
+.room-name span { display: block; font: italic 15px var(--fell); color: var(--faded); }
+.exits { position: absolute; right: 28px; top: calc(var(--top, 88px) + 14px); display: flex; gap: 18px; }
+.exits a, .loose a { font: italic 16px var(--fell); color: var(--red); text-decoration: none; }
+.exits a:hover, .loose a:hover { text-decoration: underline; }
+.loose { position: absolute; left: 28px; top: calc(var(--top, 88px) + 58px); display: flex; flex-direction: column; max-width: 240px; font: italic 14.5px/1.3 var(--fell); color: var(--faded); }
+.tag {  /* a paper label on a string, naming what the pointer is over */
+  position: absolute; z-index: 4; max-width: 300px; padding: 7px 12px 8px 22px; pointer-events: none;
+  font: 14.5px/1.35 var(--fell); color: var(--ink-soft); background: var(--paper-light);
+  border: 1px solid var(--faded); border-radius: 2px 10px 10px 2px; box-shadow: 0 3px 10px rgba(60, 40, 20, 0.2); transform: rotate(-1deg);
+}
+.tag::before { content: ""; position: absolute; left: 8px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; border: 1px solid var(--faded); background: var(--paper); }
+.tag b { font: 18px var(--fell); font-weight: normal; color: var(--ink); }
+.tag span:not(.stamp) { display: block; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.stepper { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; background: rgba(255, 255, 255, 0.4); border: 1px solid var(--rule); }
+.stepper .caption { flex: 1; font: italic 16px/1.35 var(--fell); color: var(--ink-soft); }
+.stepper .caption b { margin-right: 6px; font: 14px var(--fell-sc); font-style: normal; color: var(--red); }
+.stepper button { flex: none; }
+.stepper[hidden] { display: none; }
+.trail { font: italic 16px var(--fell); color: var(--faded); }
+.trail a { color: var(--faded); text-decoration: none; }
+.trail a:hover { color: var(--red); }
+.locator { display: block; margin: 0 0 16px; color: inherit; text-decoration: none; border: 1px solid var(--rule); background: var(--paper-light); }
+.locator .scene-host { max-width: 100%; }
+.locator span { display: block; padding: 3px 10px 5px; font: italic 15px var(--fell); color: var(--red); border-top: 1px solid var(--rule); }
+main.arrive { animation: arrive 0.45s ease-out; }
+@keyframes arrive { from { opacity: 0; transform: scale(1.03); } }
+@media (max-width: 900px) {
+  #stage { position: relative; height: calc(56vw + 56px); }  /* on a phone the room is part of the page, not behind it */
+  #stage > .scene-host { inset: 0 0 48px; }
+  body.staged:not(.in-room) #stage { display: none; }
+  body.in-room main { margin-top: 0; }
+  .room-name { top: auto; bottom: 4px; left: 12px; font-size: 20px; }
+  .exits { top: 6px; right: 12px; }
+  .loose { display: none; }
+  body.staged:not(.in-room) :is(main, #sketch) { margin: 12px 8px 40px; padding: 12px 16px 30px; }
+}
+
+/* ---------- the drawing board: every drawing on one sheet, zoomed like a map ---------- */
+#board { top: var(--top, 88px); overflow: hidden; background: #e8dcc2; transition: filter 0.5s, opacity 0.5s; touch-action: none; }
+#board.behind { filter: blur(3px) sepia(0.25); opacity: 0.6; cursor: zoom-out; }
+#board.behind > :not(.board-svg) { display: none; }
+#board.behind .board-svg { pointer-events: none; }
+.board-svg, .board-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+.board-svg { cursor: grab; }
+.board-svg:active { cursor: grabbing; }
+.board-overlay { pointer-events: none; overflow: visible; }
+.plate-shadow { fill: rgba(60, 40, 20, 0.14); }
+.plate-edge { fill: none; stroke: #b9a888; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.plate-title { font-family: "IM Fell English SC", Georgia, serif; fill: var(--ink-soft); }
+.detail-edge { stroke: var(--red); stroke-width: 1.4; stroke-dasharray: 16 5 3 5; }
+.detail-mark { fill: none; stroke: var(--red); stroke-width: 1.1; stroke-dasharray: 12 4 2 4; opacity: 0.5; }
+.detail-mark.hot { opacity: 1; stroke-width: 1.6; }
+.part-hot { fill: rgba(156, 59, 37, 0.07); stroke: var(--red); stroke-width: 1.4; }
+.balloon { pointer-events: auto; cursor: pointer; }
+.balloon line { stroke: var(--ink-soft); stroke-width: 0.9; }
+.balloon circle { fill: var(--paper-light); stroke: var(--ink); stroke-width: 1.3; }
+.balloon text { font: 14px "IM Fell English", Georgia, serif; text-anchor: middle; fill: var(--ink); }
+.balloon.opens circle { stroke: var(--red); stroke-width: 1.8; }
+.balloon:is(.planned, .coming) circle { stroke: var(--blue); stroke-dasharray: 3 2; }
+.balloon:is(.planned, .coming) text { fill: var(--blue); }
+.balloon.faulty circle { fill: #f2d8cc; }
+.balloon.hot circle { fill: var(--ink); stroke: var(--ink); }
+.balloon.hot text { fill: var(--paper-light); }
+.board-trail { position: absolute; left: 20px; top: 12px; padding: 2px 10px; font: italic 16px var(--fell); color: var(--faded); background: rgba(248, 241, 225, 0.85); }
+.board-trail a { color: var(--ink-soft); cursor: pointer; }
+.board-trail a:hover { color: var(--red); }
+.board-panel { position: absolute; right: 16px; top: 12px; width: 340px; max-height: calc(100% - 170px); overflow: auto; padding: 10px 18px 12px; font-size: 15.5px; line-height: 1.4;
+  background: rgba(248, 241, 225, 0.95); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+.board-panel h3 { margin: 2px 0; font: 22px var(--fell-sc); }
+.board-panel h4 { margin: 10px 0 2px; font: 14px var(--fell-sc); color: var(--faded); }
+.board-panel p { margin: 6px 0; }
+.board-panel .flaws { margin: 0; padding-left: 18px; color: var(--red); font-size: 14.5px; }
+.board-panel a[data-go] { color: var(--red); cursor: pointer; }
+.bom { width: 100%; margin: 8px 0 2px; border-collapse: collapse; font-size: 14.5px; }
+.bom th { font: 13px var(--fell-sc); color: var(--faded); text-align: left; border-bottom: 1px solid var(--rule); }
+.bom td { padding: 2px 4px 2px 0; border-bottom: 1px dotted var(--rule); vertical-align: top; }
+.bom td:last-child { font: italic 14px var(--fell); color: var(--faded); white-space: nowrap; }
+.bom tr { cursor: pointer; }
+.bom tr:hover td { background: rgba(156, 59, 37, 0.06); }
+.bom tr.unmarked td:nth-child(2) { color: var(--faded); }
+.bom .opens { color: var(--red); }
+.balloon-n { display: inline-grid; place-items: center; width: 20px; height: 20px; font-size: 12.5px; border: 1.2px solid var(--ink); border-radius: 50%; }
+.balloon-n:is(.planned, .coming) { color: var(--blue); border-color: var(--blue); border-style: dashed; }
+.balloon-n.faulty { background: #f2d8cc; }
+.board-progress span { white-space: nowrap; }
+.board-progress .ok { color: var(--green); }
+.board-progress .making { color: var(--brass); }
+.board-progress :is(.coming, .planned) { color: var(--blue); }
+.board-progress .faulty { color: var(--red); }
+.board-progress .of { color: var(--faded); font-style: italic; }
+.board-keys { position: absolute; left: 20px; bottom: 76px; display: flex; flex-direction: column; gap: 4px; }
+.board-keys button { width: 34px; height: 34px; padding: 0; font-size: 18px; }
+@media (max-width: 900px) {
+  #board { position: relative; top: 0; height: 70vh; }
+  body.staged:not(.in-room) #board { display: none; }
+  .board-panel { top: auto; bottom: 8px; right: 8px; left: 8px; width: auto; max-height: 34%; }
+  .board-keys { bottom: auto; top: 50px; }
+}
+.board-states { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.board-states button { padding: 1px 10px; font: 14px var(--fell-sc); color: var(--faded); background: none; border: 1px solid var(--rule); }
+.board-states button.on { color: var(--paper-light); background: var(--ink); border-color: var(--ink); }
+.board-panel .stepper { margin: 6px 0; padding: 6px 8px; gap: 6px; }
+.board-panel .stepper { flex-wrap: wrap; }
+.board-panel .stepper .caption { flex: 1 1 100%; order: -1; font-size: 14.5px; }
+.section-title { font-family: "IM Fell English SC", Georgia, serif; fill: var(--faded); }

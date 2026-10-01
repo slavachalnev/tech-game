@@ -73,3 +73,11 @@ def test_broken_world_gives_a_message_not_a_traceback(save, monkeypatch, capsys)
     (save / "world.json").write_text('{"scenario": "cornwall-1705"}')
     code, _, _ = tg(monkeypatch, capsys, "--save", str(save), "advance", "1d")
     assert code == 1
+
+
+def test_room_lists_what_is_here_but_not_drawn_and_what_has_left(save, monkeypatch, capsys):
+    (save / "visuals/room-smithy.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"><g data-thing="coal"/><g data-thing="drawing-kit"/></svg>')
+    code, out, _ = tg(monkeypatch, capsys, "--save", "g1", "room", "smithy")
+    drawn, missing, gone = out.split("\n")[1], out.split("Here but not drawn yet:")[1].split("Drawn but")[0], out.split("Drawn but")[1]
+    assert code == 0 and "coal" in drawn and "bar-iron" in missing and "anvil" not in missing  # the anvil is part of the smithy
+    assert "drawing-kit" in gone

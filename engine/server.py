@@ -87,7 +87,7 @@ def make_server(save, port):
     return server
 
 
-def shot(save, target, visual_state=None, sheet=False):
+def shot(save, target, visual_state=None, sheet=False, step=None, hotspots=False, states=(), half=False):
     """Render a view with headless Chromium and return the PNG path."""
     from playwright.sync_api import sync_playwright
 
@@ -95,9 +95,9 @@ def shot(save, target, visual_state=None, sheet=False):
     threading.Thread(target=server.serve_forever, daemon=True).start()
     tab = (target in ("workshop", "capabilities", "people", "map", "journal", "sketch") or "/" in target) and not sheet
     route = f"#/{target}" if tab else f"#/{'thing' if sheet else 'visual'}/{target}"
-    if visual_state:
-        route += f"?state={visual_state}"
-    out = save / ".shots" / f"{target.replace('/', '-')}{'-sheet' if sheet else ''}{'-' + visual_state if visual_state else ''}.png"
+    query = [f"state={visual_state}"] * bool(visual_state) + [f"step={step}"] * bool(step) + ["hotspots"] * hotspots + [f"set={','.join(states)}"] * bool(states) + ["half"] * half
+    route += "?" + "&".join(query) if query else ""
+    out = save / ".shots" / f"{target.replace('/', '-')}{'-sheet' if sheet else ''}{''.join('-' + q.split('=', 1)[-1].replace('=', '-').replace(',', '-') for q in query)}.png"
     out.parent.mkdir(exist_ok=True)
     errors = []
     with sync_playwright() as p:
@@ -106,7 +106,7 @@ def shot(save, target, visual_state=None, sheet=False):
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(f"http://127.0.0.1:{server.server_address[1]}/{route}")
         page.wait_for_function("document.body.dataset.ready === '1'", timeout=15000)
-        page.screenshot(path=out, full_page=tab or sheet)
+        page.screenshot(path=out, full_page=(tab and not target.startswith("board")) or sheet)  # the board is one screen
         browser.close()
     server.shutdown()
     for e in errors:

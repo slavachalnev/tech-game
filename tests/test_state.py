@@ -73,6 +73,18 @@ def test_places_must_be_labelled_on_their_maps(tmp_path, monkeypatch):
     assert any("unknown place 'atlantis'" in p for p in problems)
 
 
+def test_drawings_may_only_mark_real_things_and_people(tmp_path, monkeypatch):
+    monkeypatch.setattr(state, "SAVES", tmp_path)
+    save = state.new_save("cornwall-1705", "g1")
+    (save / "visuals/room-smithy.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"><g data-thing="anvil"/><g data-thing="lathe"/>'
+                                                  '<g data-person="jacca-pascoe"/><g data-person="nobody"/><g data-go="#/room/atlantis"/></svg>')
+    (save / "visuals/room-nowhere.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    problems = [p for p in state.check_save(save) if "room-" in p]
+    assert problems == ["visuals/room-nowhere.svg: no place 'nowhere' in places.json for a room",
+                        "visuals/room-smithy.svg: marks unknown person 'nobody'", "visuals/room-smithy.svg: marks unknown thing 'lathe'",
+                        "visuals/room-smithy.svg: no place 'atlantis' in places.json for a room"]
+
+
 def test_undo_and_restore_turns(tmp_path, monkeypatch):
     from engine import history
     monkeypatch.setattr(state, "SAVES", tmp_path)

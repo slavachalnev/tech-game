@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="Georgia, 'Times New Roman', serif">
+  <title>Yard</title>
+  <!--
+    Outdoor room template: copy to visuals/room-<place-id>.svg, retitle it, and replace the example shed,
+    person and signpost (THING-ID, PERSON-ID, PLACE-ID are placeholders). Looking north unless you say otherwise.
+    Scale: 1 m = 36 px (a person 1.7 m = 61 px); keep it for every thing in the room.
+    Projection: a shallow oblique. With x metres across (right = east), d metres back (away from you) and
+    h metres up:   X = 800 + 36x + 4d,   Y = 700 - 7d - 36h.
+    So a circle on the ground is a flat ellipse, and things further back sit a little higher and to the right.
+    Ground: the front edge of the yard (d = -4) is the ink line at y 728; the back of the yard (d = 20) is
+    near y 560; the skyline is about y 340. Below y 728 the ground is cut away: show a cellar, a shaft or a
+    quay's water there, or delete the band.
+    Free ground: all of it. As you fill the yard, write here what is still free, e.g. "x 1200-1560, y 640-720".
+    Order: defs; the empty yard (room); one group per thing, back to front, each after a one-line comment
+    saying what and where, each starting with its paper knockout; people; ways to go; time-of-day overlays.
+    Ink: filter="url(#ink)" on groups drawn in these coordinates; leave moving parts unfiltered.
+  -->
+  <defs>
+    <!-- Hand-drawn wobble; its region is the whole drawing, so straight lines don't vanish. Keep it as is. -->
+    <filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <pattern id="hatch-metal" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#7a6a55" stroke-width="0.7"/>
+    </pattern>
+    <pattern id="hatch-masonry" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r="0.7" fill="#7a6a55"/><circle cx="6.5" cy="7" r="0.6" fill="#7a6a55"/>
+    </pattern>
+    <!-- Lamplight for the night overlay: fill="url(#glow)" on a circle -->
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#e8a13a" stop-opacity="0.75"/>
+      <stop offset="0.35" stop-color="#e8a13a" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#e8a13a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- room -->
+  <!-- Sky by time of day, behind everything; exactly one shows, so the wind is always heard -->
+  <g data-sky="day" data-sound="wind">
+    <path d="M20,343.4 Q14,250 24,170 Q16,90 34,26 Q300,14 620,24 Q950,12 1250,22 Q1450,14 1570,28 Q1586,110 1578,190 Q1588,270 1580,341.4 Q1520,348 1490,348.5 Q1460,349 1430,347.1 Q1400,345.3 1370,343.4 Q1340,341.5 1310,341.5 Q1280,341.5 1250,343.2 Q1220,345 1190,346.3 Q1160,347.6 1130,346.4 Q1100,345.2 1070,341.5 Q1040,337.7 1010,333.5 Q980,329.3 950,327.3 Q920,325.2 890,326.2 Q860,327.3 830,329.8 Q800,332.4 770,334 Q740,335.6 710,335 Q680,334.5 650,332.9 Q620,331.3 590,331 Q560,330.7 530,333.2 Q500,335.6 470,339.8 Q440,344 410,347.3 Q380,350.7 350,351.1 Q320,351.5 290,349.2 Q260,346.9 230,344.1 Q200,341.2 170,340.2 Q140,339.1 110,340.1 Q80,341.1 50,342.2 L20,343.4 Z" fill="#9aa5a8" fill-opacity="0.2"/>
+    <path d="M80,90 Q190.0,66 300,70 Q410.0,64 520,90 Q300,99 80,90 Z M560,60 Q690.0,36 820,40 Q950.0,34 1080,60 Q820,69 560,60 Z M1030,120 Q1145.0,96 1260,100 Q1375.0,94 1490,120 Q1260,129 1030,120 Z M360,210 Q460.0,186 560,190 Q660.0,184 760,210 Q560,219 360,210 Z" fill="#7a6a55" fill-opacity="0.07"/>
+    <path d="M100,92 Q300,98 500,91 M580,62 Q820,68 1060,61 M1050,122 Q1260,128 1470,121 M380,212 Q560,218 740,211" fill="none" stroke="#7a6a55" stroke-width="0.8" stroke-opacity="0.6"/>
+  </g>
+  <g data-sky="dawn dusk" data-sound="wind">
+    <path d="M20,343.4 Q14,250 24,170 Q16,90 34,26 Q300,14 620,24 Q950,12 1250,22 Q1450,14 1570,28 Q1586,110 1578,190 Q1588,270 1580,341.4 Q1520,348 1490,348.5 Q1460,349 1430,347.1 Q1400,345.3 1370,343.4 Q1340,341.5 1310,341.5 Q1280,341.5 1250,343.2 Q1220,345 1190,346.3 Q1160,347.6 1130,346.4 Q1100,345.2 1070,341.5 Q1040,337.7 1010,333.5 Q980,329.3 950,327.3 Q920,325.2 890,326.2 Q860,327.3 830,329.8 Q800,332.4 770,334 Q740,335.6 710,335 Q680,334.5 650,332.9 Q620,331.3 590,331 Q560,330.7 530,333.2 Q500,335.6 470,339.8 Q440,344 410,347.3 Q380,350.7 350,351.1 Q320,351.5 290,349.2 Q260,346.9 230,344.1 Q200,341.2 170,340.2 Q140,339.1 110,340.1 Q80,341.1 50,342.2 L20,343.4 Z" fill="#9aa5a8" fill-opacity="0.14"/>
+    <path d="M20,223.4 Q800,193.4 1580,231.4 L1580,341.4 Q1520,348 1490,348.5 Q1460,349 1430,347.1 Q1400,345.3 1370,343.4 Q1340,341.5 1310,341.5 Q1280,341.5 1250,343.2 Q1220,345 1190,346.3 Q1160,347.6 1130,346.4 Q1100,345.2 1070,341.5 Q1040,337.7 1010,333.5 Q980,329.3 950,327.3 Q920,325.2 890,326.2 Q860,327.3 830,329.8 Q800,332.4 770,334 Q740,335.6 710,335 Q680,334.5 650,332.9 Q620,331.3 590,331 Q560,330.7 530,333.2 Q500,335.6 470,339.8 Q440,344 410,347.3 Q380,350.7 350,351.1 Q320,351.5 290,349.2 Q260,346.9 230,344.1 Q200,341.2 170,340.2 Q140,339.1 110,340.1 Q80,341.1 50,342.2 L20,343.4 Z" fill="#c0662b" fill-opacity="0.16"/>
+    <path d="M20,293.4 Q800,273.4 1580,296.4 L1580,341.4 Q1520,348 1490,348.5 Q1460,349 1430,347.1 Q1400,345.3 1370,343.4 Q1340,341.5 1310,341.5 Q1280,341.5 1250,343.2 Q1220,345 1190,346.3 Q1160,347.6 1130,346.4 Q1100,345.2 1070,341.5 Q1040,337.7 1010,333.5 Q980,329.3 950,327.3 Q920,325.2 890,326.2 Q860,327.3 830,329.8 Q800,332.4 770,334 Q740,335.6 710,335 Q680,334.5 650,332.9 Q620,331.3 590,331 Q560,330.7 530,333.2 Q500,335.6 470,339.8 Q440,344 410,347.3 Q380,350.7 350,351.1 Q320,351.5 290,349.2 Q260,346.9 230,344.1 Q200,341.2 170,340.2 Q140,339.1 110,340.1 Q80,341.1 50,342.2 L20,343.4 Z" fill="#e8a13a" fill-opacity="0.2"/>
+  </g>
+  <g data-sky="night" data-sound="wind">
+    <path d="M20,343.4 Q14,250 24,170 Q16,90 34,26 Q300,14 620,24 Q950,12 1250,22 Q1450,14 1570,28 Q1586,110 1578,190 Q1588,270 1580,341.4 Q1520,348 1490,348.5 Q1460,349 1430,347.1 Q1400,345.3 1370,343.4 Q1340,341.5 1310,341.5 Q1280,341.5 1250,343.2 Q1220,345 1190,346.3 Q1160,347.6 1130,346.4 Q1100,345.2 1070,341.5 Q1040,337.7 1010,333.5 Q980,329.3 950,327.3 Q920,325.2 890,326.2 Q860,327.3 830,329.8 Q800,332.4 770,334 Q740,335.6 710,335 Q680,334.5 650,332.9 Q620,331.3 590,331 Q560,330.7 530,333.2 Q500,335.6 470,339.8 Q440,344 410,347.3 Q380,350.7 350,351.1 Q320,351.5 290,349.2 Q260,346.9 230,344.1 Q200,341.2 170,340.2 Q140,339.1 110,340.1 Q80,341.1 50,342.2 L20,343.4 Z" fill="#26344a" fill-opacity="0.38"/>
+  </g>
+  <!-- Distant land: skyline, a far hill, the land wash down to the front edge -->
+  <path d="M20,343.4 Q80,341.1 110,340.1 Q140,339.1 170,340.2 Q200,341.2 230,344.1 Q260,346.9 290,349.2 Q320,351.5 350,351.1 Q380,350.7 410,347.3 Q440,344 470,339.8 Q500,335.6 530,333.2 Q560,330.7 590,331 Q620,331.3 650,332.9 Q680,334.5 710,335 Q740,335.6 770,334 Q800,332.4 830,329.8 Q860,327.3 890,326.2 Q920,325.2 950,327.3 Q980,329.3 1010,333.5 Q1040,337.7 1070,341.5 Q1100,345.2 1130,346.4 Q1160,347.6 1190,346.3 Q1220,345 1250,343.2 Q1280,341.5 1310,341.5 Q1340,341.5 1370,343.4 Q1400,345.3 1430,347.1 Q1460,349 1490,348.5 Q1520,348 1550,344.7 L1580,341.4 L1580,728 L20,728 Z" fill="#8a7a62" fill-opacity="0.1"/>
+  <g filter="url(#ink)" fill="none" stroke="#7a6a55" stroke-width="1.2" stroke-linecap="round">
+    <path d="M20,343.4 Q80,341.1 110,340.1 Q140,339.1 170,340.2 Q200,341.2 230,344.1 Q260,346.9 290,349.2 Q320,351.5 350,351.1 Q380,350.7 410,347.3 Q440,344 470,339.8 Q500,335.6 530,333.2 Q560,330.7 590,331 Q620,331.3 650,332.9 Q680,334.5 710,335 Q740,335.6 770,334 Q800,332.4 830,329.8 Q860,327.3 890,326.2 Q920,325.2 950,327.3 Q980,329.3 1010,333.5 Q1040,337.7 1070,341.5 Q1100,345.2 1130,346.4 Q1160,347.6 1190,346.3 Q1220,345 1250,343.2 Q1280,341.5 1310,341.5 Q1340,341.5 1370,343.4 Q1400,345.3 1430,347.1 Q1460,349 1490,348.5 Q1520,348 1550,344.7 L1580,341.4"/>
+    <path d="M80,346.1 l-1,7 M140,344.1 l1,6 M200,346.2 l0,7 M260,351.9 l-2,8 M320,356.5 l-2,8 M380,355.7 l-2,6 M440,349 l-0,9 M500,340.6 l-2,7 M560,335.7 l1,10 M620,336.3 l0,8 M680,339.5 l2,6 M740,340.6 l1,7 M800,337.4 l-1,6 M860,332.3 l-1,9 M920,330.2 l-1,8 M980,334.3 l1,7 M1040,342.7 l0,6 M1100,350.2 l-2,7 M1160,352.6 l1,8 M1220,350 l-1,8 M1280,346.5 l-0,7 M1340,346.5 l1,9 M1400,350.3 l-1,8 M1460,354 l0,10 M1520,353 l1,7" stroke-width="0.8"/>
+    <path d="M60,342.1 C140,312.1 190,292 260,290 C330,288 430,311.4 520,333.4 L500,335.6 L480,338.2 L460,341.1 L440,344 L420,346.7 L400,349 L380,350.7 L360,351.7 L340,351.9 L320,351.5 L300,350.4 L280,348.8 L260,346.9 L240,344.8 L220,342.9 L200,341.2 L180,340 L160,339.3 L140,339.1 L120,339.4 L100,340.1 L80,341.1 Z" stroke="none" fill="#8a7a62" fill-opacity="0.1"/>
+    <path d="M60,342.1 C140,312.1 190,292 260,290 C330,288 430,311.4 520,333.4" stroke-width="1"/>
+    <path d="M60,500 Q400,490 800,496 T1560,492" stroke-width="0.9" stroke-dasharray="50 14 30 12"/>
+  </g>
+  <!-- The yard: grass tufts, and the front edge where the ground is cut away -->
+  <path d="M20,728 L1580,728 L1580,877.9 L1520,882.9 L1460,890 L1400,887.6 L1340,882 L1280,883.5 L1220,885.6 L1160,880.8 L1100,878.5 L1040,885.5 L980,890.6 L920,885.7 L860,881.3 L800,884.1 L740,884.8 L680,879.6 L620,880 L560,888 L500,890.2 L440,883.7 L380,881 L320,884.6 L260,883.7 L200,879.1 L140,882.1 L80,889.8 L20,889 Z" fill="#8a7a62" fill-opacity="0.2"/>
+  <path d="M20,728 L1580,728 L1580,877.9 L1520,882.9 L1460,890 L1400,887.6 L1340,882 L1280,883.5 L1220,885.6 L1160,880.8 L1100,878.5 L1040,885.5 L980,890.6 L920,885.7 L860,881.3 L800,884.1 L740,884.8 L680,879.6 L620,880 L560,888 L500,890.2 L440,883.7 L380,881 L320,884.6 L260,883.7 L200,879.1 L140,882.1 L80,889.8 L20,889 Z" fill="url(#hatch-masonry)"/>
+  <g filter="url(#ink)" fill="none" stroke="#7a6a55" stroke-width="0.8" stroke-linecap="round">
+    <path d="M1527,593 l-2,-5 M1530,593 l0,-6 M1533,593 l2,-5 M673,688 l-2,-5 M676,688 l0,-6 M679,688 l2,-5 M268,648 l-2,-5 M271,648 l0,-6 M274,648 l2,-5 M97,675 l-2,-5 M100,675 l0,-6 M103,675 l2,-5 M1199,660 l-2,-5 M1202,660 l0,-6 M1205,660 l2,-5 M1368,622 l-2,-5 M1371,622 l0,-6 M1374,622 l2,-5 M1094,664 l-2,-5 M1097,664 l0,-6 M1100,664 l2,-5 M918,643 l-2,-5 M921,643 l0,-6 M924,643 l2,-5 M1314,716 l-2,-5 M1317,716 l0,-6 M1320,716 l2,-5 M758,674 l-2,-5 M761,674 l0,-6 M764,674 l2,-5 M129,680 l-2,-5 M132,680 l0,-6 M135,680 l2,-5 M1021,723 l-2,-5 M1024,723 l0,-6 M1027,723 l2,-5 M1286,617 l-2,-5 M1289,617 l0,-6 M1292,617 l2,-5 M623,675 l-2,-5 M626,675 l0,-6 M629,675 l2,-5 M71,644 l-2,-5 M74,644 l0,-6 M77,644 l2,-5 M292,592 l-2,-5 M295,592 l0,-6 M298,592 l2,-5 M127,689 l-2,-5 M130,689 l0,-6 M133,689 l2,-5 M234,612 l-2,-5 M237,612 l0,-6 M240,612 l2,-5 M631,705 l-2,-5 M634,705 l0,-6 M637,705 l2,-5 M159,642 l-2,-5 M162,642 l0,-6 M165,642 l2,-5 M872,707 l-2,-5 M875,707 l0,-6 M878,707 l2,-5 M1282,704 l-2,-5 M1285,704 l0,-6 M1288,704 l2,-5 M460,637 l-2,-5 M463,637 l0,-6 M466,637 l2,-5 M582,707 l-2,-5 M585,707 l0,-6 M588,707 l2,-5"/>
+    <path d="M20,728 L1580,728" stroke="#2b2118" stroke-width="2"/>
+  </g>
+
+  <!-- THING-ID: an example thing, a stone shed right of centre, x 960-1165, y 490-660 (x 4-9 m, d 6-10 m) -->
+  <g data-thing="THING-ID">
+    <!-- Long shadows at dawn (to the left) and dusk (to the right), under the thing -->
+    <path data-sky="dusk" d="M968,658 L984,630 L1216.8,605 L1396.8,605 L1380.8,633 L1148,658 Z" fill="#2b2118" fill-opacity="0.12" pointer-events="none"/>
+    <path data-sky="dawn" d="M763.8,633 L779.8,605 L959.8,605 L1164,630 L1148,658 L968,658 Z" fill="#2b2118" fill-opacity="0.12" pointer-events="none"/>
+    <!-- Paper knockout: its silhouette in paper colour, so nothing behind shows through its washes -->
+    <path d="M968,658 L1148,658 L1164,630 L1164,529.2 L1165,492.8 L967,492.8 L958,562.5 L968,557.2 Z" fill="#f8f1e1"/>
+    <!-- Washes: stone front, darker side, slate roof -->
+    <path d="M968,658 L1148,658 L1148,557.2 L968,557.2 Z" fill="#8a7a62" fill-opacity="0.24"/>
+    <path d="M968,658 L1148,658 L1148,557.2 L968,557.2 Z" fill="url(#hatch-masonry)"/>
+    <path d="M1148,658 L1164,630 L1164,529.2 L1156,492.8 L1148,557.2 Z" fill="#8a7a62" fill-opacity="0.36"/>
+    <path d="M958,562.5 L1156,562.5 L1165,492.8 L967,492.8 Z" fill="#56514b" fill-opacity="0.28"/>
+    <!-- Ink -->
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M968,636.4 L1148,636.4 M968,614.8 L1148,614.8 M968,578.8 L1148,578.8" stroke="#7a6a55" stroke-width="0.7" stroke-dasharray="30 4 18 5"/>
+      <path d="M960.2,545.1 L1158.2,545.1 M962.5,527.7 L1160.5,527.7 M964.8,510.2 L1162.8,510.2" stroke="#7a6a55" stroke-width="0.7"/>
+      <path d="M968,658 L1148,658 L1148,557.2 L968,557.2 Z M1148,658 L1164,630 L1164,529.2 L1156,492.8 L1148,557.2 Z"/>
+      <path d="M958,562.5 L1156,562.5 L1165,492.8 L967,492.8 Z" stroke-width="1.6"/>
+      <path d="M1043.6,658 L1079.6,658 L1079.6,589.6 L1043.6,589.6 Z M993.2,622 L1025.6,622 L1025.6,593.2 L993.2,593.2 Z M1097.6,622 L1130,622 L1130,593.2 L1097.6,593.2 Z" fill="#f8f1e1" stroke="none"/>
+      <path d="M1043.6,658 L1079.6,658 L1079.6,589.6 L1043.6,589.6 Z M993.2,622 L1025.6,622 L1025.6,593.2 L993.2,593.2 Z M1097.6,622 L1130,622 L1130,593.2 L1097.6,593.2 Z" fill="#56514b" fill-opacity="0.25" stroke-width="1.3"/>
+    </g>
+    <!-- A thing with states: wrap what differs in a group whose data-state lists the states it shows in -->
+  </g>
+
+  <!-- PERSON-ID: someone who is usually here, standing in front of the shed (x 1.5 m, d -1.5 m) -->
+  <g data-person="PERSON-ID">
+    <path data-sky="dusk" d="M837.2,710.5 L841.2,709 L938.2,698.6 L946.2,698 L953.5,698.6 L955.8,700.1 L951.8,701.6 L854.8,712 L846.8,712.6 L839.5,712 Z" fill="#2b2118" fill-opacity="0.12" pointer-events="none"/>
+    <path data-sky="dawn" d="M752.1,700.1 L756.1,698.6 L764.1,698 L771.4,698.6 L856.5,709 L858.8,710.5 L854.8,712 L846.8,712.6 L839.5,712 L754.4,701.6 Z" fill="#2b2118" fill-opacity="0.12" pointer-events="none"/>
+    <!-- part-person from drawing_parts.svg at 0.72 (its 50 px = 1 m); feet at (848,710.5) -->
+    <g transform="translate(830,645) scale(0.72)">
+      <path d="M14,10 Q25,2 36,10 L31,20 L37,24 L42,47 L39,60 L33,62 L32,87 L37,92 L13,92 L18,87 L17,62 L11,60 L8,47 L13,24 L19,20 Z" fill="#f8f1e1"/>
+      <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18,60 V67 Q17,77 19,87 M23,60 V67 Q24,77 22.5,87 M27,60 V67 Q26,77 27.5,87 M32,60 V67 Q33,77 31,87" stroke-width="1.1"/>
+        <path d="M14,91 Q15,87 19,87 H22.5 L23,91 Z M36,91 Q35,87 31,87 H27.5 L27,91 Z" fill="#56514b" fill-opacity="0.5" stroke-width="1"/>
+        <path d="M19,20 Q14,21 13,25 L11,60 Q18,62 25,61 Q32,62 39,60 L37,25 Q36,21 31,20 Z" fill="#8a7a62" fill-opacity="0.35"/>
+        <path d="M22,20.5 L25,29 L28,20.5 M25,29 V61" stroke-width="1"/>
+        <path d="M14,23 Q10,34 8.5,46 L13,47 Q14,37 17,29 M36,23 Q40,34 41.5,46 L37,47 Q36,37 33,29" fill="#8a7a62" fill-opacity="0.35" stroke-width="1.2"/>
+        <circle cx="10.5" cy="49.5" r="2.2" stroke-width="1"/><circle cx="39.5" cy="49.5" r="2.2" stroke-width="1"/>
+        <ellipse cx="25" cy="14.5" rx="4.5" ry="5.5" stroke-width="1.2"/>
+        <path d="M14,10 Q25,3 36,10 Q25,12.5 14,10 Z" fill="#2b2118" fill-opacity="0.45" stroke-width="1.2"/>
+      </g>
+    </g>
+    <!-- Heard while showing, e.g. a smith by day: a child group with data-sky day and data-sound hammer -->
+  </g>
+
+  <!-- Ways to go: a signpost at the left edge to another room (or #/map, #/journal ...) -->
+  <g data-go="#/room/PLACE-ID">
+    <path d="M154.8,649 L154.8,669 L26,669 L14,659 L26,649 Z" fill="#f8f1e1"/>
+    <path d="M154.8,649 L154.8,669 L26,669 L14,659 L26,649 Z" fill="#9a7446" fill-opacity="0.25"/>
+    <path d="M147.8,721 h6 v-76 h-6 Z" fill="#9a7446" fill-opacity="0.4"/>
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M147.8,721 h6 v-76 h-6 Z M154.8,649 L154.8,669 L26,669 L14,659 L26,649 Z"/>
+    </g>
+    <text x="143.8" y="663.5" text-anchor="end" font-size="13" font-style="italic" fill="#2b2118">Place name, 2 km</text>
+  </g>
+
+  <!-- Time of day, over everything; pointer-events none so they never catch the pointer -->
+  <!-- Day: light rain on a west wind. Delete the path for fair weather. -->
+  <g data-sky="day" pointer-events="none">
+    <path d="M1505,141 l5,14 M301,195 l5,14 M389,364 l5,14 M937,216 l5,14 M36,320 l5,14 M599,418 l5,14 M1498,501 l5,14 M824,453 l5,14 M1071,76 l5,14 M1415,561 l5,14 M1377,573 l5,14 M634,307 l5,14 M189,464 l5,14 M126,85 l5,14 M351,148 l5,14 M554,75 l5,14 M30,141 l5,14 M186,283 l5,14 M69,624 l5,14 M976,139 l5,14 M418,272 l5,14 M591,122 l5,14 M1337,703 l5,14 M748,363 l5,14 M162,108 l5,14 M558,217 l5,14 M1306,148 l5,14 M66,675 l5,14 M844,138 l5,14 M866,58 l5,14 M843,694 l5,14 M1360,505 l5,14 M432,285 l5,14 M287,556 l5,14 M850,560 l5,14 M538,189 l5,14 M1280,698 l5,14 M1343,578 l5,14 M1290,534 l5,14 M379,386 l5,14 M578,59 l5,14 M73,227 l5,14 M429,503 l5,14 M1503,339 l5,14 M1473,700 l5,14 M1501,284 l5,14 M370,192 l5,14 M333,177 l5,14 M991,641 l5,14 M1324,360 l5,14 M1036,574 l5,14 M161,481 l5,14 M1431,563 l5,14 M1185,359 l5,14 M305,567 l5,14 M542,575 l5,14 M1526,304 l5,14 M648,672 l5,14 M1146,154 l5,14 M226,141 l5,14 M1423,579 l5,14 M255,592 l5,14 M1540,479 l5,14 M570,407 l5,14 M232,50 l5,14 M1525,474 l5,14 M841,664 l5,14 M698,622 l5,14 M1302,181 l5,14 M418,236 l5,14" stroke="#7a6a55" stroke-width="0.6" stroke-opacity="0.45" stroke-linecap="round"/>
+  </g>
+  <!-- Dawn and dusk: a warm tint (the long shadows are in each thing's group) -->
+  <g data-sky="dawn dusk" pointer-events="none">
+    <path d="M20,343.4 Q14,250 24,170 Q16,90 34,26 Q300,14 620,24 Q950,12 1250,22 Q1450,14 1570,28 Q1586,110 1578,190 Q1588,270 1580,341.4 L1580,728 L1580,877.9 L1520,882.9 L1460,890 L1400,887.6 L1340,882 L1280,883.5 L1220,885.6 L1160,880.8 L1100,878.5 L1040,885.5 L980,890.6 L920,885.7 L860,881.3 L800,884.1 L740,884.8 L680,879.6 L620,880 L560,888 L500,890.2 L440,883.7 L380,881 L320,884.6 L260,883.7 L200,879.1 L140,882.1 L80,889.8 L20,889 Z" fill="#c0662b" fill-opacity="0.06"/>
+  </g>
+  <!-- Night: a dark wash over the drawing, then lamplight on top: a lantern by the shed door and its pool -->
+  <g data-sky="night" pointer-events="none">
+    <path d="M20,343.4 Q14,250 24,170 Q16,90 34,26 Q300,14 620,24 Q950,12 1250,22 Q1450,14 1570,28 Q1586,110 1578,190 Q1588,270 1580,341.4 L1580,728 L1580,877.9 L1520,882.9 L1460,890 L1400,887.6 L1340,882 L1280,883.5 L1220,885.6 L1160,880.8 L1100,878.5 L1040,885.5 L980,890.6 L920,885.7 L860,881.3 L800,884.1 L740,884.8 L680,879.6 L620,880 L560,888 L500,890.2 L440,883.7 L380,881 L320,884.6 L260,883.7 L200,879.1 L140,882.1 L80,889.8 L20,889 Z" fill="#1a2230" fill-opacity="0.42"/>
+    <path d="M1043.6,658 L1079.6,658 L1079.6,589.6 L1043.6,589.6 Z" fill="#e8a13a" fill-opacity="0.3"/>
+    <circle cx="1036" cy="586.7" r="80" fill="url(#glow)"/>
+    <ellipse cx="1048" cy="669.2" rx="70" ry="10" fill="#e8a13a" fill-opacity="0.18"/>
+    <path d="M1036,574.7 l0,-5 M1032,579.7 l8,0 l1,12 l-10,0 Z" fill="#e8a13a" fill-opacity="0.6" stroke="#2b2118" stroke-width="1.1" stroke-linejoin="round"/>
+  </g>
+</svg>

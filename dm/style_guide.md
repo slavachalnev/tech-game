@@ -42,6 +42,45 @@ Washes are pale fills under ink outlines. Never fill a shape with solid ink.
 - Places the player hasn't visited but has heard of can be drawn with a dotted outline or a "?".
 - Places off the map's edge get an arrow at the edge: "London, 430 km, 7–9 days".
 
+## Rooms: places the player can look around
+
+A room is a place drawn so the player can stand in it: `visuals/room-<place-id>.svg`, where `<place-id>` is the place's id in `places.json`. The room of the player's base (the place of kind `base`) is the Workshop tab; other rooms open from the map and from each other.
+
+- **Frame:** `viewBox="0 0 1600 900"` (it fills a screen), transparent background, the same ink, washes and `#ink` filter as other drawings. No title cartouche: the view labels the room.
+- **Start** from `../../dm/room_template.svg` (indoors) or `../../dm/yard_template.svg` (outdoors).
+- **View:** a cutaway elevation, looking in, with a floor line. Keep true relative sizes (pick a scale, e.g. 1 m = 150 px indoors or 36 px in a yard, and hold to it: a person is about 1.7 m), so the room reads as a real space. Write the scale, the floor line, any projection formula and where there's free space (in the room's coordinates) in a comment at the top, so later additions land at the right size and place. Update the free-space note when you add or remove something.
+- **Order:** `<defs>`, then the empty room under `<!-- room -->`, then one top-level group per thing, back to front, each after a one-line comment saying what and where. Then people, then ways to go, then the time-of-day washes last. Keep each thing's group self-contained (its own transform, no shared clip paths), so it can be added, deleted or redrawn alone.
+- **Paper knockout:** start each thing's and person's group with an opaque paper-coloured (`#f8f1e1`) silhouette of it, so what's behind doesn't show through its washes. Use separate `<path>` elements for separate parts; opposite windings in one path cut holes.
+- **Things:** draw every thing that's there and visible, each wrapped in `<g data-thing="<id>">`. Draw what the player would pick out at room scale; small parts are reached through their machine's own drawing. Things not in the room aren't drawn.
+- **People** who are usually there: `<g data-person="<id>">`.
+- **Ways to go:** `<g data-go="#/journal">` on something that leads to another page: the journal on the bench (`#/journal`), the map on the wall or the door (`#/map`), letters on a nail (`#/people`), a sketchbook (`#/sketch`), the ledger of methods (`#/capabilities`), or a door to another room (`#/room/<place-id>`).
+- **States:** a `data-state` group follows the nearest thing around it that has states, so the engine runs when its state is `running`. Groups inside a thing without states (a forge), or outside any thing, follow the state of the place's own thing (the smithy's `idle` or `fire-lit`). Preview other states with `uv run tg shot room-<place> --set engine-10cm=cold --set smithy=fire-lit`.
+- **Outdoors, shadows:** give each thing faint long shadows in `data-sky="dawn"` (falling west, to the left when looking north) and `data-sky="dusk"` (falling east, to the right), inside its own group.
+- **Sound:** a group with `data-sound="fire"`, `engine`, `water`, `hammer` or `wind` is heard while it shows (the view makes the sound; the player can turn it off). Put it on the fire's lit state, the engine's running state, a smith by day, the wind outdoors.
+- **Time of day:** `<g data-sky="day">`, `data-sky="dawn dusk"` or `data-sky="night"` show only at those times: daylight through the door, dusk light, and at night the hearth's glow and a lantern.
+- **Labels:** few. The view shows each thing's name on a tag when the player points at it; hand-lettered labels only where they add character.
+- **Ink and motion:** put `filter="url(#ink)"` on an outer group drawn in the room's coordinates; parts placed with negative local coordinates (a horse anchored at its feet) lose the filter. Leave moving parts unfiltered: filters are redrawn every frame.
+- **Keeping up:** a room is never finished. When something arrives, leaves or changes, edit its group; `uv run tg room <place-id>` lists what's there but not drawn and what's drawn but gone, and the view lists undrawn things beside the room meanwhile.
+
+## Hotspots: parts you can click in a drawing
+
+In a machine's drawing, mark each component the player might want a closer look at, so clicking it opens that component. Either wrap the component's drawn parts in `<g data-thing="<component-id>">`, or add an invisible outline over it at the end of the drawing: `<g data-layer="hotspots"><rect data-thing="cylinder-10cm" x="…" y="…" width="…" height="…" fill="none"/></g>`. Only ids of existing things. Check them with `uv run tg shot <id> --hotspots`, which outlines everything clickable with its id.
+
+## Drawing sets: zooming from machine to part
+
+The Drawing Board shows every drawing on one sheet the player zooms through. A part with its own drawing opens in place: zoom in on it in its machine's drawing and its own drawing fades in right there, lined up over it, while the machine stays around it. For that to line up:
+
+- **Mark the object.** In every drawing, wrap the object itself (its outlines, washes and section, but no labels, leader lines, dimensions, notes or cartouche) in `<g data-object="">` (the empty value keeps it valid XML). The board fits that group's outline onto the part's outline in the machine's drawing.
+- **Draw parts the way their machine shows them**: the same side, the same way up. A cylinder standing upright in the engine stands upright in its own drawing; a section of it is fine.
+- **Mark parts snugly** in the machine's drawing (`data-thing`, see Hotspots), so the outline is the part's real extent.
+- Keep the object's proportions true to the spec sheet in both drawings, so the two outlines have the same shape.
+- **Check** with `uv run tg shot board/<part-id> --half`: the part's drawing, half grown in its circle, should sit over the machine's picture of it the same way round.
+- **A project** (a big machine being gathered and built) gets a general-arrangement drawing with each part's real geometry wrapped in its own `data-thing` group, not invisible outlines: the board draws parts not yet in hand as pale blueprint ghosts, so the drawing shows how the project stands.
+
+## Steps: how it works
+
+To show a machine's working cycle, give a state step groups: `<g data-step="1" data-caption="Steam in: the piston rises">…</g>`, numbered from 1, three to six of them. The view shows one step at a time with its caption, with buttons to step and play. Parts outside step groups show in every step, so draw the machine once and put only what changes (valve positions, flows as coloured washes and arrows, the piston's place) in the steps. Moving parts are easiest kept out of the still drawing and placed in each step with `<use>` and a transform. Add the new state only to the groups that don't move, so the other states stay as they were. Check each step with `uv run tg shot <id> --state <state> --step <n>`.
+
 ## Technical conventions
 
 - Start from `../../dm/visual_template.svg`: `viewBox="0 0 800 600"`, transparent background, with the ink-wobble filter and hatch patterns already defined. Use a wider or taller viewBox when the subject needs it.

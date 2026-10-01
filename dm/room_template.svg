@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" font-family="Georgia, 'Times New Roman', serif">
+  <title>A room</title>
+  <!--
+    Room template: a place the player can stand in. Copy it to visuals/room-<place-id>.svg and make it that place.
+    Scale: 1 m = 155 px, so a 9 m room fills the frame (x 110-1490 here). The back wall meets the floor at y=820:
+      things against the wall stand on y=820, things out in the room on y 850-880. Eaves and tie-beam at 2.7 m
+      (y 374-405). A person of 1.7 m is 264 px: the figure below is dm/drawing_parts.svg's part-person at scale 3.1
+      with strokes thinned to about 0.55. A smaller room can take a bigger scale; keep one scale per room.
+    Order: defs; the empty room (walls, floor, roof, tie-beam, door frame, window, lantern) under the room comment;
+      then one top-level group per thing, each after a one-line comment naming it and where it stands; then
+      people; then ways to go; then the time-of-day groups last.
+    Self-contained groups: each thing keeps its own transforms and uses only the shared defs, so deleting its
+      group leaves no hole and no dangling reference. Nest a machine's big parts as data-thing groups inside it.
+    Knockout: washes are see-through. Anything standing in front of something else starts with a paper-coloured
+      copy of its outline (fill #f8f1e1, no stroke), one path per shape: shapes wound in opposite directions
+      inside one path cancel and leave holes.
+    States: a data-state group follows the nearest enclosing thing that has states, else the state of the
+      place's own thing. Time of day: data-sky="day", "dawn dusk" or "night", on any element.
+    Sound: data-sound="fire|engine|water|hammer|wind" on a group; it's heard only while that group shows, so put
+      it on a state or sky group (a lit fire, a running engine), or on a small empty one: <g data-sky="day" data-sound="hammer"/>.
+    Free space: keep some wall and floor clear for things yet to come, and say where in this comment.
+      Here everything is free but the example table, the person, the door and the window.
+    Check: uv run tg shot room-<place-id> [ state night | dawn | dusk ] [ set <thing-id>=<state> ],
+      with double dashes before state and set.
+  -->
+  <defs>
+    <filter id="ink" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/>
+      <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+    </filter>
+    <pattern id="hatch-metal" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#7a6a55" stroke-width="0.7"/>
+    </pattern>
+    <pattern id="hatch-masonry" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r="0.7" fill="#7a6a55"/><circle cx="6.5" cy="7" r="0.6" fill="#7a6a55"/>
+    </pattern>
+    <pattern id="shade" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#7a6a55" stroke-width="0.6"/>
+    </pattern>
+    <!-- light: a glow round a flame; a pool the night wash leaves (black = lit, used in a mask); daylight and low sun -->
+    <radialGradient id="fire-glow"><stop offset="0" stop-color="#c0662b" stop-opacity="0.45"/><stop offset="1" stop-color="#c0662b" stop-opacity="0"/></radialGradient>
+    <radialGradient id="lamp-glow"><stop offset="0" stop-color="#e8a13a" stop-opacity="0.5"/><stop offset="0.45" stop-color="#e8a13a" stop-opacity="0.16"/><stop offset="1" stop-color="#e8a13a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="light-pool"><stop offset="0" stop-color="#000" stop-opacity="1"/><stop offset="0.5" stop-color="#000" stop-opacity="0.7"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <linearGradient id="daylight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3dfa0" stop-opacity="0.6"/><stop offset="1" stop-color="#f3dfa0" stop-opacity="0.12"/></linearGradient>
+    <linearGradient id="low-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8a13a" stop-opacity="0.5"/><stop offset="1" stop-color="#c0662b" stop-opacity="0.1"/></linearGradient>
+    <linearGradient id="dusk-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0662b" stop-opacity="0.18"/><stop offset="1" stop-color="#e8a13a" stop-opacity="0.55"/></linearGradient>
+  </defs>
+
+  <!-- room -->
+  <g>
+    <!-- roof space above the tie-beam: underside of the roof, rafters, two purlins -->
+    <path d="M110,0 H1490 V374 H110 Z" fill="#9a7446" fill-opacity="0.06"/>
+    <path d="M110,0 H1490 V374 H110 Z" fill="url(#shade)" opacity="0.18"/>
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M150,374 L202,0 M240,374 L285,0 M330,374 L368,0 M420,374 L450,0 M510,374 L533,0 M600,374 L616,0 M690,374 L699,0 M780,374 L782,0 M870,374 L864,0 M960,374 L947,0 M1050,374 L1030,0 M1140,374 L1113,0 M1230,374 L1196,0 M1320,374 L1278,0 M1410,374 L1361,0" stroke="#7a6a55" stroke-width="1"/>
+      <path d="M110,116 H1490 V128 H110 Z M110,244 H1490 V256 H110 Z" fill="#9a7446" fill-opacity="0.2" stroke="#7a6a55" stroke-width="1.1"/>
+    </g>
+    <!-- back wall, with holes for the doorway (x 1150-1330) and the window (x 560-660) -->
+    <path d="M110,405 H1490 V820 H110 Z M1150,510 V820 H1330 V510 Z M560,520 V600 H660 V520 Z" fill-rule="evenodd" fill="#8a7a62" fill-opacity="0.1"/>
+    <path d="M110,405 H1490 V820 H110 Z M1150,510 V820 H1330 V510 Z M560,520 V600 H660 V520 Z" fill-rule="evenodd" fill="url(#hatch-masonry)" opacity="0.4"/>
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M112,450 L192,451 M221,449 L331,453 M341,450 L451,450 M620,450 L720,450 M1054,449 L1109,455 M1127,452 L1237,454 M112,496 L208,498 M330,501 L418,498 M446,498 L540,499 M557,495 L650,501 M668,497 L738,499 M845,495 L929,498 M959,501 L1070,495 M1093,498 L1162,501 M1185,499 L1250,501 M112,541 L226,543 M236,545 L295,541 M311,543 L413,542 M424,542 L517,547 M799,547 L862,545 M880,546 L985,542 M1476,545 L1488,546 M112,589 L169,590 M190,589 L285,592 M310,592 L362,587 M383,589 L465,591 M829,590 L912,587 M922,588 L988,592 M1006,592 L1086,590 M1404,592 L1475,592 M112,639 L219,633 M541,637 L607,639 M625,636 L734,635 M757,636 L859,634 M875,639 L925,637 M951,638 L1056,634 M366,684 L422,679 M437,684 L551,679 M577,683 L695,679 M715,685 L781,683 M806,680 L863,679 M890,685 L955,681 M969,683 L1019,685 M1370,681 L1474,685 M112,728 L177,725 M189,727 L304,726 M324,730 L383,728 M411,726 L499,727 M522,725 L587,730 M609,725 L669,727 M693,731 L812,725 M841,730 L946,728 M112,771 L216,773 M237,776 L320,771 M346,776 L444,773 M472,775 L590,776 M600,777 L710,774 M721,771 L838,776 M952,771 L1017,776 M1042,777 L1128,771" stroke="#7a6a55" stroke-width="0.7" opacity="0.7"/>
+      <path d="M110,820 H1150 M1330,820 H1490" stroke="#7a6a55" stroke-width="1.2"/>
+    </g>
+    <!-- the cut end walls, west and east -->
+    <path d="M110,0 V888 H66 Q58,760 64,620 Q56,480 62,340 Q55,200 62,60 L60,0 Z" fill="#8a7a62" fill-opacity="0.26"/>
+    <path d="M110,0 V888 H66 Q58,760 64,620 Q56,480 62,340 Q55,200 62,60 L60,0 Z" fill="url(#hatch-masonry)"/>
+    <path d="M1490,0 V888 H1534 Q1542,760 1536,620 Q1544,480 1537,340 Q1545,200 1537,60 L1540,0 Z" fill="#8a7a62" fill-opacity="0.26"/>
+    <path d="M1490,0 V888 H1534 Q1542,760 1536,620 Q1544,480 1537,340 Q1545,200 1537,60 L1540,0 Z" fill="url(#hatch-masonry)"/>
+    <!-- floor, and the cut ground along its front edge -->
+    <path d="M60,820 H1540 V884 Q1300,890 1000,886 Q700,892 400,886 Q200,891 60,887 Z" fill="#8a7a62" fill-opacity="0.13"/>
+    <path d="M60,887 Q200,891 400,886 Q700,892 1000,886 Q1300,890 1540,884 V900 H60 Z" fill="url(#hatch-masonry)" opacity="0.8"/>
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M110,0 V888 M1490,0 V888 M60,887 Q200,891 400,886 Q700,892 1000,886 Q1300,890 1540,884" stroke-width="2"/>
+      <!-- tie-beam at 2.7 m -->
+      <path d="M110,374 H1490 V405 H110 Z" fill="#9a7446" fill-opacity="0.32"/>
+      <path d="M116,384 Q500,380 900,385 T1484,383 M118,396 Q600,400 1000,394 T1484,397" stroke="#7a6a55" stroke-width="0.8"/>
+      <!-- doorway: lintel, jambs, threshold -->
+      <path d="M1140,498 H1340 V510 H1140 Z" fill="#9a7446" fill-opacity="0.45" stroke-width="1.6"/>
+      <path d="M1150,510 V820 M1330,510 V820" stroke-width="2"/>
+      <path d="M1146,818 H1334 V827 H1146 Z" fill="#8a7a62" fill-opacity="0.3" stroke-width="1.3"/>
+      <!-- window: lintel, sill, frame -->
+      <path d="M554,512 H666 V520 H554 Z" fill="#9a7446" fill-opacity="0.45" stroke-width="1.4"/>
+      <path d="M552,600 H668 V607 H552 Z" fill="#8a7a62" fill-opacity="0.3" stroke-width="1.4"/>
+      <path d="M560,520 V600 H660 V520 Z" stroke-width="1.8"/>
+    </g>
+    <!-- what shows through the window at each time of day -->
+    <g data-sky="day"><rect x="560" y="520" width="100" height="80" fill="#f3dfa0" fill-opacity="0.55"/></g>
+    <g data-sky="dawn dusk"><rect x="560" y="520" width="100" height="80" fill="url(#dusk-sky)"/></g>
+    <g data-sky="night"><rect x="560" y="520" width="100" height="80" fill="#1c2640" fill-opacity="0.4"/><circle cx="632" cy="538" r="1.4" fill="#f3dfa0"/></g>
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M610,520 V600 M560,560 H660" stroke="#7a6a55" stroke-width="1"/>
+      <!-- lantern on a chain from the tie-beam; it's lit at night (see the night group) -->
+      <path d="M800,405 V440" stroke="#7a6a55" stroke-width="1.4" stroke-dasharray="3 2"/>
+      <path d="M792,448 L800,440 L808,448 Z M790,474 H810 V478 H790 Z" fill="#56514b" fill-opacity="0.4" stroke-width="1.2"/>
+      <path d="M792,448 H808 V474 H792 Z" fill="#f3dfa0" fill-opacity="0.2" stroke-width="1.3"/>
+    </g>
+  </g>
+
+  <!-- table: an example thing, out on the floor in front of the wall, x 300-520 (use a real thing's id) -->
+  <g data-thing="table">
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+      <!-- knockout first, so the wall behind doesn't show through -->
+      <path d="M300,762 H520 V772 H300 Z" fill="#f8f1e1" stroke="none"/>
+      <path d="M308,772 H320 V878 H308 Z" fill="#f8f1e1" stroke="none"/>
+      <path d="M500,772 H512 V878 H500 Z" fill="#f8f1e1" stroke="none"/>
+      <path d="M300,762 H520 V772 H300 Z" fill="#9a7446" fill-opacity="0.4"/>
+      <path d="M308,772 H320 V878 H308 Z M500,772 H512 V878 H500 Z" fill="#9a7446" fill-opacity="0.35"/>
+      <path d="M320,790 H500" stroke-width="1.1"/>
+      <path d="M306,767 Q400,765 516,768" stroke="#7a6a55" stroke-width="0.7"/>
+    </g>
+  </g>
+
+  <!-- someone: a person standing out on the floor, x 580-690 (use a real person's id) -->
+  <g data-person="someone">
+    <g filter="url(#ink)">
+      <g transform="translate(560,596) scale(3.1)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round" stroke-width="0.55">
+        <g fill="#f8f1e1" stroke="none">
+          <path d="M19,20 Q14,21 13,25 L11,60 Q18,62 25,61 Q32,62 39,60 L37,25 Q36,21 31,20 Z"/>
+          <path d="M14,23 Q10,34 8.5,46 L13,47 Q14,37 17,29 Z"/>
+          <path d="M36,23 Q40,34 41.5,46 L37,47 Q36,37 33,29 Z"/>
+          <path d="M17.5,60 H23.5 V88 H17.5 Z"/>
+          <path d="M26.5,60 H32.5 V88 H26.5 Z"/>
+          <ellipse cx="25" cy="14" rx="5.5" ry="6.5"/>
+          <path d="M14,10 Q25,3 36,10 Q25,12.5 14,10 Z"/>
+        </g>
+        <path d="M17.5,60 H23.5 V88 H17.5 Z M26.5,60 H32.5 V88 H26.5 Z" fill="#8a7a62" fill-opacity="0.16" stroke="none"/>
+        <path d="M18,60 V67 Q17,77 19,87 M23,60 V67 Q24,77 22.5,87 M27,60 V67 Q26,77 27.5,87 M32,60 V67 Q33,77 31,87" stroke-width="0.45"/>
+        <path d="M18,66.5 H23 M27,66.5 H32" stroke-width="0.35"/>
+        <path d="M14,91 Q15,87 19,87 H22.5 L23,91 Z M36,91 Q35,87 31,87 H27.5 L27,91 Z" fill="#56514b" fill-opacity="0.5" stroke-width="0.4"/>
+        <path d="M19,20 Q14,21 13,25 L11,60 Q18,62 25,61 Q32,62 39,60 L37,25 Q36,21 31,20 Z" fill="#8a7a62" fill-opacity="0.35"/>
+        <path d="M22,20.5 L25,29 L28,20.5 M25,29 V61" stroke-width="0.4"/>
+        <path d="M14,23 Q10,34 8.5,46 L13,47 Q14,37 17,29 M36,23 Q40,34 41.5,46 L37,47 Q36,37 33,29" fill="#8a7a62" fill-opacity="0.35" stroke-width="0.45"/>
+        <circle cx="10.5" cy="49.5" r="2.2" stroke-width="0.4"/><circle cx="39.5" cy="49.5" r="2.2" stroke-width="0.4"/>
+        <ellipse cx="25" cy="14.5" rx="4.5" ry="5.5" stroke-width="0.5"/>
+        <path d="M14,10 Q25,3 36,10 Q25,12.5 14,10 Z" fill="#2b2118" fill-opacity="0.45" stroke-width="0.5"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- ways to go -->
+  <!-- door: to another room (#/room/<place-id>) or the map (#/map); the view through it changes with the time of day -->
+  <g data-go="#/map">
+    <path d="M1150,575 H1330 V818 H1150 Z" fill="#8a7a62" fill-opacity="0.14"/>
+    <g data-sky="day"><rect x="1150" y="510" width="180" height="65" fill="#f3dfa0" fill-opacity="0.55"/><rect x="1150" y="575" width="180" height="243" fill="#f3dfa0" fill-opacity="0.22"/></g>
+    <g data-sky="dawn dusk"><rect x="1150" y="510" width="180" height="65" fill="url(#dusk-sky)"/><circle cx="1200" cy="570" r="10" fill="#e8a13a" fill-opacity="0.45"/></g>
+    <g data-sky="night"><rect x="1150" y="510" width="180" height="308" fill="#1c2640" fill-opacity="0.35"/><circle cx="1190" cy="530" r="1.3" fill="#f3dfa0"/><circle cx="1290" cy="540" r="1.1" fill="#f3dfa0"/></g>
+    <g filter="url(#ink)" fill="none" stroke="#2b2118" stroke-linecap="round" stroke-linejoin="round">
+      <!-- the land outside: skyline at eye height (about 1.6 m, y 575), a track going away -->
+      <path d="M1152,575 Q1200,568 1250,574 Q1290,566 1328,572" stroke="#7a6a55" stroke-width="1"/>
+      <path d="M1222,818 Q1232,700 1238,580 M1262,818 Q1252,700 1244,580" stroke="#7a6a55" stroke-width="0.8"/>
+      <!-- the two leaves, standing open outward -->
+      <path d="M1152,512 L1168,522 V810 L1152,818 Z M1328,512 L1312,522 V810 L1328,818 Z" fill="#9a7446" fill-opacity="0.35" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- time of day: light through the door and window; at night a dark wash that leaves pools of light -->
+  <g data-sky="day">
+    <path d="M1150,822 H1330 L1380,888 H1110 Z" fill="url(#daylight)"/>
+    <path d="M560,600 H660 L630,760 H520 Z" fill="#f3dfa0" fill-opacity="0.12"/>
+  </g>
+  <g data-sky="dawn dusk">
+    <path d="M60,0 H1540 V884 Q1300,890 1000,886 Q700,892 400,886 Q200,891 60,887 Z" fill="#c0662b" fill-opacity="0.07"/>
+    <path d="M1150,822 H1330 L1200,888 H880 Z" fill="url(#low-sun)"/>
+  </g>
+  <g data-sky="night">
+    <!-- white shows the wash, black keeps it off: one light-pool circle per lamp or fire; give a fire's pool
+         data-state="lit" (or its own state) so it only lights the room when the fire does -->
+    <mask id="night-pools" maskUnits="userSpaceOnUse" x="0" y="0" width="1600" height="900">
+      <rect x="0" y="0" width="1600" height="900" fill="#fff"/>
+      <circle cx="800" cy="470" r="250" fill="url(#light-pool)"/>
+    </mask>
+    <path d="M60,0 H1540 V884 Q1300,890 1000,886 Q700,892 400,886 Q200,891 60,887 Z" fill="#1c2640" fill-opacity="0.5" mask="url(#night-pools)"/>
+    <circle cx="800" cy="466" r="190" fill="url(#lamp-glow)"/>
+    <path d="M800,470 Q795,464 798,458 Q799,454 800,449 Q802,455 803,459 Q805,465 800,470 Z" fill="#e8a13a" fill-opacity="0.8" stroke="#c0662b" stroke-width="0.8">
+      <animate attributeName="d" values="M800,470 Q795,464 798,458 Q799,454 800,449 Q802,455 803,459 Q805,465 800,470 Z;M800,470 Q794,464 797,459 Q800,455 802,451 Q803,456 804,460 Q805,465 800,470 Z;M800,470 Q795,464 798,458 Q799,454 800,449 Q802,455 803,459 Q805,465 800,470 Z" keyTimes="0;0.5;1" dur="1.1s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

@@ -7,8 +7,9 @@ from playwright.sync_api import sync_playwright
 from engine import history, state
 from engine.server import make_server
 
-ROUTES = ["workshop", "capabilities", "people", "map", "map/region", "journal", "sketch",
-          "thing/wheal-fortune", "thing/smithy?state=fire-lit", "thing/anvil", "visual/scene-yard"]
+ROUTES = ["workshop", "room/smithy", "capabilities", "people", "map", "map/region", "journal", "sketch",
+          "thing/wheal-fortune", "thing/smithy?state=fire-lit", "thing/anvil", "visual/scene-yard",
+          "visual/room-smithy?hotspots", "visual/room-smithy?state=night"]
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +40,13 @@ def full_save(tmp_path_factory):
     save = state.new_save("cornwall-1705", "view")
     state.SAVES = old
     (save / "visuals/scene-yard.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><text x="10" y="20">Yard</text></svg>')
+    smithy = (save / "visuals/smithy.svg").read_text()
+    (save / "visuals/smithy.svg").write_text(smithy.replace("</svg>", '<g data-layer="hotspots"><rect data-thing="forge" x="300" y="250" width="200" height="300" fill="none"/>'
+                                                            '<rect data-thing="anvil" x="600" y="430" width="140" height="110" fill="none"/></g></svg>'))
+    (save / "visuals/room-smithy.svg").write_text(  # a room: a thing, a person and a way out to point at
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><g data-thing="anvil"><rect x="700" y="600" width="120" height="140" fill="#999"/></g>'
+        '<g data-person="jacca-pascoe"><rect x="900" y="500" width="60" height="260" fill="#999"/></g>'
+        '<g data-go="#/journal"><rect x="300" y="650" width="80" height="30" fill="#999"/></g></svg>')
     state.write_json(save / "stores.json", {"items": [{"name": "Scrap brass", "quantity": 20, "unit": "kg"}]})
     state.write_json(save / "recipes/hoops.json", {
         "id": "hoops", "name": "Forge iron hoops", "makes": "hoops", "how": "bend and weld", "tools": ["anvil"],
@@ -69,6 +77,33 @@ def test_trials_are_plotted_in_the_journal_and_on_the_sheet(browser, full_save):
 def test_workshop_shows_what_is_coming_up_and_recent_drawings(browser, full_save):
     page, errors = open_page(browser, full_save, "workshop")
     assert "24 June" in page.inner_text(".almanac") and page.locator(".recent img").count() == 4 and errors == []
+
+
+def test_a_room_can_be_pointed_at_and_walked_into(browser, full_save):
+    page, errors = open_page(browser, full_save, "room/smithy")
+    anvil = page.evaluate("""() => { const r = document.querySelector('#stage .scene-host').shadowRoot
+      .querySelector('[data-thing=anvil] rect').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }""")
+    page.mouse.move(*anvil)
+    assert "Anvil" in page.inner_text("#stage .tag")
+    assert "Coal" in page.inner_text(".loose")  # here by its location, but not drawn in the room yet
+    page.mouse.click(*anvil)
+    page.wait_for_function("location.hash === '#/thing/anvil' && document.body.dataset.ready === '1'")
+    assert "smithy" in page.inner_text(".trail").lower() and page.locator(".locator").count() == 1 and errors == []
+
+
+def test_the_workshop_is_a_drawing_board_of_machines_and_their_parts(browser, full_save):
+    page, errors = open_page(browser, full_save, "workshop")
+    page.wait_for_selector(".board-svg .plate")
+    page.locator("#board .board-keys [data-k=all]").click()  # the whole sheet, then into the smithy's drawing
+    page.wait_for_timeout(900)
+    box = page.evaluate("(() => { const r = document.querySelector('.plate[data-id=smithy] image').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+    page.mouse.click(*box)
+    page.wait_for_function("document.querySelector('.board-panel h3')?.textContent === 'The smithy'", timeout=5000)
+    assert page.locator(".board-overlay .balloon").count() == 2  # its forge and anvil, marked in the drawing
+    assert "Hearth and bellows" in page.inner_text(".bom")
+    page.locator(".balloon[data-id=anvil]").dispatch_event("click")  # the anvil's own drawing opens in place
+    page.wait_for_function("document.querySelector('.board-trail').textContent.includes('Anvil')", timeout=5000)
+    assert "The smithy › Anvil" in page.inner_text(".board-trail") and errors == []
 
 
 def test_old_journal_entries_show_drawings_as_they_were(browser, tmp_path, monkeypatch):

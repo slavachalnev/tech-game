@@ -29,7 +29,7 @@ export function createBoard(host, h) {
   let S = null, roots = [], cam = null, path = [], focus = null, hover = null, frameAsked = false, panelKey = "", playing = null;
   let selected = null; // a part without a drawing of its own: its sheet is shown in the panel
   let closing = null; // the detail being closed as the camera backs out of it: { key, parentKey }
-  let quiet = false; // after a flight nothing opens by itself, until you zoom or drag
+  let quiet = false; // after a flight or jump nothing opens by itself, until you zoom in (dragging is only looking around)
   let aim = null; // where on the screen you're zooming at with the wheel; else the middle of the clear part
   let zoomedOut = null, sheetW = 1; // whether the camera takes in most of the sheet; the sheet's width
   const view = {}; // thing id -> { state, step } the player chose to look at, else its current state and step 1
@@ -449,7 +449,7 @@ export function createBoard(host, h) {
     if (drag) {
       const [W] = size(), dx = ((e.clientX - drag.x) / W) * drag.cam[2], dy = ((e.clientY - drag.y) / W) * drag.cam[2];
       if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
-      if (drag.moved) (flight = null), (quiet = false), (aim = null), (cam = [drag.cam[0] - dx, drag.cam[1] - dy, cam[2], cam[3]]), ask();
+      if (drag.moved) (flight = null), (aim = null), (cam = [drag.cam[0] - dx, drag.cam[1] - dy, cam[2], cam[3]]), ask();
       return;
     }
     const id = pick(sx, sy);
@@ -468,7 +468,8 @@ export function createBoard(host, h) {
     if (e.target.closest(".board-panel")) return;
     e.preventDefault();
     const r = host.getBoundingClientRect();
-    (flight = null), (quiet = false), (aim = [e.clientX - r.left, e.clientY - r.top]);
+    (flight = null), (aim = [e.clientX - r.left, e.clientY - r.top]);
+    if (e.deltaY < 0) quiet = false; // zooming in: what you zoom into may open
     zoom(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), e.clientX - r.left, e.clientY - r.top);
   }, { passive: false });
   overlay.addEventListener("click", (e) => { const b = e.target.closest(".balloon"); if (b) open(b.dataset.id); });
@@ -499,7 +500,7 @@ export function createBoard(host, h) {
   trailEl.addEventListener("click", (e) => { const go = e.target.closest("[data-go]"); if (!go) return; const n = nodeByKey(go.dataset.go); h.desk(!n); fly(n ? framed(n.rect) : framed(sheet(), 0.96)); });
   host.querySelector(".board-keys").addEventListener("click", (e) => {
     const k = e.target.closest("button")?.dataset.k, [W, H] = size();
-    if (k === "in") zoom(0.6, W / 2, H / 2);
+    if (k === "in") (quiet = false), zoom(0.6, W / 2, H / 2);
     if (k === "out") up();
     if (k === "all") h.desk(true), fly(framed(sheet(), 0.96));
   });
@@ -539,8 +540,8 @@ export function createBoard(host, h) {
     up,
     // Home: the whole sheet, your papers open beside it.
     home() { h.desk(true); fly(framed(sheet(), 0.96)); },
-    // Frame what's in view again, after your papers open or close.
-    reframe() { fly(focus ? framed(focus.rect) : framed(sheet(), 0.96), 350); },
+    // Keep the same view when your papers open or close: slide it over by half the drawer, at the same zoom.
+    reframe(shift) { const u = cam[2] / size()[0]; fly([cam[0] - shift * u / 2, cam[1], cam[2], cam[3]], 350); },
     // The parts of the drawing in focus and their boxes on the screen (for tests and checks).
     parts() {
       const [W, H] = size();

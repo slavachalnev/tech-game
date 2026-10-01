@@ -684,7 +684,7 @@ const wide = () => innerWidth > 900;
 function desk(open = !deskOpen(), reframe = true) {
   if (open === deskOpen()) return;
   document.body.classList.toggle("desk-open", open);
-  if (reframe && wide()) board.reframe();
+  if (reframe && wide()) board.reframe(open ? 404 : -404); // the drawer's width, as in cover()
 }
 
 // Clicking the board around a page, or Escape, puts the page down; on the board, Escape steps back out.

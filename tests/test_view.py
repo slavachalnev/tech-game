@@ -158,3 +158,4 @@ def test_dragging_the_board_does_not_flicker_the_sidebars(browser, full_save):
         page.wait_for_timeout(16)
     page.mouse.up()
     assert page.evaluate("flips") == 0 and errors == []
+    assert page.locator(".details > g").count() == 0  # looking around opens nothing; only zooming in does

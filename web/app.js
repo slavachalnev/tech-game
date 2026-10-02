@@ -657,11 +657,9 @@ function markFresh(next) {
   setTimeout(() => changed.forEach((k) => fresh.delete(k)), 5000);
 }
 
-function toast(message, href) {
+function toast(message) {
   const el = $("#toast");
   el.textContent = message;
-  el.onclick = href ? () => (location.hash = href) : null;
-  el.style.cursor = href ? "pointer" : "";
   el.hidden = false;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => (el.hidden = true), 7000);
@@ -722,8 +720,6 @@ events.onopen = () => $("#live").classList.add("on");
 events.onerror = () => $("#live").classList.remove("on");
 events.onmessage = async () => {
   const next = await (await fetch("/api/state")).json();
-  const drawn = S && next.log.filter((e) => e.turn > S.log.length && e.visuals?.length).at(-1);
-  if (drawn) toast(`New drawings in turn ${drawn.turn}: click to see them in the Journal.`, "#/journal");
   markFresh(next);
   S = next;
   render();

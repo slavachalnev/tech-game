@@ -2,6 +2,7 @@
 name = "tech-game"
 version = "0.1.0"
 description = "A time-travel invention game refereed by Claude Code"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["jsonschema>=4.23", "playwright>=1.50"]
 

@@ -302,7 +302,7 @@ body::after {
   transition: opacity 3s ease;
 }
 body[data-sky="dusk"]::after, body[data-sky="dawn"]::after { opacity: 0.5; }
-body[data-sky="night"]::after { opacity: 1; animation: candle 7s ease-in-out infinite alternate; }
+body[data-sky="night"]::after { opacity: 1; animation: candle 7s steps(4) infinite alternate; }  /* stepped: a smooth one redraws the screen every frame */
 body.bare::after { display: none; }
 @keyframes candle { 0%, 100% { opacity: 1; } 40% { opacity: 0.86; } 55% { opacity: 0.97; } 80% { opacity: 0.9; } }
 

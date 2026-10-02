@@ -1,7 +1,8 @@
 // The drawing board: every drawing laid out on one sheet you zoom through like a map. A part with its own
 // drawing opens in place: zoom in on it and its drawing grows out of a detail circle, lined up over it (by the
 // drawings' [data-object] outlines), while the machine around it recedes. Balloons and a parts list say what can
-// be opened. Drawings are shown as images; the board only measures them once.
+// be opened. Drawings are shown as images; the board only measures them once. Only the drawing in focus moves: an
+// animation repaints its whole drawing, ink filter and all, every frame, so the others show a still of it.
 
 const OPEN = [0.3, 0.78]; // a detail opens as its drawing grows from this share of the screen to this one
 const FOCUS = 0.45; // a drawing on the sheet is in focus once it fills this share of the screen
@@ -61,7 +62,7 @@ export function createBoard(host, h) {
     <text x="400" y="462" font-size="22" font-style="italic" text-anchor="middle" fill="#7a6a55">not drawn yet</text></svg>`;
 
   // A thing's sheet prepared for the board, in the state and step being looked at: parts not in hand drawn as
-  // blueprint ghosts, on squared paper; measured.
+  // blueprint ghosts, on squared paper; measured. Two images of it: moving (url) and held at its first moment (still).
   function measure(item) {
     const all = things(), state = stateFor(item), step = view[item.id]?.step ?? 1, path = sheetFor(item);
     const key = `${path ?? "blank:" + item.id}@${S.visuals[path]}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
@@ -86,7 +87,11 @@ export function createBoard(host, h) {
       const pieces = [...svg.querySelectorAll("[data-thing]")].map((el) => ({ id: el.getAttribute("data-thing"), box: boxIn(el, svg) })).filter((p) => p.box.w && all[p.id]);
       const data = { blank: !path, states: text.includes("data-state="), captions, sounds: [...svg.querySelectorAll("[data-sound]")].map((g) => g.dataset.sound), vb, object: obj && boxIn(obj, svg), parts: joined(pieces) };
       svg.remove();
-      data.url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
+      const blob = () => URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
+      data.url = blob();
+      const moving = svg.querySelectorAll("animate, animateTransform, animateMotion, set");
+      moving.forEach((a) => (a.setAttribute("end", "0.001s"), a.setAttribute("fill", "freeze")));
+      data.still = moving.length ? blob() : data.url;
       return data;
     })());
     return measured.get(key);
@@ -175,7 +180,7 @@ export function createBoard(host, h) {
     sheetW = sheet().w;
     platesG.innerHTML = roots.map((n) => `<g class="plate" data-id="${h.esc(n.id)}">
         <rect class="plate-shadow" x="${n.rect.x + 8}" y="${n.rect.y + 10}" width="${n.rect.w}" height="${n.rect.h}"/>
-        <image href="${n.data.url}" x="${n.rect.x}" y="${n.rect.y}" width="${n.rect.w}" height="${n.rect.h}" preserveAspectRatio="none"/>
+        <image href="${n.data.still}" x="${n.rect.x}" y="${n.rect.y}" width="${n.rect.w}" height="${n.rect.h}" preserveAspectRatio="none"/>
         <rect class="plate-edge" x="${n.rect.x}" y="${n.rect.y}" width="${n.rect.w}" height="${n.rect.h}"/>
         <text class="plate-title" x="${n.rect.x}" y="${n.rect.y + n.rect.h + 64}" font-size="${Math.max(44, n.rect.w / 28)}">${h.esc(n.thing.name)}</text>
       </g>`).join("") + heads.join("");
@@ -296,8 +301,10 @@ export function createBoard(host, h) {
     path = walk();
     const was = focus;
     focus = [...path].reverse().find((e) => e.p >= 1)?.node ?? null;
+    const live = host.classList.contains("behind") ? null : focus; // the drawing that moves
+    const show = (img, node) => { const url = node === live ? node.data.url : node.data.still; if (img.getAttribute("href") !== url) img.setAttribute("href", url); };
     // Each drawing on the path recedes as the one inside it opens.
-    platesG.querySelectorAll(".plate").forEach((g) => (g.style.opacity = g.dataset.id === path[0]?.node.id && path[1] ? 1 - 0.7 * path[1].p : 1));
+    platesG.querySelectorAll(".plate").forEach((g, i) => ((g.style.opacity = g.dataset.id === path[0]?.node.id && path[1] ? 1 - 0.7 * path[1].p : 1), show(g.querySelector("image"), roots[i])));
     const keep = new Set();
     path.slice(1).forEach(({ node, p }, i) => {
       const id = `d-${btoa(node.key).replace(/[^a-z0-9]/gi, "")}`, next = path[i + 2];
@@ -305,7 +312,7 @@ export function createBoard(host, h) {
       let g = detailsG.querySelector(`#${id}`);
       if (!g) {
         detailsG.insertAdjacentHTML("beforeend", `<g id="${id}"><clipPath id="${id}-clip"><circle/></clipPath>
-          <g clip-path="url(#${id}-clip)"><image href="${node.data.url}" x="${node.rect.x}" y="${node.rect.y}" width="${node.rect.w}" height="${node.rect.h}" preserveAspectRatio="none"/></g>
+          <g clip-path="url(#${id}-clip)"><image x="${node.rect.x}" y="${node.rect.y}" width="${node.rect.w}" height="${node.rect.h}" preserveAspectRatio="none"/></g>
           <circle class="detail-edge" fill="none" vector-effect="non-scaling-stroke"/></g>`);
         g = detailsG.querySelector(`#${id}`);
       }
@@ -313,8 +320,7 @@ export function createBoard(host, h) {
       const rFull = Math.max(...[[node.rect.x, node.rect.y], [node.rect.x + node.rect.w, node.rect.y], [node.rect.x, node.rect.y + node.rect.h], [node.rect.x + node.rect.w, node.rect.y + node.rect.h]].map(([x, y]) => Math.hypot(x - cx, y - cy)));
       const e = 1 - (1 - p) ** 2, r = r0 + (rFull - r0) * e;
       g.querySelectorAll("circle").forEach((c) => (c.setAttribute("cx", cx), c.setAttribute("cy", cy), c.setAttribute("r", r)));
-      const img = g.querySelector("image");
-      if (img.getAttribute("href") !== node.data.url) img.setAttribute("href", node.data.url); // another state or step
+      show(g.querySelector("image"), node); // moving or still; another state or step
       g.querySelector(".detail-edge").style.opacity = p < 1 ? 1 : 0;
       g.querySelector("image").style.opacity = next ? 1 - 0.7 * next.p : 1;
       g.style.opacity = Math.min(1, p * 3);
@@ -563,7 +569,7 @@ export function createBoard(host, h) {
       const [W, H] = size();
       return partsOf(focus).map((p) => ({ id: p.id, n: p.n, boxes: p.boxes.map((b) => [((b.x - cam[0]) / cam[2]) * W, ((b.y - cam[1]) / cam[3]) * H, (b.w / cam[2]) * W, (b.h / cam[3]) * H]) }));
     },
-    setBehind(b) { host.classList.toggle("behind", b); },
+    setBehind(b) { host.classList.toggle("behind", b); ask(); }, // behind a page, nothing moves
     get focus() { return focus?.id ?? null; },
   };
 }

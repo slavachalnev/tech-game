@@ -16,7 +16,7 @@ A time-travel invention game. A Claude Code session is the referee (DM), a local
 - **Hooks**, in the save's `.claude/settings.json`, active once the folder is trusted in Claude Code:
   - `tg hook` (PostToolUse on Write/Edit) validates each file the referee writes. Exit 2 feeds the errors back to it, so `state.check_file` must report bad content and never raise.
   - `tg snapshot` (Stop) commits the save into `.history/` after every reply. That's what `tg undo`, `tg history` and `tg restore` use.
-- **The `draw` subagent** (`.claude/agents/draw.md` in each save) makes every drawing in the background while the referee narrates. Running in the save, it loads the secret notes like the referee does; its instructions only keep them out of what the player sees. When it's done it adds the drawing to the turn's `visuals` and sets the thing's `visual`, so nothing points at a missing file meanwhile.
+- **The `draw` subagent** (`.claude/agents/draw.md` in each save) makes every drawing in the background while the referee narrates. Running in the save, it loads the secret notes like the referee does; its instructions only keep them out of what the player sees. It sets the thing's `visual` once the drawing exists (the board only opens a part that has one) and, when done, adds it to the turn's `visuals`, so nothing points at a missing file meanwhile.
 - **Validation** (`engine/state.py`) works in two layers:
   - `check_file`: one file's schema, `id` matching the file name, well-formed SVG.
   - `check_save`: adds cross-references between files (missing drawings, unknown components, tools or recipes, places not labelled on their maps, drawings marking unknown things or people). It feeds `tg validate`, `tg status` and the view's "State problems" banner.
@@ -78,7 +78,7 @@ uv run pytest                                    # about 10 s, including the bro
 ## Conventions
 
 - **Playable over rigorous.** The player is the user. They can override anything out of character, and lasting overrides become house rules. Don't add strictness machinery, or automation that changes state behind the referee's back. Prefer tools that do one lookup or calculation and print it (see `dm/rules.md`, "The player is in charge of the game").
-- **Spoilers.** Don't show the user `scenarios/*/referee.md` or a save's `hidden.md`. That includes commands, heredocs and test fixtures they can see. Delegate edits to those files to a subagent that reports back without content. The server's refusal to serve `hidden.md` is spoiler courtesy, not security; don't harden it.
+- **Spoilers.** Don't show the user `scenarios/*/referee.md` or a save's `hidden.md`, nor the contents of its `fermi/` scripts, which use the hidden figures. That includes commands, heredocs and test fixtures they can see. Delegate edits to those files to a subagent that reports back without content. The server's refusal to serve `hidden.md` is spoiler courtesy, not security; don't harden it.
 - **The world is data.** State is JSON under `engine/schema.json`; the only code in a save is drawings (SVG, and the kit scripts in `drawings/` that make them) and Fermi scripts. A new field or state file usually touches:
   - the schema;
   - `state.py` (`kind_of`, `load_state`, `new_save`, `check_save`);

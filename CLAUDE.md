@@ -78,7 +78,7 @@ uv run pytest                                    # about 10 s, including the bro
 ## Conventions
 
 - **Playable over rigorous.** The player is the user. They can override anything out of character, and lasting overrides become house rules. Don't add strictness machinery, or automation that changes state behind the referee's back. Prefer tools that do one lookup or calculation and print it (see `dm/rules.md`, "The player is in charge of the game").
-- **Spoilers.** Don't show the user `scenarios/*/referee.md` or a save's `hidden.md`, nor the contents of its `fermi/` scripts, which use the hidden figures. That includes commands, heredocs and test fixtures they can see. Delegate edits to those files to a subagent that reports back without content. The server's refusal to serve `hidden.md` is spoiler courtesy, not security; don't harden it.
+- **Spoilers.** Don't show the user `scenarios/*/referee.md` or a save's `hidden.md`, nor the contents of its `fermi/` scripts, which use the hidden figures. That includes commands, heredocs and test fixtures they can see. Delegate edits to those files to a subagent that reports back without content. Reading any file inside a save with the Read tool loads that save's CLAUDE.md, secret notes and all, so in dev work look at saves with `uv run tg --save <name> show …` or `status`, and tell subagents the same. The server's refusal to serve `hidden.md` is spoiler courtesy, not security; don't harden it.
 - **The world is data.** State is JSON under `engine/schema.json`; the only code in a save is drawings (SVG, and the kit scripts in `drawings/` that make them) and Fermi scripts. A new field or state file usually touches:
   - the schema;
   - `state.py` (`kind_of`, `load_state`, `new_save`, `check_save`);

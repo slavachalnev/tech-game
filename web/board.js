@@ -65,10 +65,11 @@ export function createBoard(host, h) {
   // blueprint ghosts, on squared paper; measured. Two images of it: moving (url) and held at its first moment (still).
   function measure(item) {
     const all = things(), state = stateFor(item), step = view[item.id]?.step ?? 1, path = sheetFor(item);
-    const key = `${path ?? "blank:" + item.id}@${S.visuals[path]}@${state}@${step}@${S.things.map((t) => standing(t)[0]).join("")}`;
+    const key = `${path ?? "blank:" + item.id}@${S.visuals[path]}@${state}@${step}@${h.phase()}@${S.things.map((t) => standing(t)[0] + h.stateOf(t)).join()}`;
     if (!measured.has(key)) measured.set(key, (async () => {
       const text = path ? await h.svgText({ visual: path, _v: S.visuals[path] }) : blank(item);
-      const svg = h.prepare(text, state, { self: item.id });
+      let svg = h.prepare(text ?? "", state, { self: item.id });
+      if (!(svg instanceof SVGSVGElement)) svg = h.prepare(blank(item), state); // missing or broken: the problems banner names it
       const steps = [...svg.querySelectorAll("[data-step]")], n = Math.max(0, ...steps.map((g) => +g.dataset.step));
       const captions = Array.from({ length: n }, (_, i) => steps.find((g) => +g.dataset.step === i + 1 && g.dataset.caption)?.dataset.caption ?? "");
       steps.forEach((g) => +g.dataset.step !== step && g.remove()); // one step at a time
@@ -295,9 +296,11 @@ export function createBoard(host, h) {
     return out;
   }
 
+  let drawnW = 1; // the board's width in pixels when last drawn
   function draw() {
     if (!cam) return;
     svg.setAttribute("viewBox", cam.join(" "));
+    drawnW = size()[0];
     path = walk();
     const was = focus;
     focus = [...path].reverse().find((e) => e.p >= 1)?.node ?? null;
@@ -326,7 +329,8 @@ export function createBoard(host, h) {
       g.style.opacity = Math.min(1, p * 3);
     });
     detailsG.querySelectorAll(":scope > g").forEach((g) => keep.has(g.id) || g.remove());
-    if (was !== focus) (hover = null), (selected = null), h.sounds(focus?.data.sounds ?? []); // what you'd hear there
+    if (was !== focus) h.sounds(focus?.data.sounds ?? []); // what you'd hear there
+    if (was?.key !== focus?.key) (hover = null), (selected = null);
     // Your papers are out when you've zoomed out to most of the sheet and away when you're in close: by zoom, with
     // some slack, never by focus (opening them moves the middle of the view, and so the focus).
     const far = cam[2] > sheetW * (zoomedOut ? 0.4 : 0.55);
@@ -380,8 +384,14 @@ export function createBoard(host, h) {
   }
 
   // The panel is the sheet of what you're looking at: the drawing in focus, or a part of it you picked that has
-  // no drawing of its own. Zoomed out, it's the register of every sheet on the board.
+  // no drawing of its own. Zoomed out, it's the register of every sheet on the board. Refreshed, it keeps your place.
+  let panelFor = "";
   function showPanel() {
+    const key = `${focus?.key ?? ""}|${selected ?? ""}`, top = key === panelFor ? panel.scrollTop : 0;
+    fillPanel();
+    (panel.scrollTop = top), (panelFor = key);
+  }
+  function fillPanel() {
     panelKey = `${focus?.key ?? ""}|${selected ?? ""}`;
     const crumbs = path.filter((e) => e.p >= 1).map((e) => e.node); // the drawings you've zoomed through
     trailEl.innerHTML = [`<a data-go="sheet">The drawing board</a>`, ...crumbs.map((n) => `<a data-go="${h.esc(n.key)}">${h.esc(n.thing.name)}</a>`)].join(" › ");
@@ -510,7 +520,7 @@ export function createBoard(host, h) {
     if (t && st) clearInterval(playing), (playing = null), look(t.id, { state: st.dataset.state, step: 1 });
     const n = focus?.data.captions.length, turn = (d) => look(t.id, { step: (((view[t.id]?.step ?? 1) - 1 + d + n) % n) + 1 });
     if (t && sp) turn(+sp.dataset.step);
-    if (t && e.target.closest(".play")) (playing = playing ? clearInterval(playing) : setInterval(() => (focus?.thing === t ? turn(1) : (clearInterval(playing), (playing = null))), 3200)), (panelKey = "?"), draw();
+    if (t && e.target.closest(".play")) (playing = playing ? clearInterval(playing) : setInterval(() => (focus?.thing.id === t.id ? turn(1) : (clearInterval(playing), (playing = null))), 3200)), (panelKey = "?"), draw();
     const row = e.target.closest("tr[data-id]"), go = e.target.closest("[data-go]");
     if (row) open(row.dataset.id);
     if (go) { const n = nodeByKey(go.dataset.go); h.desk(!n); fly(n ? framed(n.rect) : framed(sheet(), 0.96)); }
@@ -522,7 +532,11 @@ export function createBoard(host, h) {
     if (k === "out") up();
     if (k === "all") h.desk(true), fly(framed(sheet(), 0.96));
   });
-  addEventListener("resize", () => cam && ((cam = framed({ x: cam[0], y: cam[1], w: cam[2], h: cam[3] }, 1)), ask()));
+  addEventListener("resize", () => { // keep the middle of the view and its scale
+    if (!cam) return;
+    const [W, H] = size(), u = cam[2] / drawnW;
+    (cam = [cam[0] + cam[2] / 2 - (W * u) / 2, cam[1] + cam[3] / 2 - (H * u) / 2, W * u, H * u]), ask();
+  });
 
   // ---------- the outside ----------
 
@@ -531,7 +545,10 @@ export function createBoard(host, h) {
     async update(state) {
       S = state;
       children.forEach((c) => (c.stale = true));
+      const anchor = path[0]?.node, was = anchor && { ...anchor.rect };
       await layout();
+      const now = anchor && roots.find((n) => n.key === anchor.key)?.rect; // the drawing you're at stays put
+      if (cam && now) cam = [cam[0] + now.x - was.x, cam[1] + now.y - was.y, cam[2], cam[3]];
       if (!cam) h.desk(true), (cam = roots.length ? framed(sheet(), 0.96) : [0, 0, 1000, 600]); // first: the whole sheet, your papers open
       draw();
     },

@@ -59,7 +59,7 @@ const facts = (title, obj) =>
     : "";
 const fermi = (paths) =>
   paths?.length
-    ? `<h3>Fermi estimates</h3>${paths.map((p) => `<details class="fermi" data-key="${esc(p)}" data-src="${esc(p)}"><summary>${esc(p)}</summary><pre>…</pre></details>`).join("")}`
+    ? `<h3>Fermi estimates</h3>${paths.map((p) => `<details class="fermi" data-src="${esc(p)}"><summary>${esc(p)}</summary><pre>…</pre></details>`).join("")}`
     : "";
 const initials = (name) => name.split(/\s+/).filter((w) => /^[A-Z]/.test(w) && !/^(Mr|Mrs|Miss|Dr|Sir|Lady|Lord|Captain|Rev)\.?$/.test(w)).map((w) => w[0]).slice(0, 2).join("") || name[0];
 const historyNotes = (items) => bullets("History", items?.map((h) => `<span class="turn-ref">Turn ${h.turn}.</span> ${esc(h.note)}`), "history");
@@ -179,7 +179,7 @@ async function drawing(thing, state = stateOf(thing), phase = sky(S.world.clock)
 // ---------- the drawing board ----------
 
 const board = ($("#board").api = createBoard($("#board"), {
-  prepare, svgText, stateOf, esc, stamp, details, sounds: ambience,
+  prepare, svgText, stateOf, esc, stamp, details, sounds: ambience, phase: () => sky(S.world.clock).phase,
   desk: (open) => wide() && desk(open, false), // the board is about to frame things itself; on a phone, only by hand
   cover: () => (deskOpen() && wide() ? 404 : 0), // px of the board's left the papers cover: 16 + 380 + 8
   glyph: (kind) => GLYPH[kind] ?? GLYPH.other,
@@ -597,7 +597,7 @@ async function render() {
   const id = ++renderId;
   document.body.dataset.ready = "0";
   const [path, q] = location.hash.slice(2).split("?");
-  const [route = "workshop", arg] = path.split("/");
+  const [first, arg] = path.split("/"), route = first || "workshop"; // no hash: the Workshop
   const query = new URLSearchParams(q);
   masthead(route, arg);
   document.body.classList.toggle("bare", route === "visual");
@@ -627,7 +627,9 @@ async function render() {
   document.body.classList.toggle("front", onBoard && front);
   const navigated = location.hash !== shownHash;
   if (navigated) scrolls[shownHash] = scrollY;
+  const papersTop = main.querySelector(".papers")?.scrollTop ?? 0; // your place in the papers, through a refresh
   main.innerHTML = html;
+  if (main.querySelector(".papers")) main.querySelector(".papers").scrollTop = papersTop;
   if (route === "map" && mapToMount) mountMap(main.querySelector(".map-host"), mapToMount);
   if (route === "visual" && query.has("hotspots")) outline(main.querySelector(".bare-plate svg"));
   const still = route === "visual" && query.has("at") && main.querySelector(".bare-plate svg");
@@ -692,13 +694,17 @@ const putDown = () => (deskOpen() && document.body.classList.contains("front") ?
 $("#board").addEventListener("click", (e) => $("#board").classList.contains("behind") && (e.stopPropagation(), putDown()), true);
 addEventListener("keydown", (e) => e.key === "Escape" && (document.querySelector(".place-card:not([hidden])") ? closePlaces() : putDown()));
 
-// Remember which sections are open; Fermi scripts load when opened.
+// Remember which sections are open. A Fermi script is the referee's working, with the true figures: it shows only if
+// you say so, and is never reopened for you.
 document.addEventListener("toggle", async (e) => {
   const d = e.target;
+  if (d.matches?.("details.fermi") && d.open) {
+    if (!confirm("Fermi scripts are the referee's working, with the true figures, so they may give away what you haven't found out yet. Show it anyway?")) return (d.open = false);
+    d.querySelector("pre").textContent = await (await fetch(`/save/${d.dataset.src}`)).text();
+  }
   if (!d.matches?.("details[data-key]")) return;
   opened[d.dataset.key] = d.open;
   localStorage.setItem("opened", JSON.stringify(opened));
-  if (d.dataset.src && d.open) d.querySelector("pre").textContent = await (await fetch(`/save/${d.dataset.src}`)).text();
 }, true);
 
 const sketch = initSketch($("#sketch"), {

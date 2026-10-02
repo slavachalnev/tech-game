@@ -137,12 +137,14 @@ def cmd_draw(args):
     save = state.find_save(args.save)
     folder = save / "drawings"
     scripts = [folder / f"{i}.py" for i in args.ids] or sorted(p for p in folder.glob("*.py") if not p.stem.startswith(("parts", "_")))
-    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(folder), str(state.ROOT)]), "PYTHONDONTWRITEBYTECODE": "1"}  # no __pycache__ in the save
+    env = {**os.environ, "PYTHONPATH": str(state.ROOT), "PYTHONDONTWRITEBYTECODE": "1"}  # no __pycache__ in the save
     failed = False
     for script in scripts:
         if not script.is_file():
             raise SystemExit(f"No drawings/{script.name}. Drawings are scripts in the save's drawings/ folder (see the style guide).")
-        run = subprocess.run([sys.executable, script], cwd=save, env=env, capture_output=True, text=True)
+        # drawings/ goes last on the path, for parts.py: a drawing called engine.py or calendar.py hides no module.
+        boot = f"import runpy, sys; sys.path.append({str(folder)!r}); sys.argv[0] = {str(script)!r}; runpy.run_path(sys.argv[0], run_name='__main__')"
+        run = subprocess.run([sys.executable, "-P", "-c", boot], cwd=save, env=env, capture_output=True, text=True)
         if run.returncode:
             failed = True
             print(f"drawings/{script.name} failed:\n{run.stderr.strip()}")
@@ -192,8 +194,11 @@ def cmd_history(args):
 
 
 def cmd_undo(args):
-    turn, tag = history.undo(state.find_save(args.save))
-    print(f"Undid turn {turn}. The save is back to just before it.\nChanged your mind? uv run tg restore {tag}")
+    save = state.find_save(args.save)
+    turn, tag = history.undo(save)
+    first = state.next_turn(save)  # turns snapshotted together are undone together
+    which = f"turn {turn}" if first == turn else f"turns {first}–{turn} (they were snapshotted together)"
+    print(f"Undid {which}. The save is back to just before turn {first}.\nChanged your mind? uv run tg restore {tag}")
 
 
 def cmd_restore(args):

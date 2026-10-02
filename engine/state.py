@@ -7,7 +7,7 @@ from datetime import datetime, time, timedelta
 from pathlib import Path
 from xml.etree import ElementTree
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker, validators
 
 ROOT = Path(__file__).resolve().parent.parent
 SAVES = ROOT / "saves"
@@ -144,8 +144,15 @@ def unseen_sketches(save):
 
 # --- Validation ---
 
+# Stricter than JSON Schema, because the engine computes with these: 1.0 isn't a whole number of pence or a turn
+# number, and a clock must be a real time (no 31 April, no 24:00).
+Validator = validators.extend(Draft202012Validator, type_checker=Draft202012Validator.TYPE_CHECKER.redefine("integer", lambda _, x: type(x) is int))
+FORMATS = FormatChecker([])
+FORMATS.checks("real date and time", raises=ValueError)(lambda v: not isinstance(v, str) or datetime.strptime(v, CLOCK_FMT))
+
+
 def validator(kind):
-    return Draft202012Validator({**SCHEMA, "$ref": f"#/$defs/{kind}"})
+    return Validator({**SCHEMA, "$ref": f"#/$defs/{kind}"}, format_checker=FORMATS)
 
 
 def kind_of(rel):

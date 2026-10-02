@@ -38,6 +38,31 @@ def test_hook_blocks_bad_writes_with_exit_2(save, monkeypatch, capsys, content):
     assert code == 2 and "things/bad.json" in err
 
 
+def test_hook_blocks_values_the_engine_cant_compute_with(save, monkeypatch, capsys):
+    world = state.read_json(save / "world.json")
+    turn = {"turn": 1.0, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T09:00", "action": "a", "rulings": [], "narration": "n"}
+    for path, content in [("world.json", {**world, "clock": "1705-04-31T08:00"}), ("world.json", {**world, "clock": "1705-04-30T24:00"}),
+                          ("world.json", {**world, "purse_p": 4718.0}), ("log/0001.json", turn)]:
+        state.write_json(save / path, content)
+        code, _, err = tg(monkeypatch, capsys, "hook", stdin={"cwd": str(save), "tool_input": {"file_path": path}})
+        assert code == 2 and path in err, (content, err)
+
+
+def test_undo_names_every_turn_it_takes_back(save, monkeypatch, capsys):
+    history.snapshot(save)
+    for n in (1, 2):  # two turns in one snapshot go back together
+        state.write_json(save / f"log/{n:04d}.json", {"turn": n, "clock_start": "1705-04-02T08:00", "clock_end": "1705-04-02T09:00", "action": f"act {n}", "rulings": [], "narration": "n"})
+    history.snapshot(save)
+    code, out, _ = tg(monkeypatch, capsys, "--save", str(save), "undo")
+    assert code == 0 and "turns 1–2" in out and state.next_turn(save) == 1
+
+
+def test_a_drawing_named_like_a_module_hides_nothing(save, monkeypatch, capsys):
+    (save / "drawings/engine.py").write_text((save / "drawings/anvil.py").read_text())  # "engine" is a likely id
+    code, out, _ = tg(monkeypatch, capsys, "--save", str(save), "draw", "forge")
+    assert code == 0 and "visuals/forge.svg" in out, out
+
+
 def test_hook_passes_good_writes_and_ignores_files_outside_saves(save, monkeypatch, capsys, tmp_path):
     assert tg(monkeypatch, capsys, "hook", stdin={"cwd": str(save), "tool_input": {"file_path": str(save / "world.json")}})[0] == 0
     (tmp_path / "notes.json").write_text("{")

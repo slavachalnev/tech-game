@@ -3,7 +3,7 @@
   "$comment": "Schemas for a save's state files: world.json, places.json, stores.json, things/, people/, recipes/, log/.",
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
-    "clock": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$"},
+    "clock": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$", "format": "real date and time"},
     "text": {"type": "string", "minLength": 1},
     "texts": {"type": "array", "items": {"$ref": "#/$defs/text"}},
     "paths": {"type": "array", "items": {"type": "string", "pattern": "^[a-z]+/[^/]+$"}},
